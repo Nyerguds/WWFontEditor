@@ -21,56 +21,29 @@ namespace Nyerguds.ImageManipulation
             if (formats.Length == 0)
                 return null;
             // Order: try PNG, move on to try 32-bit ARGB DIB, then technically-RGB DIB abused as ARGB, and finally the normal Bitmap and Image types.
-            Boolean built = false;
-            if (formats.Contains("System.Drawing.Bitmap"))
-            {
-                clipboardimage = retrievedData.GetData(typeof(Bitmap)) as Bitmap;
-            }
-            if (clipboardimage == null && formats.Contains("PNG"))
+            if (formats.Contains("PNG"))
             {
                 Byte[] pngData = TryGetStreamDataFromClipboard(retrievedData, "PNG");
                 if (pngData != null)
                 {
                     clipboardimage = BitmapHandler.LoadBitmap(pngData);
-                    // LoadBitmap clones the object.
-                    if (clipboardimage != null) built = true;
                 }
             }
-            if (clipboardimage == null && formats.Contains("Format17"))
+            if (clipboardimage == null && formats.Contains("Format17")) // DIB v5
             {
                 Byte[] dibdata = TryGetStreamDataFromClipboard(retrievedData, "Format17");
                 clipboardimage = DibHandler.ImageFromDib5(dibdata, true);
-                // ImageFromClipboardDib5 builds the image in local memory.
-                if (clipboardimage != null) built = true;
             }
             if (clipboardimage == null && formats.Contains(DataFormats.Dib))
             {
                 Byte[] dibdata = TryGetStreamDataFromClipboard(retrievedData, DataFormats.Dib);
                 clipboardimage = DibHandler.ImageFromDib(dibdata);
-                // ImageFromClipboardDib builds the image in local memory.
-                if (clipboardimage != null) built = true;
             }
             if (clipboardimage == null && formats.Contains(DataFormats.Bitmap)){
                 clipboardimage = retrievedData.GetData(DataFormats.Bitmap) as Bitmap;}
             if (clipboardimage == null && formats.Contains(typeof(Bitmap).FullName))
                 clipboardimage = retrievedData.GetData(typeof(Bitmap)) as Bitmap;
-            if (clipboardimage == null && formats.Contains(typeof(Image).FullName))
-            {
-                Image clipImage = retrievedData.GetData(typeof(Image)) as Image;
-                clipboardimage = clipImage as Bitmap;
-                if (clipboardimage == null && clipImage != null)
-                {
-                    clipboardimage = new Bitmap(clipImage);
-                    built = true;
-                }
-            }
-            // If the image wasn't specifically built using BuildImage already, clone it to separate it from any backing sources.
-            if (clipboardimage == null || built)
-                return clipboardimage;
-            Bitmap returnImage = ImageUtils.CloneImage(clipboardimage);
-            try { clipboardimage.Dispose(); }
-            catch { /* Ignore */ }
-            return returnImage;
+            return clipboardimage;
         }
 
         /// <summary>

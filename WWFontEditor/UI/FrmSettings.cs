@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
+using Nyerguds.Util;
+using Nyerguds.Util.UI.Wrappers;
 using WWFontEditor.Domain;
 
 namespace WWFontEditor.UI
@@ -9,11 +14,16 @@ namespace WWFontEditor.UI
     {
         public Int32[] CustomColors { get; set; }
         private FontEditSettings m_Settings;
+        private List<EncodingDropDownInfo> encodings;
+        private EncodingDropDownInfo defSelect;
 
         public FrmSettings()
         {
             this.InitializeComponent();
-            this.tabControl1.TabPages.Remove(this.tabPage3);
+            this.encodings = EncodingDropDownInfo.GetAsDropDownItems(TextUtils.GetAsciiCompatibleEncodings());
+            this.encodings.RemoveAll(e => e.Encoding != null && "ISO-8859-1".Equals(e.Encoding.WebName, StringComparison.InvariantCultureIgnoreCase));
+            this.defSelect = this.encodings.FirstOrDefault(en => en.Encoding != null && FontEditSettings.DefSubstituteEncoding.Equals(en.Encoding.WebName, StringComparison.InvariantCultureIgnoreCase));
+            this.cmbEncodings.DataSource = this.encodings;
         }
 
         public FrmSettings(Int32[] customColors, FontEditSettings fontEditSettings)
@@ -50,7 +60,12 @@ namespace WWFontEditor.UI
             this.chkPal8BppWin.Checked = this.m_Settings.Generate8BitWindows;
             this.chkPal8BppBW.Checked = this.m_Settings.Generate8BitBW;
             this.chkPal8BppWB.Checked = this.m_Settings.Generate8BitWB;
-            //this.chkDisableCompression.Checked = this.m_Settings.DisableCompression;
+            this.chkShowDosSymbols.Checked = this.m_Settings.ShowDosSymbols;
+            Encoding enc = this.m_Settings.SubstituteUnicodeStart;
+            this.chkSubstUnicodeStart.Checked = enc != null;
+            this.cmbEncodings.SelectedItem = enc == null ? this.defSelect : this.encodings.FirstOrDefault(e => e.Encoding != null && e.Encoding.WebName == enc.WebName);
+            this.lblSymbolFontVal.Text = m_Settings.SymbolPreviewFont.Name;
+            this.lblSymbolFontVal.Font = m_Settings.SymbolPreviewFont;
         }
 
         private void SetLabelColor(Label label, Color color)
@@ -107,13 +122,34 @@ namespace WWFontEditor.UI
                 this.chkPal8BppRainbow.Checked = true;
         }
 
+        private void chkSubstUnicodeStart_CheckedChanged(Object sender, EventArgs e)
+        {
+            CheckBox chk = sender as CheckBox;
+            if (chk == null)
+                return;
+            this.cmbEncodings.Enabled = chk.Checked;
+        }
+
+        private void btnSelectFont_Click(Object sender, EventArgs e)
+        {
+            FontDialog fd = new FontDialog();
+            fd.Font = this.lblSymbolFontVal.Font;
+            if (fd.ShowDialog(this) != DialogResult.OK)
+                return;
+            this.lblSymbolFontVal.Text = fd.Font.Name;
+            Font selectedFont = new Font(fd.Font.FontFamily, 8.25F, fd.Font.Style, GraphicsUnit.Point, 0);
+            if (selectedFont.Name != fd.Font.Name)
+                MessageBox.Show("Only fonts with \"Regular\" font style are supported!", FrmFontEditor.GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            this.lblSymbolFontVal.Font = selectedFont;
+        }
+
         private void btnOk_Click(Object sender, EventArgs e)
         {
             if ((!this.chkPal1BppBR.Checked && !this.chkPal1BppBW.Checked && !this.chkPal1BppWB.Checked)
                 || (!this.chkPal4BppRainbow.Checked && !this.chkPal4BppWin.Checked && !this.chkPal4BppBW.Checked && !this.chkPal4BppWB.Checked)
                 || (!this.chkPal8BppRainbow.Checked && !this.chkPal8BppWin.Checked && !this.chkPal8BppBW.Checked && !this.chkPal8BppWB.Checked))
             {
-                MessageBox.Show(this, "Error: at least one default palette must be selected for each image color type!", "Font Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, "Error: at least one default palette must be selected for each image color type!", FrmFontEditor.GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             this.m_Settings.Background = this.lblValEditorBackColor.ForeColor;
@@ -141,7 +177,16 @@ namespace WWFontEditor.UI
             this.m_Settings.Generate8BitWindows = this.chkPal8BppWin.Checked;
             this.m_Settings.Generate8BitBW = this.chkPal8BppBW.Checked;
             this.m_Settings.Generate8BitWB = this.chkPal8BppWB.Checked;
-            //this.m_Settings.DisableCompression = this.chkDisableCompression.Checked;
+
+            this.m_Settings.ShowDosSymbols = this.chkShowDosSymbols.Checked;
+            Encoding substEnc;
+            if (this.chkSubstUnicodeStart.Checked && this.cmbEncodings.SelectedItem != null)
+                substEnc = ((EncodingDropDownInfo) this.cmbEncodings.SelectedItem).Encoding;
+            else
+                substEnc = null;
+            this.m_Settings.SubstituteUnicodeStart = substEnc;
+            this.m_Settings.SymbolPreviewFont = this.lblSymbolFontVal.Font;
+            
             this.m_Settings.SaveSettings();
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -173,7 +218,12 @@ namespace WWFontEditor.UI
             this.chkPal8BppBW.Checked = FontEditSettings.DefGenerate8BitBW;
             this.chkPal8BppWB.Checked = FontEditSettings.DefGenerate8BitWB;
             this.chkLimit8Bit.Checked = FontEditSettings.DefLimit8BitPalettes;
-            //this.chkDisableCompression.Checked = FontEditSettings.DefDisableCompression;
+            this.chkShowDosSymbols.Checked = FontEditSettings.DefShowDosSymbols;
+            this.chkSubstUnicodeStart.Checked = true;
+            this.cmbEncodings.SelectedItem = this.defSelect;
+            Font font = FontEditSettings.GetSizedFont(FontEditSettings.DefSymbolPreviewFont, FontEditSettings.DefSymbolPreviewFontStyle);
+            this.lblSymbolFontVal.Font = font;
+            this.lblSymbolFontVal.Text = font.Name;
         }
     }
 }

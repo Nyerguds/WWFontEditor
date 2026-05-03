@@ -127,18 +127,31 @@ namespace WWFontEditor.Domain.FontTypes
                 if (curNum > 0xFFFF)
                     throw new NotSupportedException("WWFont v5 can only contain 65535 (0xFFFF) characters!");
                 ArrayUtils.WriteIntToByteArray(index, i << 1, 2, true, curNum);
+                // Start at i; everything before it is already checked. This means the inner loop becomes shorter as this progresses.
                 for (Int32 j = i + 1; j < imageListcount; j++)
                 {
                     Byte[] curChecksymbol = fontListBin[j];
-                    if (curChecksymbol == null || curWritesymbol[0] != curChecksymbol[0])
+                    if (curChecksymbol == null)
                         continue;
-                    if (curWritesymbol.SequenceEqual(curChecksymbol))
+                    Boolean isEqual = true;
+                    // Seems x.SequenceEquals(y) is about 4x as slow as a simple 'for' loop, so I stopped using it.
+                    // Since they're stride-adjusted, the arrays are all of equal length at this point anyway.
+                    for (Int32 b = 0; b < blockLength; b++)
+                    {
+                        if (curWritesymbol[b] == curChecksymbol[b])
+                            continue;
+                        isEqual = false;
+                        break;
+                    }
+                    if (isEqual)
                     {
                         ArrayUtils.WriteIntToByteArray(index, j << 1, 2, true, curNum);
+                        // Remove it from any following equal checks, to further increase speed.
                         fontListBin[j] = null;
                     }
                 }
-                fontListBin[i] = null;
+                // I originally nulled fontListBin[i] here, but the inner loops only starting at i makes this unnecessary.
+                // I guess this means the final fontListBin will contain only the originals. Not that it matters; it's no longer used.
             }
             Int32 count = optimisedList.Count;
             Byte[] outputArray = new Byte[0x1C + index.Length + count * blockLength];

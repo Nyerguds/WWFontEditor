@@ -308,15 +308,27 @@ The Dynamix v4 format was figured out thanks to code from ScummVM. ScummVM is
 licensed under the GNU General Public License, but I only used it as reference
 and didn't copy or use their actual code.
 
-The Dynamix decompression code was converted from the C++ code of VOGONS.org
-user tikalat's Midi Tools. It contains no license but I assume the fact he
-included the code implies that he doesn't mind it being useful to more people.
+The Dynamix LZW and Huffman decompression code was converted from the C++ code
+of the Midi Tools created by VOGONS.org user 'tikalat'. The code contains no
+license, but I assume the fact he included the code implies that tikalat
+doesn't mind it being useful to more people.
 https://www.vogons.org/viewtopic.php?p=273448#p273448
 
 
 ---------------
 Version history
 ---------------
+
+v1.13.3: (2019/03/21 16:28)
+-Optimised saving of WW Unicode BitFont to make it roughly four times faster.
+-Fixed bug: not all of the UI got unlocked if an error occurred while saving.
+-Start of the unicode range can now be substituted with a different encoding.
+-Added setting to show/hide DOS symbols
+-Added setting to control unicode 00-FF range encoding substitution.
+-Added setting to change the symbol preview font.
+-Fixed descriptions of symbols that were only defined as range start and end.
+-Fixed issues with the palette revert button.
+-Using "Save as" will no longer replace the loaded font.
 
 v1.13.2: (2019/03/19 16:07)
 -Renamed "WWFont v5" to "WW BitFont (Unicode)" and "WWFont v6" to "WW BitFont".
@@ -328,6 +340,7 @@ v1.13.1: (2019/03/19 14:05)
 v1.13.0: (2019/03/17 15:25)
 -Added support for the Red Alert 2 "fonT" format (game.fnt).
  Note: Saving takes long (> 20 sec), and the UI will freeze while saving.
+-Added popup tooltips with symbol info in the sidebar list.
 
 v1.12.7: (2019/03/14 11:26)
 -Fixed pasting of 24-bit DIB images from clipboard.

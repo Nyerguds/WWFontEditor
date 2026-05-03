@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -113,6 +114,28 @@ namespace Nyerguds.Util
             if (index == -1)
                 return input;
             return input.Substring(0, index) + '&' + input.Substring(index);
+        }
+    }
+
+
+    /// <summary>
+    /// Sorts files using the same method used by the Windows Explorer, sorting numbers with a lower amount of digits before numbers with a higher amount of digits.
+    /// See http://stackoverflow.com/a/3099659/395685
+    /// </summary>
+    public class ExplorerFileComparer : IComparer<String>
+    {
+        [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        private static extern Int32 StrCmpLogicalW(String x, String y);
+
+        /// <summary>
+        /// Sorts files using the same method used by the Windows Explorer, sorting numbers with a lower amount of digits before numbers with a higher amount of digits.
+        /// See http://stackoverflow.com/a/3099659/395685
+        /// </summary>
+        public ExplorerFileComparer() { }
+
+        public Int32 Compare(String x, String y)
+        {
+            return StrCmpLogicalW(x, y);
         }
     }
 }

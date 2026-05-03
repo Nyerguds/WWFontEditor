@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain
 {
@@ -39,6 +40,11 @@ namespace WWFontEditor.Domain
         private const String INI_KEY_GENERATE8BITWINDOWS = "8BitWindows";
         private const String INI_KEY_GENERATE8BITBW = "8BitBW";
         private const String INI_KEY_GENERATE8BITWB = "8BitWB";
+        private const String INI_SECTION_SYMBOLS = "Symbols";
+        private const String INI_KEY_SHOW_DOS_SYMBOLS = "ShowDosSymbols";
+        private const String INI_KEY_SUBSTITUTE_ENCODING = "UnicodeLowRangeEnc";
+        private const String INI_KEY_SYMBOL_PREVIEW_FONT = "SymbolPreviewFont";
+        private const String INI_KEY_SYMBOL_PREVIEW_FONT_STYLE = "SymbolPreviewFontStyle";
 
         //private const String INI_SECTION_IO = "IO";
         //private const String INI_KEY_DISABLECOMPRESSION = "DisableCompression";
@@ -72,8 +78,10 @@ namespace WWFontEditor.Domain
         public const Boolean DefGenerate8BitBW = true;
         public const Boolean DefGenerate8BitWB = true;
 
-        //public const Boolean DefDisableCompression = false;
-        
+        public const Boolean DefShowDosSymbols = true;
+        public const String DefSubstituteEncoding = "Windows-1252";
+        public const String DefSymbolPreviewFont = "Microsoft Sans Serif";
+        public const FontStyle DefSymbolPreviewFontStyle = FontStyle.Regular;
         
         public Color EditAreaGrid { get; set; }
         public Color EditAreaFrame { get; set; }
@@ -104,8 +112,10 @@ namespace WWFontEditor.Domain
         public Boolean Generate8BitBW { get; set; }
         public Boolean Generate8BitWB { get; set; }
 
-        //public Boolean DisableCompression { get; set; }
-        
+        public Boolean ShowDosSymbols { get; set; }
+        public Encoding SubstituteUnicodeStart { get; set; }
+        public Font SymbolPreviewFont { get; set; }
+                        
         public FontEditSettings()
         {
             ReadSettings();
@@ -129,7 +139,7 @@ namespace WWFontEditor.Domain
             this.BackgroundFrame = ColorFromString(settings.GetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDFRAME, null), DefBackgroundFrame);
             this.Background = ColorFromString(settings.GetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUND, null), DefBackground);
             this.UsePaletteBG = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_USEPALETTEBG, DefUsePaletteBG);
-            
+
             this.Zoom = settings.GetIntValue(INI_SECTION_DEFAULTS, INI_KEY_ZOOM, DefZoom);
             this.SelectedSymbol = settings.GetIntValue(INI_SECTION_DEFAULTS, INI_KEY_SELECTEDSYMBOL, DefSelectedSymbol);
             this.EnableGrid = settings.GetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEGRID, DefEnableGrid);
@@ -159,10 +169,25 @@ namespace WWFontEditor.Domain
             // Don't allow no defaults at all.
             if (!this.Generate8BitRainbow && !this.Generate8BitBW && !this.Generate8BitWB && !this.Generate8BitWindows)
                 this.Generate8BitRainbow = true;
-            
-            //this.DisableCompression = settings.GetBoolValue(INI_SECTION_IO, INI_KEY_DISABLECOMPRESSION, DefDisableCompression);
+
+            this.ShowDosSymbols = settings.GetBoolValue(INI_SECTION_SYMBOLS, INI_KEY_SHOW_DOS_SYMBOLS, DefShowDosSymbols);
+            String substituteUnicodeStart = settings.GetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SUBSTITUTE_ENCODING, DefSubstituteEncoding);
+            if ("ISO-8859-1".Equals(substituteUnicodeStart, StringComparison.InvariantCultureIgnoreCase))
+                substituteUnicodeStart = null;
+            this.SubstituteUnicodeStart = String.IsNullOrEmpty(substituteUnicodeStart) ? null : Encoding.GetEncoding(substituteUnicodeStart);
+            String symbolPreviewFont = settings.GetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SYMBOL_PREVIEW_FONT, DefSymbolPreviewFont);
+            String symbolPreviewFontStyle = settings.GetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SYMBOL_PREVIEW_FONT_STYLE, DefSymbolPreviewFontStyle.ToString());
+            FontStyle style = GeneralUtils.TryParseEnum(symbolPreviewFontStyle, FontStyle.Regular, true);
+            this.SymbolPreviewFont = GetSizedFont(symbolPreviewFont, style);
+            if (SymbolPreviewFont.Name != symbolPreviewFont)
+                this.SymbolPreviewFont = GetSizedFont(DefSymbolPreviewFont, style);
         }
-        
+
+        public static Font GetSizedFont(String fontFamily, FontStyle style)
+        {
+            return new Font(fontFamily, 8.25F, style, GraphicsUnit.Point, 0);
+        }
+
         public Boolean SaveSettings()
         {
             IniFile settings = GetSettingsFile();
@@ -200,8 +225,14 @@ namespace WWFontEditor.Domain
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, this.Generate8BitWindows);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, this.Generate8BitBW);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWB, this.Generate8BitWB);
+            
+            settings.SetBoolValue(INI_SECTION_SYMBOLS, INI_KEY_SHOW_DOS_SYMBOLS, this.ShowDosSymbols);
 
-            //settings.SetBoolValue(INI_SECTION_IO, INI_KEY_DISABLECOMPRESSION, this.DisableCompression);
+            if (this.SubstituteUnicodeStart != null && "ISO-8859-1".Equals(this.SubstituteUnicodeStart.WebName, StringComparison.InvariantCultureIgnoreCase))
+                this.SubstituteUnicodeStart = null;
+            settings.SetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SUBSTITUTE_ENCODING, this.SubstituteUnicodeStart == null ? String.Empty : this.SubstituteUnicodeStart.WebName);
+            settings.SetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SYMBOL_PREVIEW_FONT, this.SymbolPreviewFont == null ? DefSymbolPreviewFont : this.SymbolPreviewFont.Name);
+            settings.SetStringValue(INI_SECTION_SYMBOLS, INI_KEY_SYMBOL_PREVIEW_FONT_STYLE, (this.SymbolPreviewFont == null ? DefSymbolPreviewFontStyle : this.SymbolPreviewFont.Style).ToString());
 
             return settings.WriteIni();
         }

@@ -15,7 +15,6 @@ using WWFontEditor.Domain;
 using WWFontEditor.Domain.FontTypes;
 using Nyerguds.Util.UI.Wrappers;
 using System.Drawing.Drawing2D;
-using System.Globalization;
 using System.Threading;
 
 namespace WWFontEditor.UI
@@ -31,7 +30,7 @@ namespace WWFontEditor.UI
         private const Int32 PALETTE_MAX_DIM = 162;
         private const String PROG_NAME = "Westwood Font Editor";
         private const String PROG_AUTHOR = "Created by Nyerguds";
-        private const String ASCII_CONVERT = " ☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
+        private const String DOS_SYMBOLS = " ☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
         private const String QUESTION_RESETFONT = "This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?";
         private const String QUESTION_REVERTSYMBOL = "This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?";
         private const String QUESTION_SAVEFILE_OPENNEW = "The font has unsaved changes!\n\nDo you want to save the changes to the current font?";
@@ -39,6 +38,7 @@ namespace WWFontEditor.UI
         private const String ABOUTTEXT = "Program icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26\n\nPalette manager design assisted by Moon Flower";
         private const String NEWFONTNAME = "newfont.";
         private const String UNHANDLED_EXCEPTION_MESSAGE = "Unhandled exception. Please copy this message to the clipboard using Ctrl+C and send it to the development team.\n\n";
+        private readonly Byte[] ByteRange128To255 = Enumerable.Range(0x80, 0x7F).Select(c => (Byte)c).ToArray();
 
         private Boolean m_Loading;
         private Boolean m_Clicking;
@@ -94,14 +94,10 @@ namespace WWFontEditor.UI
             this.chkOutline.Checked = this.m_Settings.EnableArea;
             this.chkShiftWrap.Checked = this.m_Settings.EnablePixelWrap;
             this.chkWrapPreview.Checked = this.m_Settings.EnablePreviewWrap;
+            this.txtPreview.Font = this.m_Settings.SymbolPreviewFont;
 
             // encodings init
-            List<EncodingDropDownInfo> encodings = Encoding.GetEncodings() // Get all known .Net encodings
-                .Select(e => e.GetEncoding()) // From EncodingInfo to Encoding
-                .Where(e => e.IsSingleByte && TextUtils.IsAsciiCompatible(e)) // Filter out single byte ASCII-compatible ones
-                .Select(e => new EncodingDropDownInfo(e)) // Put in wrapper class to add a ToString() for the dropdown
-                .OrderBy(n => n.ToString()) // Order by name as returned by wrapper class (with extra info first)
-                .ToList();
+            List<EncodingDropDownInfo> encodings = EncodingDropDownInfo.GetAsDropDownItems(TextUtils.GetAsciiCompatibleEncodings());
             // Add standard Dune 2000 text encoding
             encodings.Add(new EncodingDropDownInfo(new D2KEncoding()));
             // Add custom added Dune 2000 text encodings
@@ -324,13 +320,13 @@ namespace WWFontEditor.UI
             this.cmbRange.Visible = loadOk && this.m_LoadedFont.IsUnicode;
             if (this.cmbRange.Visible)
             {
-                Int32 curIndex = Math.Min(Math.Max(cmbRange.SelectedIndex, 0), m_LoadedFont.Length / 0x100);
+                Int32 curIndex = Math.Min(Math.Max(this.cmbRange.SelectedIndex, 0), this.m_LoadedFont.Length / 0x100);
                 this.cmbRange.Items.Clear();
                 this.cmbRange.Location = this.cmbEncodings.Location;
-                for (Int32 i = 0; i < m_LoadedFont.Length; i += 0x100)
+                for (Int32 i = 0; i < this.m_LoadedFont.Length; i += 0x100)
                     this.cmbRange.Items.Add(i.ToString("X4") + "-" + (i + 0xFF).ToString("X4"));
                 if (this.cmbRange.Items.Count > 0)
-                    cmbRange.SelectedIndex = newFontLoaded ? 0 : curIndex;
+                    this.cmbRange.SelectedIndex = newFontLoaded ? 0 : curIndex;
             }
             else if (newFontLoaded)
                 this.cmbRange.Items.Clear();            
@@ -385,7 +381,7 @@ namespace WWFontEditor.UI
                 // to allow index changed events on the following piece
                 this.m_Loading = false;
                 if (newFontLoaded)
-                    SelectFirstSymbol();
+                    this.SelectFirstSymbol();
             }
             this.m_Loading = wasloading;
             return loadOk;
@@ -520,7 +516,8 @@ namespace WWFontEditor.UI
                 Boolean isUnicode = this.m_LoadedFont.IsUnicode;
 
                 // add as param later
-                Encoding enc = isUnicode ? null : ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
+                Encoding enc = isUnicode ? this.m_Settings.SubstituteUnicodeStart : ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
+                Boolean useSubst = isUnicode && enc != null;
                 Color[] palette = this.m_CurrentPalette.ToArray();
                 palette[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(0xFF, palette[this.m_LoadedFont.TransparencyColor]);
                 Int32 selectedIndex = -1;
@@ -543,7 +540,7 @@ namespace WWFontEditor.UI
                 Int32 rangeEnd = Math.Min(allSymbols.Length, 0x100);
                 if (isUnicode)
                 {
-                    rangeStart = Math.Max(rangeStart, cmbRange.SelectedIndex * 0x100);
+                    rangeStart = Math.Max(rangeStart, this.cmbRange.SelectedIndex * 0x100);
                     rangeEnd = Math.Min(allSymbols.Length, rangeStart + 0x100);
                 }
                 for (Int32 i = rangeStart; i < rangeEnd; i++)
@@ -552,7 +549,14 @@ namespace WWFontEditor.UI
                     DataRow row = symbolsTable.NewRow();
                     row[0] = "0x" + i.ToString(isUnicode ? "X4" : "X2");
                     row[1] = i;
-                    String symbolStr = i < 0x20 ? ASCII_CONVERT[i].ToString() : isUnicode ? ((Char)i).ToString() : enc.GetString(new Byte[] { (Byte)i });
+                    String symbolStr;
+                    if (i < 0x20 && this.m_Settings.ShowDosSymbols)
+                        symbolStr = DOS_SYMBOLS[i].ToString();
+                    else if (isUnicode && (!useSubst || i < 0x80 || i > 0xFF))
+                        symbolStr = ((Char) i).ToString();
+                    else
+                        symbolStr = enc.GetString(new Byte[] {(Byte) i});
+
                     row[2] = symbolStr;
                     Bitmap bm = symbol.GetBitmapFullSize(palette, this.m_LoadedFont, false);
                     row[3] = bm;
@@ -562,21 +566,18 @@ namespace WWFontEditor.UI
                 this.dgrvSymbolsList.DataSource = symbolsTable;
                 if (isUnicode)
                 {
-                    if (m_ColumnWidth0 == -1) m_ColumnWidth0 = this.dgrvSymbolsList.Columns[0].Width;
-                    if (m_ColumnWidth1 == -1) m_ColumnWidth1 = this.dgrvSymbolsList.Columns[1].Width;
-                    if (m_ColumnWidth2 == -1) m_ColumnWidth2 = this.dgrvSymbolsList.Columns[2].Width;
-                    if (m_ColumnWidth3 == -1) m_ColumnWidth3 = this.dgrvSymbolsList.Columns[3].Width;
-                    this.dgrvSymbolsList.Columns[0].Width = m_ColumnWidth0 + 9;
-                    this.dgrvSymbolsList.Columns[1].Width = m_ColumnWidth1 + 5;
-                    this.dgrvSymbolsList.Columns[2].Width = m_ColumnWidth2 - 7;
+                    if (this.m_ColumnWidth0 == -1) this.m_ColumnWidth0 = this.dgrvSymbolsList.Columns[0].Width;
+                    if (this.m_ColumnWidth1 == -1) this.m_ColumnWidth1 = this.dgrvSymbolsList.Columns[1].Width;
+                    if (this.m_ColumnWidth2 == -1) this.m_ColumnWidth2 = this.dgrvSymbolsList.Columns[2].Width;
+                    if (this.m_ColumnWidth3 == -1) this.m_ColumnWidth3 = this.dgrvSymbolsList.Columns[3].Width;
+                    this.dgrvSymbolsList.Columns[0].Width = this.m_ColumnWidth0 + 9;
+                    this.dgrvSymbolsList.Columns[1].Width = this.m_ColumnWidth1 + 5;
+                    this.dgrvSymbolsList.Columns[2].Width = this.m_ColumnWidth2 - 7;
                     //this.dgrvSymbolsList.Columns[3].Width = m_ColumnWidth3 - 7;
                 }
-                if (rangeStart > 0xFF)
-                {
-                    DataGridViewCellStyle txtStyle = new DataGridViewCellStyle();
-                    txtStyle.Font = new System.Drawing.Font("Lucida Sans Unicode", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, (Byte)(0));
-                    this.dgrvSymbolsList.Columns[2].DefaultCellStyle = txtStyle;
-                }
+                DataGridViewCellStyle txtStyle = new DataGridViewCellStyle();
+                txtStyle.Font = this.m_Settings.SymbolPreviewFont;
+                this.dgrvSymbolsList.Columns[2].DefaultCellStyle = txtStyle;
                 DataGridViewCellStyle imgStyle = new DataGridViewCellStyle();
                 imgStyle.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
                 imgStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -636,10 +637,24 @@ namespace WWFontEditor.UI
             if (!this.m_LoadedFont.CanSave || this.m_FileName == null)
                 this.SaveFontAs();
             else
-                this.SaveFontFile(this.m_FileName);
+                this.SaveFontFile(this.m_FileName, true);
+        }
+        
+        private void SaveFontAs()
+        {
+            if (this.m_LoadedFont == null)
+                return;
+            FontFile selectedItem;
+            String suggestedfilename = this.m_FileName ?? NEWFONTNAME + (this.m_LoadedFont.FileExtensions.FirstOrDefault() ?? "fnt");
+            String filename = FileDialogGenerator.ShowSaveFileFialog(this, this.m_LoadedFont.GetType(), FontFile.SupportedTypes, typeof(FontFileWsV3), true, suggestedfilename, out selectedItem);
+            if (filename == null || selectedItem == null)
+                return;
+            if (this.m_LoadedFont.GetType() != selectedItem.GetType() && !this.ChangeFontType(selectedItem))
+                return;
+            this.SaveFontFile(filename, false);
         }
 
-        private void SaveFontFile(String fileName)
+        private void SaveFontFile(String fileName, Boolean replaceLoaded)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -659,7 +674,7 @@ namespace WWFontEditor.UI
                     saveOptions = extraopts.GetSaveOptions();
                 }
                 //Arguments: func returning FontFile, process type indication string.
-                Object[] arrParams = { new Func<FontFile>(()=> this.SaveFile(m_LoadedFont, fileName, saveOptions)), "Saving" };
+                Object[] arrParams = { new Func<FontFile>(() => this.SaveFile(this.m_LoadedFont, fileName, replaceLoaded, saveOptions)), "Saving" };
                 this.m_ProcessingThread = new Thread(this.ExecuteThreaded);
                 this.m_ProcessingThread.Start(arrParams);
 
@@ -671,16 +686,15 @@ namespace WWFontEditor.UI
             }
         }
 
-        private FontFile SaveFile(FontFile loadedFont, String fileName, SaveOption[] saveOptions)
+        private FontFile SaveFile(FontFile loadedFont, String fileName, Boolean replaceLoaded, SaveOption[] saveOptions)
         {
             Byte[] filedata = loadedFont.SaveFont(saveOptions);
             File.WriteAllBytes(fileName, filedata);
-            return loadedFont;
+            if (!replaceLoaded)
+                return null;
+            this.m_LoadedFont = loadedFont;
             this.m_LoadedFontBackup = loadedFont.Clone();
             this.m_FileName = fileName;
-            this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + loadedFont.ShortTypeName + ")";
-            this.tsmiRevertSymbol.Enabled = false;
-            this.ReloadUIWithSelection(false);
             return null;
         }
         
@@ -691,7 +705,6 @@ namespace WWFontEditor.UI
         /// <param name="parameters">An Object[] containing a Func returning a FontFile, and a string to indicate the process type being executed (eg. "saving").</param>
         private void ExecuteThreaded(Object parameters)
         {
-            Boolean wasLoading = this.m_Loading;
             this.m_Loading = true;
             try
             {
@@ -729,7 +742,7 @@ namespace WWFontEditor.UI
             }
             finally
             {
-                this.m_Loading = wasLoading;
+                this.m_Loading = false;
             }
         }
 
@@ -757,7 +770,8 @@ namespace WWFontEditor.UI
                 this.grbSymbolInfo.Enabled = enabled;
                 this.cmbPalettes.Enabled = enabled;
                 this.palColorSelector.Enabled = enabled;
-                this.btnResetPalette.Enabled = enabled;
+                PaletteDropDownInfo currentPal = this.cmbPalettes.SelectedItem as PaletteDropDownInfo;
+                this.btnResetPalette.Enabled = enabled && currentPal != null && currentPal.IsChanged();
                 this.btnSavePalette.Enabled = enabled;
                 this.btnRemap.Enabled = enabled;
                 this.txtPreview.Enabled = enabled;
@@ -789,7 +803,7 @@ namespace WWFontEditor.UI
                     this.m_BusyStatusLabel.BringToFront();
                 }
                 else
-                    RemoveProcessingLabel();
+                    this.RemoveProcessingLabel();
             }
             finally
             {
@@ -876,10 +890,10 @@ namespace WWFontEditor.UI
 
         private Int32 GetSelectedIndex()
         {
-            m_CurrentSymbol = 0;
+            this.m_CurrentSymbol = 0;
             if (this.dgrvSymbolsList.SelectedRows.Count > 0)
-                m_CurrentSymbol = (Int32)this.dgrvSymbolsList.SelectedRows[0].Cells[1].Value;
-            return m_CurrentSymbol;
+                this.m_CurrentSymbol = (Int32)this.dgrvSymbolsList.SelectedRows[0].Cells[1].Value;
+            return this.m_CurrentSymbol;
         }
         
         private void PnlImageScroll_MouseScroll(Object sender, MouseEventArgs e)
@@ -940,7 +954,7 @@ namespace WWFontEditor.UI
                 if (fntLoadOk && addGrid)
                 {
                     //Draw normal grid, with or without special outline
-                    Color[] palette = new Color[] { Color.Transparent, Color.Black, drawOutline ? this.m_Settings.EditAreaGrid : this.m_Settings.BackgroundGrid, this.m_Settings.EditAreaFrame };
+                    Color[] palette = { Color.Transparent, Color.Black, drawOutline ? this.m_Settings.EditAreaGrid : this.m_Settings.BackgroundGrid, this.m_Settings.EditAreaFrame };
                     gridImageSmall = ImageUtils.GenerateGridImage(this.m_CurWidth, this.m_CurHeight, zoom, palette, 0, drawGrid ? (Byte)2 : (Byte)0, drawOutline ? (Byte)3 : (Byte)2);
                     if (!drawOutline)
                     {
@@ -1048,7 +1062,7 @@ namespace WWFontEditor.UI
         private void pxbEditGridFront_MouseMove(Object sender, MouseEventArgs e)
         {
             // Fix for bug where the ctrl picker gets stuck sometimes.
-            if (m_TempColActive && (ModifierKeys & Keys.Control) == 0)
+            if (this.m_TempColActive && (ModifierKeys & Keys.Control) == 0)
                 this.ToggleTempColorSelect(false);
             this.CheckMouse(e.X, e.Y, e.Button, this.chkPaint.Checked, false);
         }
@@ -1304,7 +1318,9 @@ namespace WWFontEditor.UI
                 return;
             this.ReloadDataGrid(false);
             this.RepaintPreview();
+            this.ReloadSymbolToolTip();
         }
+
         private void CmbRange_SelectedIndexChanged(Object sender, EventArgs e)
         {
             if (this.m_Loading)
@@ -1312,13 +1328,25 @@ namespace WWFontEditor.UI
             if (this.dgrvSymbolsList.Rows.Count > 0)
                 this.dgrvSymbolsList.Rows[0].Cells[0].Selected = true;
             this.ReloadDataGrid(true);
-            if (cmbRange.SelectedIndex == 0)
+            if (this.cmbRange.SelectedIndex == 0)
             {
                 this.SelectFirstSymbol();
                 this.cmbRange.Focus();
             }
             else
                 this.ReloadImageInfo(true);
+            this.ReloadSymbolToolTip();
+        }
+
+        private void ReloadSymbolToolTip()
+        {
+            Point point = this.PointToClient(MousePosition);
+            if (this.GetChildAtPoint(point) != this.dgrvSymbolsList)
+                return;
+            Point inPoint = this.dgrvSymbolsList.PointToClient(MousePosition);
+            DataGridView.HitTestInfo hit = this.dgrvSymbolsList.HitTest(inPoint.X, inPoint.Y);
+            if (hit.Type == DataGridViewHitTestType.Cell)
+                this.ShowSymbolsListToolTip(this.dgrvSymbolsList, hit.RowIndex, hit.ColumnIndex);
         }
 
         private void DgrvSymbolsList_SelectionChanged(Object sender, EventArgs e)
@@ -1433,20 +1461,6 @@ namespace WWFontEditor.UI
             if (this.m_LoadedFont == null)
                 return;
             this.SaveFontAs();
-        }
-
-        private void SaveFontAs()
-        {
-            if (this.m_LoadedFont == null)
-                return;
-            FontFile selectedItem;
-            String suggestedfilename = this.m_FileName ?? NEWFONTNAME + (this.m_LoadedFont.FileExtensions.FirstOrDefault() ?? "fnt");
-            String filename = FileDialogGenerator.ShowSaveFileFialog(this, this.m_LoadedFont.GetType(), FontFile.SupportedTypes, typeof(FontFileWsV3), true, suggestedfilename, out selectedItem);
-            if (filename == null || selectedItem == null)
-                return;
-            if (this.m_LoadedFont.GetType() != selectedItem.GetType() && !this.ChangeFontType(selectedItem))
-                return;
-            this.SaveFontFile(filename);
         }
 
         private void TsmiExit_Click(Object sender, EventArgs e)
@@ -1782,8 +1796,10 @@ namespace WWFontEditor.UI
             using (Bitmap image = ffs.GetBitmapFullSize(this.m_CurrentPalette, this.m_LoadedFont, true))
             {
                 // Reconvert from encoding to compensate for 0x00-0x20 ASCII substitution.
-                Encoding enc = m_LoadedFont.IsUnicode ? null : ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
-                String str = m_LoadedFont.IsUnicode ? ((Char)curIndex).ToString() : enc.GetString(new Byte[] { (Byte)curIndex });
+                Encoding enc = this.m_LoadedFont.IsUnicode ? this.m_Settings.SubstituteUnicodeStart : ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
+
+                Boolean substitute = this.m_LoadedFont.IsUnicode && enc != null && curIndex >= 0x80 && curIndex <= 0xFF;
+                String str = this.m_LoadedFont.IsUnicode && !substitute ? ((Char)curIndex).ToString() : enc.GetString(new Byte[] { (Byte)curIndex });
                 data.SetData(DataFormats.Text, str);
                 // As Font Editor object
                 data.SetData(typeof(FontFileSymbol), ffs.Clone());
@@ -1973,7 +1989,7 @@ namespace WWFontEditor.UI
                 }
                 if ((this.dgrvSymbolsList.DataSource as DataTable) != null && selectedIndex < ((DataTable)(this.dgrvSymbolsList.DataSource)).Rows.Count && selectedIndex > 0)
                 {
-                    this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Min(Math.Max(0, scrollOffset), this.dgrvSymbolsList.ClientSize.Height);
+                    this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Max(0, scrollOffset);
                     this.dgrvSymbolsList.Rows[selectedIndex].Cells[0].Selected = true;
                 }
             }
@@ -2028,10 +2044,10 @@ namespace WWFontEditor.UI
             if (trimValueAmounts.Keys.Count > 0)
             {
                 Int32 maxTrimmed = trimValueAmounts.Values.Max();
-                Double percentage = (Double)maxTrimmed / (Double)totalTrimmed;
+                Double percentage = (Double)maxTrimmed / totalTrimmed;
                 Int32 trimmed = trimValueAmounts.FirstOrDefault(x => x.Value == maxTrimmed).Key;
                 // only adjust space if at least 90% of the trimmed normal-range characters had the same amount trimmed off.
-                if (percentage > 0.90d && space.Width > trimmed)
+                if (percentage > 0.90d && (space == null || space.Width > trimmed))
                     space.ChangeWidth(space.Width - trimmed, 0);
             }
         }
@@ -2247,6 +2263,20 @@ namespace WWFontEditor.UI
                 return null;
             if (width == 0)
                 width = (this.pnlImagePreview.ClientRectangle.Width) / (Int32) this.numZoomPreview.Value;
+            if (this.m_LoadedFont.IsUnicode && !String.IsNullOrEmpty(text) && this.m_Settings.SubstituteUnicodeStart != null)
+            {
+                String substitutes = this.m_Settings.SubstituteUnicodeStart.GetString(this.ByteRange128To255);
+                Char[] textArr = text.ToCharArray();
+                for (Int32 i = 0; i < text.Length; i++)
+                {
+                    Char c = text[i];
+                    Int32 index = substitutes.IndexOf(c);
+                    if (index != -1)
+                        textArr[i] = (Char)(0x80+index);
+                }
+                text = new String(textArr);
+                // character substitution for 0-FF range here.
+            }
             List<Point> shadows = this.m_ShadowCoords == null ? null : this.m_ShadowCoords.Distinct().ToList();
             Boolean generateShadow = !String.IsNullOrEmpty(text) && shadows != null && shadows.Count > 0 && !(shadows.Count() == 1 && shadows[0].Equals(new Point(0, 0)));
 
@@ -2267,7 +2297,7 @@ namespace WWFontEditor.UI
                 if (width != -1)
                     width = width + minX - maxX;
             }
-            Encoding enc = m_LoadedFont.IsUnicode ? null : ((EncodingDropDownInfo) this.cmbEncodings.SelectedItem).Encoding;
+            Encoding enc = this.m_LoadedFont.IsUnicode ? null : ((EncodingDropDownInfo) this.cmbEncodings.SelectedItem).Encoding;
             Bitmap mainText = this.m_LoadedFont.PrintText(text, this.m_CurrentPalette, transparentBg || generateShadow, enc, width);
 
             if (!generateShadow)
@@ -2328,16 +2358,12 @@ namespace WWFontEditor.UI
             settingsFrm.ShowDialog(this);
             Boolean refreshSymbols = this.m_LoadedFont != null && oldEditBpp > this.GetEditBpp(this.m_LoadedFont);
             if (refreshSymbols)
-            {
                 this.AdjustFontSymbolsBpp(this.m_LoadedFont);
-            }
             this.m_CustomColors = settingsFrm.CustomColors;
+            this.txtPreview.Font = this.m_Settings.SymbolPreviewFont;
             this.m_DefaultPalettes = this.LoadDefaultPalettes();
             this.RefreshPalettes(true, false);
-            if (refreshSymbols)
-            {
-                this.ReloadUIWithSelection(false);
-            }
+            this.ReloadUIWithSelection(false);
         }
 
         private void PreviewImageBox_Click(Object sender, EventArgs e)
@@ -2477,18 +2503,22 @@ namespace WWFontEditor.UI
 
         private void dgrvSymbolsList_CellMouseEnter(Object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgrvSender = sender as DataGridView;
+            this.ShowSymbolsListToolTip(sender as DataGridView, e.RowIndex, e.ColumnIndex);
+        }
+
+        private void ShowSymbolsListToolTip(DataGridView dgrvSender, Int32 rowIndex, Int32 columnIndex)
+        {
             if (dgrvSender == null || this.m_Loading)
                 return;
             this.toolTip1.SetToolTip(dgrvSender, null);
-            if (m_LoadedFont == null)
+            if (this.m_LoadedFont == null)
                 return;
-            if (e.ColumnIndex < 2 || e.RowIndex == -1)
+            if (columnIndex < 2 || rowIndex == -1)
                 return;
-            DataGridViewCell cell = dgrvSender[e.ColumnIndex, e.RowIndex];
+            DataGridViewCell cell = dgrvSender[columnIndex, rowIndex];
             DataGridViewRow row = cell.OwningRow;
             Int32 ch = (Int32) row.Cells[1].Value;
-            if (ch > 0x1F && !m_LoadedFont.IsUnicode)
+            if (ch > 0x1F && (!this.m_LoadedFont.IsUnicode || this.m_Settings.SubstituteUnicodeStart != null))
             {
                 String charStr = row.Cells[2].Value as String;
                 if (String.IsNullOrEmpty(charStr))
@@ -2498,19 +2528,16 @@ namespace WWFontEditor.UI
             UnicodeInfo info = UnicodeInfo.GetForId(ch);
             if (info == null)
                 return;
-            String desc = info.Name == "<control>" ? info.OldName : info.Name;
-            if (String.IsNullOrEmpty(desc))
-                return;
-            String toolTip = desc[0].ToString().ToUpperInvariant() + desc.Substring(1).ToLowerInvariant();
-            Rectangle cellRect = dgrvSender.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, false);
+            String toolTip = info.Name;
+            Rectangle cellRect = dgrvSender.GetCellDisplayRectangle(columnIndex, rowIndex, false);
             Int32 x = dgrvSender.Location.X + cellRect.X + cellRect.Width; // +8 to get past the cell
             Int32 y = dgrvSender.Location.Y + cellRect.Y + cellRect.Height + 30; // +30 to get past the cell. No clue why...
-            toolTip1.Show(toolTip, this, x, y, 30000);
+            this.toolTip1.Show(toolTip, this, x, y, 30000);
         }
         
         private void dgrvSymbolsList_CellMouseLeave(Object sender, DataGridViewCellEventArgs e)
         {
-            toolTip1.Hide(this);
+            this.toolTip1.Hide(this);
         }
 
         private void dgrvSymbolsList_CellMouseDown(Object sender, DataGridViewCellMouseEventArgs e)
@@ -2555,7 +2582,7 @@ namespace WWFontEditor.UI
             this.WipeColorPickHighlight();
         }
 
-        private void btnSetShadow_Click(object sender, EventArgs e)
+        private void btnSetShadow_Click(Object sender, EventArgs e)
         {
             FrmSetshadow shadowDialog = new FrmSetshadow();
             shadowDialog.ShadowColor = this.m_ShadowColor;

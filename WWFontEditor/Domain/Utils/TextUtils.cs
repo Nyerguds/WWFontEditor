@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -25,6 +26,15 @@ namespace Nyerguds.Util
                 // Both of these derive from ArgumentException.
                 return false;
             }
+        }
+
+        public static List<Encoding> GetAsciiCompatibleEncodings()
+        {
+            return Encoding.GetEncodings() // Get all known .Net encodings
+                .Select(e => e.GetEncoding()) // From EncodingInfo to Encoding
+                .Where(e => e.CodePage != 20127 // Exclude actual ASCII
+                    && e.IsSingleByte // Single byte encodings only
+                    && IsAsciiCompatible(e)).ToList(); // check if 0-127 range matches ASCII.
         }
 
     }

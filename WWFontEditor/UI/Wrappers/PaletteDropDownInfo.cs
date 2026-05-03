@@ -39,11 +39,19 @@ namespace Nyerguds.Util.UI.Wrappers
             this.PrefixIndex = prefixIndex;
             this.SuffixSource = suffixSource;
         }
-
-
+        
         public Boolean IsChanged()
         {
-            return !this.ColorBackup.SequenceEqual(this.Colors);
+            if (this.ColorBackup == null)
+                return false;
+            if (this.ColorBackup.Length != this.Colors.Length)
+                return true;
+            for (Int32 i = 0; i < this.Colors.Length; i++)
+            {
+                if (this.ColorBackup[i].ToArgb() != this.Colors[i].ToArgb())
+                    return true;
+            }
+            return false;
         }
 
         public void Revert()

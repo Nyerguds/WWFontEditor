@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
+using WWFontEditor.Domain;
 using WWFontEditor.UI;
 
 namespace WWFontEditor
@@ -15,10 +17,16 @@ namespace WWFontEditor
         public static void Main(String[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-
+            PreloadCharacterInfo();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FrmFontEditor(args));
+        }
+
+        private static void PreloadCharacterInfo()
+        {
+            // ReSharper disable once UnusedVariable
+            List<UnicodeInfo> allUnicodeInfo = UnicodeInfo.AllUnicodeInfo;
         }
 
         /// <summary>

@@ -67,10 +67,15 @@
             this.lblPalOneBit = new System.Windows.Forms.Label();
             this.lblGenerateDefaultPalettes = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.chkDisableCompression = new System.Windows.Forms.CheckBox();
+            this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
+            this.chkSubstUnicodeStart = new System.Windows.Forms.CheckBox();
+            this.chkShowDosSymbols = new System.Windows.Forms.CheckBox();
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
+            this.lblsymbolfont = new System.Windows.Forms.Label();
+            this.lblSymbolFontVal = new System.Windows.Forms.Label();
+            this.btnSelectFont = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
@@ -186,6 +191,9 @@
             0,
             0});
             this.numDefaultSelectedSymbol.Name = "numDefaultSelectedSymbol";
+            this.numDefaultSelectedSymbol.SelectedText = "";
+            this.numDefaultSelectedSymbol.SelectionLength = 0;
+            this.numDefaultSelectedSymbol.SelectionStart = 0;
             this.numDefaultSelectedSymbol.Size = new System.Drawing.Size(53, 20);
             this.numDefaultSelectedSymbol.TabIndex = 24;
             this.numDefaultSelectedSymbol.Value = new decimal(new int[] {
@@ -218,6 +226,9 @@
             0,
             0});
             this.numDefaultZoom.Name = "numDefaultZoom";
+            this.numDefaultZoom.SelectedText = "";
+            this.numDefaultZoom.SelectionLength = 0;
+            this.numDefaultZoom.SelectionStart = 0;
             this.numDefaultZoom.Size = new System.Drawing.Size(53, 20);
             this.numDefaultZoom.TabIndex = 22;
             this.numDefaultZoom.Value = new decimal(new int[] {
@@ -552,24 +563,50 @@
             // 
             // tabPage3
             // 
-            this.tabPage3.Controls.Add(this.chkDisableCompression);
+            this.tabPage3.Controls.Add(this.btnSelectFont);
+            this.tabPage3.Controls.Add(this.lblSymbolFontVal);
+            this.tabPage3.Controls.Add(this.lblsymbolfont);
+            this.tabPage3.Controls.Add(this.cmbEncodings);
+            this.tabPage3.Controls.Add(this.chkSubstUnicodeStart);
+            this.tabPage3.Controls.Add(this.chkShowDosSymbols);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage3.Size = new System.Drawing.Size(394, 289);
             this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Files";
+            this.tabPage3.Text = "Symbols";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
-            // chkDisableCompression
+            // cmbEncodings
             // 
-            this.chkDisableCompression.AutoSize = true;
-            this.chkDisableCompression.Location = new System.Drawing.Point(8, 10);
-            this.chkDisableCompression.Name = "chkDisableCompression";
-            this.chkDisableCompression.Size = new System.Drawing.Size(269, 17);
-            this.chkDisableCompression.TabIndex = 13;
-            this.chkDisableCompression.Text = "Disable optional compression methods when saving";
-            this.chkDisableCompression.UseVisualStyleBackColor = true;
+            this.cmbEncodings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.cmbEncodings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbEncodings.Enabled = false;
+            this.cmbEncodings.FormattingEnabled = true;
+            this.cmbEncodings.Location = new System.Drawing.Point(117, 75);
+            this.cmbEncodings.Name = "cmbEncodings";
+            this.cmbEncodings.Size = new System.Drawing.Size(269, 21);
+            this.cmbEncodings.TabIndex = 22;
+            // 
+            // chkSubstUnicodeStart
+            // 
+            this.chkSubstUnicodeStart.Location = new System.Drawing.Point(8, 33);
+            this.chkSubstUnicodeStart.Name = "chkSubstUnicodeStart";
+            this.chkSubstUnicodeStart.Size = new System.Drawing.Size(378, 36);
+            this.chkSubstUnicodeStart.TabIndex = 1;
+            this.chkSubstUnicodeStart.Text = "In unicode fonts, substitute the 80-FF character range with a different encoding:" +
+    "";
+            this.chkSubstUnicodeStart.UseVisualStyleBackColor = true;
+            this.chkSubstUnicodeStart.CheckedChanged += new System.EventHandler(this.chkSubstUnicodeStart_CheckedChanged);
+            // 
+            // chkShowDosSymbols
+            // 
+            this.chkShowDosSymbols.AutoSize = true;
+            this.chkShowDosSymbols.Location = new System.Drawing.Point(8, 10);
+            this.chkShowDosSymbols.Name = "chkShowDosSymbols";
+            this.chkShowDosSymbols.Size = new System.Drawing.Size(291, 17);
+            this.chkShowDosSymbols.TabIndex = 0;
+            this.chkShowDosSymbols.Text = "Show DOS symbols for the characters before the space.";
+            this.chkShowDosSymbols.UseVisualStyleBackColor = true;
             // 
             // btnReset
             // 
@@ -603,6 +640,34 @@
             this.btnOk.Text = "OK";
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
+            // 
+            // lblsymbolfont
+            // 
+            this.lblsymbolfont.Location = new System.Drawing.Point(8, 107);
+            this.lblsymbolfont.Name = "lblsymbolfont";
+            this.lblsymbolfont.Size = new System.Drawing.Size(100, 23);
+            this.lblsymbolfont.TabIndex = 23;
+            this.lblsymbolfont.Text = "Symbol display font:";
+            this.lblsymbolfont.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblsymbolfontVal
+            // 
+            this.lblSymbolFontVal.Location = new System.Drawing.Point(114, 107);
+            this.lblSymbolFontVal.Name = "lblSymbolFontVal";
+            this.lblSymbolFontVal.Size = new System.Drawing.Size(238, 23);
+            this.lblSymbolFontVal.TabIndex = 23;
+            this.lblSymbolFontVal.Text = "-";
+            this.lblSymbolFontVal.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // btnSelectFont
+            // 
+            this.btnSelectFont.Location = new System.Drawing.Point(358, 107);
+            this.btnSelectFont.Name = "btnSelectFont";
+            this.btnSelectFont.Size = new System.Drawing.Size(28, 23);
+            this.btnSelectFont.TabIndex = 24;
+            this.btnSelectFont.Text = "...";
+            this.btnSelectFont.UseVisualStyleBackColor = true;
+            this.btnSelectFont.Click += new System.EventHandler(this.btnSelectFont_Click);
             // 
             // FrmSettings
             // 
@@ -673,8 +738,13 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.CheckBox chkLimit8Bit;
-        private System.Windows.Forms.TabPage tabPage3;
-        private System.Windows.Forms.CheckBox chkDisableCompression;
         private System.Windows.Forms.CheckBox chkEnablePreviewWrap;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.CheckBox chkShowDosSymbols;
+        private System.Windows.Forms.CheckBox chkSubstUnicodeStart;
+        private Nyerguds.Util.UI.ComboBoxSmartWidth cmbEncodings;
+        private System.Windows.Forms.Label lblsymbolfont;
+        private System.Windows.Forms.Button btnSelectFont;
+        private System.Windows.Forms.Label lblSymbolFontVal;
     }
 }
