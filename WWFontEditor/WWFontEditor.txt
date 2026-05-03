@@ -1,5 +1,5 @@
 ﻿=========================
-Westwood Font Editor v1.3
+Westwood Font Editor v1.4
 ========================= Created by Nyerguds
 
 This editor can read and write paletted fonts of pretty much every Westwood
@@ -31,9 +31,10 @@ Features list
 * Character sizes can be adjusted (if the font format supports it).
 * New characters can be added (if the font format supports it).
 * Character data can be shifted up/down/left/right.
-* Clipboard: Characters can be copied, even to other WWFontEditor instances.
+* Clipboard: Copy data to other WWFontEditor windows, or even to image editors.
 * Has a text encoding dropdown to view character mappings for other encodings.
 * Contains a Dune 2000 encoding for the game's reordered special characters.
+* Can preview text as image, in the chosen text encoding.
 * Has a multitude of inbuilt palettes to show the font symbols.
 * Color palettes can be edited on-the-fly by double-clicking the colours.
 * Has support for adding and editing custom added palettes (see next section).
@@ -157,6 +158,14 @@ Special thanks to
 ---------------
 Version history
 ---------------
+
+v1.4:
+-Clipboard copy can now also be pasted as image in other applications.
+-The correct symbol will be opened even when the grid columns are reordered.
+-Added preview pane at the bottom.
+-Opening a file by double-clicking in the dialog can no longer paint a pixel.
+-The symbol image now refreshes correctly after a palette revert.
+-Symbols in the grid are no longer centered but drawn at the correct position.
 
 v1.3:
 -True clipboard implemented: symbols can now be copied across different

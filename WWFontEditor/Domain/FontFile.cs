@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using WWFontEditor.Domain.FontTypes;
+using System.Text;
+using System.Drawing.Drawing2D;
 
 namespace WWFontEditor.Domain
 {
@@ -256,6 +258,73 @@ namespace WWFontEditor.Domain
                 throw new IndexOutOfRangeException("Bad symbol index '" + index + "'.");
             FontFileSymbol symbol = this.GetSymbol(index);
             symbol.PaintPixel(x, y, value);
+        }
+
+        public Bitmap PrintText(String text, Color[] colors, Encoding enc, Int32 wrapAt)
+        {
+            Int32 fullWidth = 0;
+            Int32 fullHeight = this.FontHeight;
+            Int32 curWidth = 0;
+            List<FontFileSymbol> symbols = new List<FontFileSymbol>();
+            text = text.Trim().Trim('\r', '\n').Replace("\r\n", "\n");
+
+            foreach (Char c in text)
+            {
+                if (c == '\n')
+                {
+                    fullWidth = Math.Max(fullWidth, curWidth);
+                    symbols.Add(null);
+                    curWidth = 0;
+                    fullHeight += this.FontHeight;
+                    continue;
+                }
+
+                Byte[] val = enc.GetBytes(new Char[]{c});
+                if (val.Length != 1 || val[0] > this.Length)
+                    continue;
+                FontFileSymbol ffs = GetSymbol(val[0]);
+                symbols.Add(ffs);
+                if (wrapAt != -1 && curWidth + ffs.Width > wrapAt)
+                {
+                    fullWidth = Math.Max(fullWidth, curWidth);
+                    curWidth = 0;
+                    fullHeight += this.FontHeight;
+                }
+                curWidth += ffs.Width;
+            }
+            // the minimum of 1 is added to prevent empty text from crashing
+            fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
+            ColorPalette palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, true);
+            Bitmap fullBm = new Bitmap(fullWidth, fullHeight, PixelFormat.Format32bppPArgb);
+            using (Graphics g = Graphics.FromImage(fullBm))
+            {
+                g.CompositingMode = CompositingMode.SourceOver;
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(0xFF, colors[0])))
+                    g.FillRectangle(brush, 0, 0, fullWidth, fullHeight);
+                curWidth = 0;
+                Int32 curHeight = 0;
+                foreach (FontFileSymbol ffs in symbols)
+                {
+                    if (ffs == null)
+                    {
+                        curWidth = 0;
+                        curHeight += this.FontHeight;
+                        continue;
+                    }
+                    if (wrapAt != -1 && curWidth + ffs.Width > fullWidth)
+                    {
+                        curWidth = 0;
+                        curHeight += this.FontHeight;
+                    }
+                    if (ffs.Width != 0)
+                    {
+                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
+                        g.DrawImage(symbol, new Point(curWidth, curHeight));
+                        curWidth += ffs.Width;
+                    }
+                }                
+            }
+            return fullBm;
         }
 
         #endregion

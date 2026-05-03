@@ -108,6 +108,15 @@ namespace WWFontEditor.Domain
             return newSymbol;
         }
 
+        public Bitmap GetBitmapFullSize(ColorPalette palette, FontFile baseFont)
+        {
+            FontFileSymbol ffs = this.Clone();
+            ffs.ChangeHeight(baseFont.FontHeight);
+            for (Int32 i = 0; i < ffs.YOffset; i++)
+                ffs.ShiftImageData(ShiftDirection.Down, false);
+            return ffs.GetBitmap(palette);
+        }
+
         public Bitmap GetBitmap(ColorPalette palette)
         {
             PixelFormat pf = PixelFormat.Format8bppIndexed;

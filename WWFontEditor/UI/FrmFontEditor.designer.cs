@@ -73,6 +73,8 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cmbPalettes = new System.Windows.Forms.ComboBox();
             this.btnSavePalette = new System.Windows.Forms.Button();
+            this.btnResetPalette = new System.Windows.Forms.Button();
+            this.txtPreview = new System.Windows.Forms.TextBox();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numFontWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numSymbols = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -84,7 +86,7 @@
             this.pxbImage = new RedCell.UI.Controls.PixelBox();
             this.pxbEditGridBehind = new RedCell.UI.Controls.PixelBox();
             this.pxbFullSize = new RedCell.UI.Controls.PixelBox();
-            this.btnResetPalette = new System.Windows.Forms.Button();
+            this.pxbPreview = new RedCell.UI.Controls.PixelBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).BeginInit();
@@ -100,6 +102,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pxbImage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pxbEditGridBehind)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pxbFullSize)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).BeginInit();
             this.SuspendLayout();
             // 
             // lblZoom
@@ -589,6 +592,30 @@
             this.btnSavePalette.UseVisualStyleBackColor = true;
             this.btnSavePalette.Click += new System.EventHandler(this.BtnSavePalette_Click);
             // 
+            // btnResetPalette
+            // 
+            this.btnResetPalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnResetPalette.Enabled = false;
+            this.btnResetPalette.Location = new System.Drawing.Point(671, 411);
+            this.btnResetPalette.Name = "btnResetPalette";
+            this.btnResetPalette.Size = new System.Drawing.Size(49, 23);
+            this.btnResetPalette.TabIndex = 312;
+            this.btnResetPalette.Text = "Revert";
+            this.btnResetPalette.UseVisualStyleBackColor = true;
+            this.btnResetPalette.Click += new System.EventHandler(this.BtnResetPalette_Click);
+            // 
+            // txtPreview
+            // 
+            this.txtPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.txtPreview.Location = new System.Drawing.Point(12, 467);
+            this.txtPreview.Multiline = true;
+            this.txtPreview.Name = "txtPreview";
+            this.txtPreview.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.txtPreview.Size = new System.Drawing.Size(381, 83);
+            this.txtPreview.TabIndex = 313;
+            this.txtPreview.Text = "Hello, world!";
+            this.txtPreview.TextChanged += new System.EventHandler(this.txtPreview_TextChanged);
+            // 
             // numFontHeight
             // 
             this.numFontHeight.Enabled = false;
@@ -799,24 +826,26 @@
             this.pxbFullSize.Visible = false;
             this.pxbFullSize.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageBox_Click);
             // 
-            // btnResetPalette
+            // pxbPreview
             // 
-            this.btnResetPalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnResetPalette.Enabled = false;
-            this.btnResetPalette.Location = new System.Drawing.Point(671, 411);
-            this.btnResetPalette.Name = "btnResetPalette";
-            this.btnResetPalette.Size = new System.Drawing.Size(49, 23);
-            this.btnResetPalette.TabIndex = 312;
-            this.btnResetPalette.Text = "Revert";
-            this.btnResetPalette.UseVisualStyleBackColor = true;
-            this.btnResetPalette.Click += new System.EventHandler(this.BtnResetPalette_Click);
+            this.pxbPreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pxbPreview.BackColor = System.Drawing.Color.Silver;
+            this.pxbPreview.Location = new System.Drawing.Point(397, 467);
+            this.pxbPreview.Name = "pxbPreview";
+            this.pxbPreview.Padding = new System.Windows.Forms.Padding(1);
+            this.pxbPreview.Size = new System.Drawing.Size(381, 83);
+            this.pxbPreview.TabIndex = 315;
+            this.pxbPreview.TabStop = false;
             // 
             // FrmFontEditor
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 469);
+            this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.pxbPreview);
+            this.Controls.Add(this.txtPreview);
             this.Controls.Add(this.btnResetPalette);
             this.Controls.Add(this.btnSavePalette);
             this.Controls.Add(this.cmbPalettes);
@@ -844,12 +873,13 @@
             this.Controls.Add(this.menuStrip1);
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimumSize = new System.Drawing.Size(725, 457);
+            this.MinimumSize = new System.Drawing.Size(800, 600);
             this.Name = "FrmFontEditor";
             this.Text = "Westwood Font Editor v#.#.# - Created by Nyerguds";
             this.Shown += new System.EventHandler(this.FrmFontEditor_Shown);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Frm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Frm_DragEnter);
+            this.Resize += new System.EventHandler(this.FrmFontEditor_Resize);
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).EndInit();
@@ -867,6 +897,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pxbImage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pxbEditGridBehind)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pxbFullSize)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -930,6 +961,8 @@
         private System.Windows.Forms.Button btnSavePalette;
         private System.Windows.Forms.Button btnResetPalette;
         private System.Windows.Forms.ToolStripMenuItem editorSettingsToolStripMenuItem;
+        private System.Windows.Forms.TextBox txtPreview;
+        private RedCell.UI.Controls.PixelBox pxbPreview;
     }
 }
 
