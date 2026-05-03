@@ -1106,8 +1106,12 @@ namespace WWFontEditor
             Boolean isCtrlV = keyData == (Keys.Control | Keys.V);
             if (this.ActiveControl is TextBox && (isCtrlC || isCtrlV))
             {
+                TextBox tb = (TextBox)this.ActiveControl;
                 if (isCtrlC)
-                    Clipboard.SetText(((TextBox)this.ActiveControl).SelectedText);
+                {
+                    if (!String.IsNullOrEmpty(tb.SelectedText))
+                        Clipboard.SetText(((TextBox)this.ActiveControl).SelectedText);
+                }
                 else
                     ((TextBox)this.ActiveControl).SelectedText = Clipboard.GetText();
                 return true;

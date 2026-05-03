@@ -331,7 +331,7 @@ namespace WWFontEditor.Domain
                     continue;
                 }
                 Byte[] val = enc.GetBytes(new Char[]{c});
-                if (val.Length != 1 || val[0] > this.Length)
+                if (val.Length != 1 || val[0] >= this.Length)
                     continue;
                 FontFileSymbol ffs = GetSymbol(val[0]);
                 symbols.Add(ffs);
