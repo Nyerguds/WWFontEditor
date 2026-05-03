@@ -9,7 +9,7 @@ namespace WWFontEditor.Domain.FontTypes
     {
         public override String ShortTypeCode { get { return "WW V3 (Kyr)"; } }
         public override String LongTypeCode { get { return "Westwood Font Version 3.1 "; } }
-        public override String[] GamesList { get { return new String[] { "The Legend of Kyrandia" }; } }
+        public override String[] GamesListForType { get { return new String[] { "The Legend of Kyrandia" }; } }
 
         public override void LoadFont(Byte[] fileData)
         {

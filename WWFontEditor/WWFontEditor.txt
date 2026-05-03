@@ -1,9 +1,35 @@
-Westwood Font Editor v1.2
+﻿Westwood Font Editor v1.2
 ------------------------- Created by Nyerguds
 
 This editor can read and write fonts of Westwood games.
 
 Have fun with it!
+
+
+---------------------------------------
+
+
+Note on Dune 2000 support:
+
+Dune 2000 has a text encoding translation table called "FONT.BIN", meant to
+compress the used special characters into all available space. For example,
+if you need the character "ä", then, in Windows 1252 text encoding, that's
+byte 0xE4. If you look on address 0xE4 in FONT.BIN, you'll see the value
+there is 0x80. This means that character "ä" is at index 80 in the fonts.
+
+So, in short: ä = E4 ==> table index E4 ==> value 80 => font index 80
+
+Doing the reverse (going from font table index to character) is slightly
+harder, involving looking for values in the table, but you don't need to
+do that, since the Dune 2000 text files are in Windows-1252 encoding.
+
+If you want to add fonts with a different text encoding to the game,
+I advise you to get rid of this whole nonsense by simply replacing FONT.BIN
+with a 256-byte file containing a simple sequence of bytes from 00 to FF,
+so each character simply gets mapped onto itself.
+
+
+---------------------------------------
 
 
 Special thanks to:
@@ -60,6 +86,12 @@ IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 
 Version history:
 
+v1.2.2:
+-Implemented correct conversion of symbols pasted in from a different font type.
+-Added support for Dune 2000's "pixels between symbols" info; the symbols are
+ now padded with that amount of pixels, and width-optimized again on save.
+-Added support for Dune 2000's character order, with a "Dune 2000" encoding.
+
 v1.2.1:
 -Added experimental Dune 2000 support. Strange format, so I have no idea if the
  game manages to read the files saved with this.
@@ -75,14 +107,14 @@ v1.1:
 -Fixed bug that prevented disabling the grids.
 
 v1.0:
--Added list of editable characters, with hex ID, decimal id, character and image preview.
+-Added list of editable symbols, with hex ID, decimal id, character, and symbol preview.
 -Added text encoding dropdown, to change the comparison characters in the list.
--Amount of characters is editable.
+-Amount of symbols is editable.
 -Overall font width and height are editable.
 -Width, height and Y-offset are editable.
 -Added buttons to shift the image data up / left / right / down.
--Added Revert option for reloading a character to the original loaded state.
--Added Copy & Paste options for copying whole characters.
+-Added Revert option for reloading a symbol to the original loaded state.
+-Added Copy & Paste options for copying whole symbols.
 -Modified palette control to support both 16 and 256 colour for later TS/D2k support.
 -Added edit mode buttons for normal drawing and color picker.
 
@@ -99,7 +131,7 @@ v0.2:
 
 v0.1:
 -Basic viewing implemented, including Y-offset. No editing.
--Shows amount of characters, font width/height, character width / height / Y-offset
+-Shows amount of symbols, font width/height, symbol width / height / Y-offset
 -Can open Lands of Lore / Kegend of Kyrandia / Dune II / C&C1 / Red Alert font format.
 -Basic zoomable viewer with grid
 -Numeric up/down control for changing indices

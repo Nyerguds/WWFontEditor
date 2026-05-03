@@ -22,7 +22,7 @@ Warning: [Dune2000 Folder]\Data\BIN\Font.BIN - is symbol code(index) table(map)
 Nyerguds' interpretation:
 
 00 Byte FontLoadedFlag    // Always "01"? Grem's specs say "Must be $00", but there's no explanation, and in the fonts it's always 01.
-01 Byte SpaceSize         // Size of the "space" character, since it's not included I guess.
+01 Byte SpaceSize         // Size of the "space" symbol, since it's not included I guess.
 02 Byte FirstSymbol       // 21; start after space. Wonder if it supports adding earlier ones.
 03 Byte Interval          // Pixels between symbols - padding. Not related to font graphics. Still, could be made editable, or included, or something...
 04 Byte MaxHeight         // Indication of overall font height
@@ -31,12 +31,12 @@ Nyerguds' interpretation:
 07 Byte Unused07          // Unused (0x00)? specs said only 2 bytes though. But it aligns to 8 as far as I can see.
 08 Int32[255] dataOffsets // leftover mem dump? Seems dumb to put in a fnt file...
 
-408 start of characters array.
+408 start of symbols array.
 Read as repeating
 Int32 width
 Int32 height
 Byte[width*height]
 
-Characters start at the FirstSymbol, and WRAP AROUND TO ZERO WHEN REACHING 256!
-From what I can see, the fonts contain 255 characters; the only one missing is the space, which is replaced by the SpaceSize in the header.
-The editor gets around this oddity by adding the space as empty character with its width set to SpaceSize.
+Symbols start at the FirstSymbol, and WRAP AROUND TO ZERO WHEN REACHING 256!
+From what I can see, the fonts contain 255 symbols; the only one missing is the space, which is replaced by the SpaceSize in the header.
+The editor gets around this oddity by adding the space as empty symbol with its width set to SpaceSize.

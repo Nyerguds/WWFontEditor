@@ -8,21 +8,17 @@ FNT Header:
  04 Int16 Unknown04;           // [Unused?] Unknown entry (always 0x000e) (font version position?)
  06 Int16 FontDataListOffset;  // Absolute offset of the start of FontDataList (Normally 0x14)
  08 Int16 WidthsListOffset;    // Absolute offset of the start of WidthsList
- 0A Int16 FontDataOffset;      // [Unused?] Start of the actual font data? Should equals the first entry in FontDataList, but doesn't in TS.
+ 0A Int16 FontDataOffset;      // Start of the actual font data. Equals the first entry in FontDataList. Needed for TS.
  0C Int16 HeightsListOffset;   // Absolute offset of the start of HeightsList
  0E Int16 Unknown0E;           // [Unused?] Unknown entry (always 0x1011 or 0x1012; 0x0000 in TS) (font version?)
  10 Byte AlwaysZero;           // [Unused?] Align byte. Always 0x00
- 11 Byte LastCharIndex;        // Last (0-based) character index. Add 1 to get the amount of characters.
+ 11 Byte LastSymbolIndex;      // Last (0-based) symbol index. Add 1 to get the amount of symbols.
  12 Byte FontHeight;           // Overall maximum font height.
  13 Byte FontWidth;            // Overall maximum font width.
 
-Extended in TS?
-
-1A Int16 LastCharIndexTS; //?
-
-@06 Int16[LastChar+1] FontDataList;  // array with the positions of all font entries
-@08 Byte[LastChar+1] WidthsList;     //  array with the widths of all font entries
-@0C Byte[LastChar+1][2] HeightsList; // array with the vertical offset and char height of all font entries
+@06 Int16[LastSymbol+1] FontDataList;  // array with the positions of all font entries
+@08 Byte[LastSymbol+1] WidthsList;     //  array with the widths of all font entries
+@0C Byte[LastSymbol+1][2] HeightsList; // array with the vertical offset and symbol height of all font entries
 
 ---
 
@@ -36,5 +32,5 @@ than being the first pixel of the next line.
 
 ---
 
-FontDataList does not need a unique entry for each character. Identical characters, like the filler
-characters on indices before 0x20, generally all refer to the same data block, to preserve space.
+FontDataList does not need a unique entry for each symbol. Identical symbols, like the filler
+symbols on indices before 0x20, generally all refer to the same data block, to preserve space.

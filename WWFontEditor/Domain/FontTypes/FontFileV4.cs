@@ -7,14 +7,15 @@ namespace WWFontEditor.Domain.FontTypes
     /// </summary>
     public class FontFileV4 : FontFile
     {
-        public override Int32 CharactersMax { get { return 0x100; } }
-        public override Int32 FontWidthMax { get { return 0xFF; } }
-        public override Int32 FontHeightMax { get { return 0xFF; } }
-        public override Int32 YOffsetMax { get { return 0xFF; } }
+        public override Int32 SymbolsTypeMax { get { return 0x100; } }
+        public override Int32 FontWidthTypeMax { get { return 0xFF; } }
+        public override Int32 FontHeightTypeMax { get { return 0xFF; } }
+        public override Int32 YOffsetTypeMax { get { return 0xFF; } }
         public override Int32 BitsPerPixel { get { return 8; } }
         public override String ShortTypeCode { get { return "WW V4"; } }
         public override String LongTypeCode { get { return "Westwood Font Version 4"; } }
-        public override String[] GamesList { get { return new String[]
+        public override String LongTypeDescription { get { return "An 8 BPP font which allows separate symbols to specify their width, height and Y-offset."; } }
+        public override String[] GamesListForType { get { return new String[]
         {
             "Command & Conquer Tiberian Sun",
             "Command & Conquer Tiberian Sun Installer",

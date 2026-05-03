@@ -65,8 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domain\ArrayUtils.cs" />
+    <Compile Include="Domain\D2KEncoding.cs" />
     <Compile Include="Domain\FontFile.cs" />
-    <Compile Include="Domain\FontFileCharacter.cs" />
+    <Compile Include="Domain\FontFileSymbol.cs" />
     <Compile Include="Domain\FontTypes\FontFileD2K.cs" />
     <Compile Include="Domain\FontTypes\FontFileV1.cs" />
     <Compile Include="Domain\FontTypes\FontFileV4.cs" />
@@ -76,6 +77,12 @@
     <Compile Include="Domain\GeneralUtils.cs" />
     <Compile Include="Domain\ImageUtils.cs" />
     <Compile Include="Domain\TextUtils.cs" />
+    <Compile Include="UI\FrmConvertToLowerBpp.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmConvertToLowerBpp.Designer.cs">
+      <DependentUpon>FrmConvertToLowerBpp.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\FrmFontEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -111,6 +118,9 @@
     <Compile Include="UI\Tools\SelectablePanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <EmbeddedResource Include="UI\FrmConvertToLowerBpp.resx">
+      <DependentUpon>FrmConvertToLowerBpp.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\FrmFontEditor.resx">
       <DependentUpon>FrmFontEditor.cs</DependentUpon>
     </EmbeddedResource>
@@ -149,13 +159,23 @@
     <Content Include="Resources\icon_grid.png" />
     <Content Include="Resources\icon_paste.png" />
     <Content Include="Resources\icon_pencil.png" />
+    <Content Include="Resources\IniHandler.dll" />
     <Content Include="wwfont.ico" />
     <Content Include="WWFontEditor.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Nyerguds.Ini\IniHandler.csproj">
+      <Project>{925c0b51-e256-4a5c-8b01-f46aa90982d5}</Project>
+      <Name>IniHandler</Name>
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>copy /y "$(ProjectDir)..\Nyerguds.Ini\$(OutDir)IniHandler.dll" "$(ProjectDir)Resources"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

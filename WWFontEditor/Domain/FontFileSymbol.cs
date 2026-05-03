@@ -10,7 +10,7 @@ namespace WWFontEditor.Domain
     // Further info: http://stackoverflow.com/questions/9032673/clipboard-copying-objects-to-and-from
     [Serializable]
     [System.Diagnostics.DebuggerDisplay("{ToString()}")]
-    public class FontFileCharacter
+    public class FontFileSymbol
     {
         public Byte[] ByteData { get; set; }
         /// <summary>Only use this for initialisation! Use ChangeWidth for editing the image!</summary>
@@ -21,13 +21,13 @@ namespace WWFontEditor.Domain
         public Int32 BitsPerPixel { get; private set; }
 
 
-        public FontFileCharacter(Int32 bitsPerPixel)
+        public FontFileSymbol(Int32 bitsPerPixel)
         {
             this.ByteData = new Byte[0];
             this.BitsPerPixel = bitsPerPixel;
         }
 
-        public FontFileCharacter(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel)
+        public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel)
         {
             this.ByteData = byteData;
             this.Width = width;
@@ -36,9 +36,76 @@ namespace WWFontEditor.Domain
             this.BitsPerPixel = bitsPerPixel;
         }
 
-        public FontFileCharacter Clone()
+        public FontFileSymbol Clone()
         {
-            return new FontFileCharacter(this.ByteData.ToArray(), this.Width, this.Height, this.YOffset, this.BitsPerPixel);
+            return new FontFileSymbol(this.ByteData.ToArray(), this.Width, this.Height, this.YOffset, this.BitsPerPixel);
+        }
+
+        public FontFileSymbol CloneFor(FontFile targetVersion)
+        {
+            return CloneFor(targetVersion, null);
+        }
+
+        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue)
+        {
+            // PART ONE: COLOR CONVERSION
+            // If higher bitrate, convert overflow to default if given.
+
+            Int32 myBpp = this.BitsPerPixel;
+            Byte[] newByteData;
+            Int32 targetBpp = targetVersion.BitsPerPixel;
+            Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
+
+            if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
+            {
+                if (defaultValue == null)
+                    throw new InvalidOperationException(String.Format("Cannot insert a {0} bit per pixel image into a {1} bit per pixel font.", myBpp, targetBpp));
+                newByteData = this.ByteData.Select(x => x >= colValLimit ? defaultValue.Value : x).ToArray();
+            }
+            else
+                newByteData = this.ByteData.ToArray();
+
+            FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp);
+
+            // PART TWO: SIZE ADJUSTMENT
+
+            if (targetVersion.FontHeight == newSymbol.Height)
+                newSymbol.YOffset = 0;
+            else if (targetVersion.FontHeight < newSymbol.Height)
+            {
+                newSymbol.YOffset = 0;
+                newSymbol.ChangeHeight(targetVersion.FontHeight);
+            }
+            else if (targetVersion.FontHeight < newSymbol.Height + newSymbol.YOffset)
+            {
+                // target has enough space, but Y is too large.
+                newSymbol.YOffset = targetVersion.FontHeight - newSymbol.Height;
+            }
+            // If there is no suppport for Y, reduce Y to 0 and shift down symbol.
+            if (targetVersion.YOffsetTypeMax == 0 && newSymbol.YOffset > 0)
+            {
+                // Increase size of image
+                if (newSymbol.Height < targetVersion.FontHeight)
+                    newSymbol.ChangeHeight(Math.Min(targetVersion.FontHeight, newSymbol.Height + newSymbol.YOffset));
+                // Shift down to Y offset
+                for (int i = 0; i < newSymbol.YOffset; i++)
+                    newSymbol.ShiftImageData(ShiftDirection.Down, false);
+                // Remove Y offset; it's been replaced by actual offset
+                newSymbol.YOffset = 0;
+            }
+            // Reduce width if needed
+            if (targetVersion.FontWidth < newSymbol.Width)
+                newSymbol.ChangeWidth(targetVersion.FontWidth);
+            // IF all sizes in the font are fixed (V1, V2) expand symbol to full size.
+            // At this point, this should only increase the size.
+            if (!targetVersion.CustomSymbSizesForType)
+            {
+                if (targetVersion.FontWidth != newSymbol.Width)
+                    newSymbol.ChangeWidth(targetVersion.FontWidth);
+                if (targetVersion.FontHeight != newSymbol.Height)
+                    newSymbol.ChangeWidth(targetVersion.FontHeight);
+            }
+            return newSymbol;
         }
 
         public Bitmap GetBitmap(ColorPalette palette)

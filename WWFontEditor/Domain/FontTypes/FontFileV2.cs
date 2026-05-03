@@ -8,20 +8,22 @@ namespace WWFontEditor.Domain.FontTypes
     /// </summary>
     public class FontFileV2 : FontFile
     {
-        public override Int32 CharactersMin { get { return 0x80; } }
-        public override Int32 CharactersMax { get { return 0x80; } }
-        public override Int32 FontWidthMax { get { return 0x8; } }
-        public override Int32 FontHeightMax { get { return 0xFF; } }
-        public override Int32 YOffsetMax { get { return 0; } }
+        public override Int32 SymbolsTypeMin { get { return 0x80; } }
+        public override Int32 SymbolsTypeMax { get { return 0x80; } }
+        public override Int32 FontWidthTypeMax { get { return 0x8; } }
+        public override Int32 FontHeightTypeMax { get { return 0xFF; } }
+        public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override Boolean IndividualSizesAllowed { get { return false; } }
+        public override Boolean CustomSymbSizesForType { get { return false; } }
         public override String ShortTypeCode { get { return "WW V2"; } }
         public override String LongTypeCode { get { return "Westwood Font Version 2"; } }
-        public override String[] GamesList { get { return new String[]
+        public override String LongTypeDescription { get { return "A 1 BPP font with a maximum width of 8 pixels, with the file header specifying the global width and height."; } }
+        public override String[] GamesListForType { get { return new String[]
         {
             "BattleTech - The Crescent Hawk's Revenge",
             "Eye of the Beholder",
-            "Eye of the Beholder II: The Legend of Darkmoon"
+            "Eye of the Beholder II: The Legend of Darkmoon",
+            "Eye of the Beholder III Character Generator"
         }; } }
 
         public override void LoadFont(Byte[] fileData)
@@ -37,15 +39,15 @@ namespace WWFontEditor.Domain.FontTypes
             Int16[] fontDataOffsetsList = new Int16[0x80];
             for (Int32 i = 0; i < 0x80; i++)
                 fontDataOffsetsList[i] = ArrayUtils.GetLEShortFromByteArray(fileData, 2 + i * 2);
-            // the height of a character in pixel
+            // the height of a symbol in pixel
             this.m_FontHeight = fileData[0x102];
-            // the width of a character in pixel
+            // the width of a symbol in pixel
             this.m_FontWidth = fileData[0x103];
             for (Int32 i = 0; i < 0x80; i++)
             {
                 Int32 start = fontDataOffsetsList[i];
-                Byte[] curData8bit = this.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, BitsPerPixel, i, true);
-                FontFileCharacter fc = new FontFileCharacter(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, BitsPerPixel);
+                Byte[] curData8bit = this.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, i, true);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -55,7 +57,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[][] imageData = new Byte[0x80][];
             for (Int32 i = 0; i < 0x80; i++)
             {
-                FontFileCharacter fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileCharacter(this.BitsPerPixel);
+                FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this.BitsPerPixel);
                 imageData[i] = ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 fontDataOffset = 0x104;
@@ -69,12 +71,12 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(fontDataOffsetsList, 0, fullData, 0x02, fontDataOffsetsList.Length);
             fullData[0x102] = (Byte)m_FontHeight;                // Byte FontHeight
             fullData[0x103] = (Byte)m_FontWidth;                 // Byte FontWidth
-            foreach (Byte[] charImgData in imageData)
+            foreach (Byte[] symbolImgData in imageData)
             {
-                if (charImgData.Length == 0)
+                if (symbolImgData.Length == 0)
                     continue;
-                Array.Copy(charImgData, 0, fullData, fontDataOffset, charImgData.Length);
-                fontDataOffset += charImgData.Length;
+                Array.Copy(symbolImgData, 0, fullData, fontDataOffset, symbolImgData.Length);
+                fontDataOffset += symbolImgData.Length;
             }
             return fullData;
         }

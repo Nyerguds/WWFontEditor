@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.lblZoom = new System.Windows.Forms.Label();
             this.lblFontMax = new System.Windows.Forms.Label();
-            this.lblCharacters = new System.Windows.Forms.Label();
+            this.lblSymbols = new System.Windows.Forms.Label();
             this.lblType = new System.Windows.Forms.Label();
             this.lblValType = new System.Windows.Forms.Label();
             this.lblFontMaxX = new System.Windows.Forms.Label();
@@ -61,10 +61,10 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.revertFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFontAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.revertFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.characterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.symbolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.revertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -72,8 +72,8 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numFontWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
-            this.numCharacters = new Nyerguds.Util.UI.EnhNumericUpDown();
-            this.dgrvCharactersList = new WWFontEditor.UI.Tools.DataGridViewScrollSupport();
+            this.numSymbols = new Nyerguds.Util.UI.EnhNumericUpDown();
+            this.dgrvSymbolsList = new WWFontEditor.UI.Tools.DataGridViewScrollSupport();
             this.palColorSelector = new Nyerguds.Util.UI.PalettePanel();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.pnlImageScroll = new Nyerguds.Util.UI.SelectablePanel();
@@ -88,8 +88,8 @@
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numCharacters)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dgrvCharactersList)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSymbols)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgrvSymbolsList)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numZoom)).BeginInit();
             this.pnlImageScroll.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pxbEditGridFront)).BeginInit();
@@ -118,14 +118,14 @@
             this.lblFontMax.Text = "Max size:";
             this.lblFontMax.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblCharacters
+            // lblSymbols
             // 
-            this.lblCharacters.Location = new System.Drawing.Point(12, 51);
-            this.lblCharacters.Name = "lblCharacters";
-            this.lblCharacters.Size = new System.Drawing.Size(62, 20);
-            this.lblCharacters.TabIndex = 27;
-            this.lblCharacters.Text = "Characters:";
-            this.lblCharacters.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblSymbols.Location = new System.Drawing.Point(12, 51);
+            this.lblSymbols.Name = "lblSymbols";
+            this.lblSymbols.Size = new System.Drawing.Size(62, 20);
+            this.lblSymbols.TabIndex = 27;
+            this.lblSymbols.Text = "Symbols:";
+            this.lblSymbols.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblType
             // 
@@ -202,6 +202,12 @@
             this.lblPaintColor2.Size = new System.Drawing.Size(20, 20);
             this.lblPaintColor2.TabIndex = 122;
             // 
+            // toolTip1
+            // 
+            this.toolTip1.AutoPopDelay = 32000;
+            this.toolTip1.InitialDelay = 500;
+            this.toolTip1.ReshowDelay = 100;
+            // 
             // btnPaste
             // 
             this.btnPaste.Enabled = false;
@@ -211,7 +217,7 @@
             this.btnPaste.Name = "btnPaste";
             this.btnPaste.Size = new System.Drawing.Size(26, 26);
             this.btnPaste.TabIndex = 75;
-            this.toolTip1.SetToolTip(this.btnPaste, "Paste character from clipboard");
+            this.toolTip1.SetToolTip(this.btnPaste, "Paste symbol from clipboard");
             this.btnPaste.UseVisualStyleBackColor = true;
             this.btnPaste.Click += new System.EventHandler(this.btnPaste_Click);
             // 
@@ -224,7 +230,7 @@
             this.btnCopy.Name = "btnCopy";
             this.btnCopy.Size = new System.Drawing.Size(26, 26);
             this.btnCopy.TabIndex = 74;
-            this.toolTip1.SetToolTip(this.btnCopy, "Copy character to clipboard");
+            this.toolTip1.SetToolTip(this.btnCopy, "Copy symbol to clipboard");
             this.btnCopy.UseVisualStyleBackColor = true;
             this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
             // 
@@ -239,7 +245,7 @@
             this.btnShiftLeft.Text = "⇐";
             this.toolTip1.SetToolTip(this.btnShiftLeft, "Shift left");
             this.btnShiftLeft.UseVisualStyleBackColor = true;
-            this.btnShiftLeft.Click += new System.EventHandler(this.btnShiftLeft_Click);
+            this.btnShiftLeft.Click += new System.EventHandler(this.BtnShiftLeft_Click);
             // 
             // btnShiftDown
             // 
@@ -252,7 +258,7 @@
             this.btnShiftDown.Text = "⇓";
             this.toolTip1.SetToolTip(this.btnShiftDown, "Shift down");
             this.btnShiftDown.UseVisualStyleBackColor = true;
-            this.btnShiftDown.Click += new System.EventHandler(this.btnShiftDown_Click);
+            this.btnShiftDown.Click += new System.EventHandler(this.BtnShiftDown_Click);
             // 
             // btnShiftRight
             // 
@@ -265,7 +271,7 @@
             this.btnShiftRight.Text = "⇒";
             this.toolTip1.SetToolTip(this.btnShiftRight, "Shift right");
             this.btnShiftRight.UseVisualStyleBackColor = true;
-            this.btnShiftRight.Click += new System.EventHandler(this.btnShiftRight_Click);
+            this.btnShiftRight.Click += new System.EventHandler(this.BtnShiftRight_Click);
             // 
             // btnShiftUp
             // 
@@ -278,7 +284,7 @@
             this.btnShiftUp.Text = "⇑";
             this.toolTip1.SetToolTip(this.btnShiftUp, "Shift up");
             this.btnShiftUp.UseVisualStyleBackColor = true;
-            this.btnShiftUp.Click += new System.EventHandler(this.btnShiftUp_Click);
+            this.btnShiftUp.Click += new System.EventHandler(this.BtnShiftUp_Click);
             // 
             // chkPicker
             // 
@@ -355,7 +361,7 @@
             this.cmbEncodings.Name = "cmbEncodings";
             this.cmbEncodings.Size = new System.Drawing.Size(196, 21);
             this.cmbEncodings.TabIndex = 21;
-            this.cmbEncodings.SelectedIndexChanged += new System.EventHandler(this.cmbEncodings_SelectedIndexChanged);
+            this.cmbEncodings.SelectedIndexChanged += new System.EventHandler(this.CmbEncodings_SelectedIndexChanged);
             // 
             // groupBox1
             // 
@@ -378,7 +384,7 @@
             this.groupBox1.Size = new System.Drawing.Size(134, 204);
             this.groupBox1.TabIndex = 60;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Character info";
+            this.groupBox1.Text = "Symbol info";
             // 
             // numWidth
             // 
@@ -435,13 +441,13 @@
             this.numYOffset.Name = "numYOffset";
             this.numYOffset.Size = new System.Drawing.Size(66, 20);
             this.numYOffset.TabIndex = 63;
-            this.numYOffset.ValueChanged += new System.EventHandler(this.numYOffset_ValueChanged);
+            this.numYOffset.ValueChanged += new System.EventHandler(this.NumYOffset_ValueChanged);
             // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.characterToolStripMenuItem,
+            this.symbolToolStripMenuItem,
             this.infoToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -454,8 +460,8 @@
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openFontToolStripMenuItem,
             this.saveFontToolStripMenuItem,
-            this.revertFontToolStripMenuItem,
             this.saveFontAsToolStripMenuItem,
+            this.revertFontToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -477,14 +483,6 @@
             this.saveFontToolStripMenuItem.Text = "Save Font";
             this.saveFontToolStripMenuItem.Click += new System.EventHandler(this.SaveFontToolStripMenuItem_Click);
             // 
-            // revertFontToolStripMenuItem
-            // 
-            this.revertFontToolStripMenuItem.Name = "revertFontToolStripMenuItem";
-            this.revertFontToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
-            this.revertFontToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
-            this.revertFontToolStripMenuItem.Text = "Revert Font";
-            this.revertFontToolStripMenuItem.Click += new System.EventHandler(this.revertFontToolStripMenuItem_Click);
-            // 
             // saveFontAsToolStripMenuItem
             // 
             this.saveFontAsToolStripMenuItem.Name = "saveFontAsToolStripMenuItem";
@@ -494,23 +492,31 @@
             this.saveFontAsToolStripMenuItem.Text = "Save Font As...";
             this.saveFontAsToolStripMenuItem.Click += new System.EventHandler(this.SaveFontAsToolStripMenuItem_Click);
             // 
+            // revertFontToolStripMenuItem
+            // 
+            this.revertFontToolStripMenuItem.Name = "revertFontToolStripMenuItem";
+            this.revertFontToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
+            this.revertFontToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
+            this.revertFontToolStripMenuItem.Text = "Revert Font";
+            this.revertFontToolStripMenuItem.Click += new System.EventHandler(this.revertFontToolStripMenuItem_Click);
+            // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
             this.exitToolStripMenuItem.Text = "Exit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
-            // characterToolStripMenuItem
+            // symbolToolStripMenuItem
             // 
-            this.characterToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.symbolToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.copyToolStripMenuItem,
             this.pasteToolStripMenuItem,
             this.revertToolStripMenuItem});
-            this.characterToolStripMenuItem.Name = "characterToolStripMenuItem";
-            this.characterToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
-            this.characterToolStripMenuItem.Text = "Character";
+            this.symbolToolStripMenuItem.Name = "symbolToolStripMenuItem";
+            this.symbolToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
+            this.symbolToolStripMenuItem.Text = "Symbol";
             // 
             // copyToolStripMenuItem
             // 
@@ -594,50 +600,50 @@
             this.numFontWidth.TabIndex = 308;
             this.numFontWidth.ValueChanged += new System.EventHandler(this.numFontWidth_ValueChanged);
             // 
-            // numCharacters
+            // numSymbols
             // 
-            this.numCharacters.Enabled = false;
-            this.numCharacters.EnteredValue = new decimal(new int[] {
+            this.numSymbols.Enabled = false;
+            this.numSymbols.EnteredValue = new decimal(new int[] {
             0,
             0,
             0,
             0});
-            this.numCharacters.Location = new System.Drawing.Point(80, 53);
-            this.numCharacters.Maximum = new decimal(new int[] {
+            this.numSymbols.Location = new System.Drawing.Point(80, 53);
+            this.numSymbols.Maximum = new decimal(new int[] {
             255,
             0,
             0,
             0});
-            this.numCharacters.MouseWheelIncrement = 0;
-            this.numCharacters.Name = "numCharacters";
-            this.numCharacters.Size = new System.Drawing.Size(128, 20);
-            this.numCharacters.TabIndex = 307;
-            this.numCharacters.ValueChanged += new System.EventHandler(this.numCharacters_ValueChanged);
+            this.numSymbols.MouseWheelIncrement = 0;
+            this.numSymbols.Name = "numSymbols";
+            this.numSymbols.Size = new System.Drawing.Size(128, 20);
+            this.numSymbols.TabIndex = 307;
+            this.numSymbols.ValueChanged += new System.EventHandler(this.numSymbols_ValueChanged);
             // 
-            // dgrvCharactersList
+            // dgrvSymbolsList
             // 
-            this.dgrvCharactersList.AllowUserToAddRows = false;
-            this.dgrvCharactersList.AllowUserToDeleteRows = false;
-            this.dgrvCharactersList.AllowUserToResizeColumns = false;
-            this.dgrvCharactersList.AllowUserToResizeRows = false;
-            this.dgrvCharactersList.AlwaysShowVerticalScrollbar = true;
-            this.dgrvCharactersList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.dgrvSymbolsList.AllowUserToAddRows = false;
+            this.dgrvSymbolsList.AllowUserToDeleteRows = false;
+            this.dgrvSymbolsList.AllowUserToResizeColumns = false;
+            this.dgrvSymbolsList.AllowUserToResizeRows = false;
+            this.dgrvSymbolsList.AlwaysShowVerticalScrollbar = true;
+            this.dgrvSymbolsList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.dgrvCharactersList.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dgrvCharactersList.BackgroundColor = System.Drawing.Color.White;
-            this.dgrvCharactersList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dgrvCharactersList.Location = new System.Drawing.Point(13, 103);
-            this.dgrvCharactersList.MultiSelect = false;
-            this.dgrvCharactersList.Name = "dgrvCharactersList";
-            this.dgrvCharactersList.ReadOnly = true;
-            this.dgrvCharactersList.RowHeadersVisible = false;
-            this.dgrvCharactersList.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.dgrvCharactersList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgrvCharactersList.Size = new System.Drawing.Size(195, 279);
-            this.dgrvCharactersList.StandardTab = true;
-            this.dgrvCharactersList.TabIndex = 20;
-            this.dgrvCharactersList.VerticalScrollbarOffset = 0;
-            this.dgrvCharactersList.SelectionChanged += new System.EventHandler(this.dgrvCharactersList_SelectionChanged);
+            this.dgrvSymbolsList.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgrvSymbolsList.BackgroundColor = System.Drawing.Color.White;
+            this.dgrvSymbolsList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.dgrvSymbolsList.Location = new System.Drawing.Point(13, 103);
+            this.dgrvSymbolsList.MultiSelect = false;
+            this.dgrvSymbolsList.Name = "dgrvSymbolsList";
+            this.dgrvSymbolsList.ReadOnly = true;
+            this.dgrvSymbolsList.RowHeadersVisible = false;
+            this.dgrvSymbolsList.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.dgrvSymbolsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgrvSymbolsList.Size = new System.Drawing.Size(195, 279);
+            this.dgrvSymbolsList.StandardTab = true;
+            this.dgrvSymbolsList.TabIndex = 20;
+            this.dgrvSymbolsList.VerticalScrollbarOffset = 0;
+            this.dgrvSymbolsList.SelectionChanged += new System.EventHandler(this.DgrvSymbolsList_SelectionChanged);
             // 
             // palColorSelector
             // 
@@ -657,7 +663,7 @@
             this.palColorSelector.Size = new System.Drawing.Size(132, 132);
             this.palColorSelector.TabIndex = 80;
             this.palColorSelector.TransItemBackColor = System.Drawing.Color.Empty;
-            this.palColorSelector.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palColorSelector_ColorLabelMouseDoubleClick);
+            this.palColorSelector.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.PalColorSelector_ColorLabelMouseDoubleClick);
             this.palColorSelector.ColorLabelMouseClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palColorSelector_ColorLabelMouseClick);
             // 
             // numZoom
@@ -772,17 +778,17 @@
             this.Controls.Add(this.chkPaint);
             this.Controls.Add(this.numFontHeight);
             this.Controls.Add(this.numFontWidth);
-            this.Controls.Add(this.numCharacters);
+            this.Controls.Add(this.numSymbols);
             this.Controls.Add(this.chkOutline);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.chkGrid);
             this.Controls.Add(this.cmbEncodings);
-            this.Controls.Add(this.dgrvCharactersList);
+            this.Controls.Add(this.dgrvSymbolsList);
             this.Controls.Add(this.lblPaintColor1);
             this.Controls.Add(this.lblPaintColor2);
             this.Controls.Add(this.palColorSelector);
             this.Controls.Add(this.lblType);
-            this.Controls.Add(this.lblCharacters);
+            this.Controls.Add(this.lblSymbols);
             this.Controls.Add(this.lblFontMax);
             this.Controls.Add(this.lblFontMaxX);
             this.Controls.Add(this.lblZoom);
@@ -806,8 +812,8 @@
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numCharacters)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dgrvCharactersList)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSymbols)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgrvSymbolsList)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numZoom)).EndInit();
             this.pnlImageScroll.ResumeLayout(false);
             this.pnlImageScroll.PerformLayout();
@@ -826,7 +832,7 @@
         private Nyerguds.Util.UI.EnhNumericUpDown numZoom;
         private System.Windows.Forms.Label lblZoom;
         private System.Windows.Forms.Label lblFontMax;
-        private System.Windows.Forms.Label lblCharacters;
+        private System.Windows.Forms.Label lblSymbols;
         private System.Windows.Forms.Label lblType;
         private System.Windows.Forms.Label lblValType;
         private System.Windows.Forms.Label lblFontMaxX;
@@ -845,7 +851,7 @@
         private Nyerguds.Util.UI.ImageButtonCheckBox chkOutline;
         private System.Windows.Forms.Button btnRevert;
         private Nyerguds.Util.UI.EnhNumericUpDown numYOffset;
-        private WWFontEditor.UI.Tools.DataGridViewScrollSupport dgrvCharactersList;
+        private WWFontEditor.UI.Tools.DataGridViewScrollSupport dgrvSymbolsList;
         private System.Windows.Forms.ComboBox cmbEncodings;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.MenuStrip menuStrip1;
@@ -862,11 +868,11 @@
         private Nyerguds.Util.UI.EnhNumericUpDown numHeight;
         private System.Windows.Forms.Button btnCopy;
         private System.Windows.Forms.Button btnPaste;
-        private System.Windows.Forms.ToolStripMenuItem characterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem symbolToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem revertToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
-        private Nyerguds.Util.UI.EnhNumericUpDown numCharacters;
+        private Nyerguds.Util.UI.EnhNumericUpDown numSymbols;
         private Nyerguds.Util.UI.EnhNumericUpDown numFontWidth;
         private Nyerguds.Util.UI.EnhNumericUpDown numFontHeight;
         private System.Windows.Forms.ToolStripMenuItem revertFontToolStripMenuItem;
