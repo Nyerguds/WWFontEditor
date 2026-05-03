@@ -219,6 +219,9 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 Version history
 ---------------
 
+v1.8.1: (2017/07/10 11:00)
+-Specifically identifies and rejects compressed Dynamix font type.
+
 v1.8: (2017/07/10 10:32)
 -Added support for basic Dynamix/Sierra 1-bit font.
 

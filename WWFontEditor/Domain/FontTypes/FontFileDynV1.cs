@@ -34,17 +34,25 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fileSize = ArrayUtils.GetBEIntFromByteArray(fileData, 0x04);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
-            this.m_FontWidth = fileData[0x08];
-            this.m_FontHeight = fileData[0x09];
-            Byte startSymbol = fileData[0x0A];
-            Byte nrOfSymbols = fileData[0x0B];
+            Int32 dataOffset = 0x08;
+            if (fileData[dataOffset] == 0xFF)
+            {
+                throw new NotSupportedException("The editor does not support compressed Dynamix fonts!");
+                // If supported later, keep boolean, and shift data offset for reading the remaining header:
+                //dataOffset++;
+            }
+            this.m_FontWidth = fileData[dataOffset];
+
+            this.m_FontHeight = fileData[dataOffset+1];
+            Byte startSymbol = fileData[dataOffset+2];
+            Byte nrOfSymbols = fileData[dataOffset+3];
             Int32 symbolSize = ((m_FontWidth + 7) / 8) * m_FontHeight;
 
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
             for (Int32 i = 0; i < startSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[m_FontHeight * m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel));
-            
-            Int32 start = 0x0C;
+
+            Int32 start = dataOffset+4;
             for (Int32 i = 0; i < nrOfSymbols; i++)
             {
                 Byte[] curData8bit;
