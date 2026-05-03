@@ -65,9 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domain\ArrayUtils.cs" />
-    <Compile Include="Domain\ColorTools\ColorHSL.cs" />
-    <Compile Include="Domain\ColorTools\ColorUtils.cs" />
-    <Compile Include="Domain\ColorTools\SixBitColor.cs" />
+    <Compile Include="Domain\ImageUtils\ColorHSL.cs" />
+    <Compile Include="Domain\ImageUtils\ColorUtils.cs" />
+    <Compile Include="Domain\ImageUtils\SixBitColor.cs" />
     <Compile Include="Domain\D2KEncoding.cs" />
     <Compile Include="Domain\FileTypeBroadcaster.cs" />
     <Compile Include="Domain\FontFile.cs" />
@@ -78,8 +78,9 @@
     <Compile Include="Domain\FontTypes\FontFileV2.cs" />
     <Compile Include="Domain\FontTypes\FontFileV3.cs" />
     <Compile Include="Domain\GeneralUtils.cs" />
-    <Compile Include="Domain\ImageUtils.cs" />
+    <Compile Include="Domain\ImageUtils\ImageUtils.cs" />
     <Compile Include="Domain\FontEditSettings.cs" />
+    <Compile Include="Domain\ImageUtils\PaletteUtils.cs" />
     <Compile Include="Domain\TextUtils.cs" />
     <Compile Include="UI\FrmManagePalettes.cs">
       <SubType>Form</SubType>

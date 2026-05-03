@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using ColorManipulation;
+using Nyerguds.ImageManipulation;
 using Nyerguds.Ini;
 using Nyerguds.Util.UI;
 using WWFontEditor.Domain;

@@ -1,4 +1,4 @@
-﻿using ColorManipulation;
+﻿using Nyerguds.ImageManipulation;
 using System;
 using System.Drawing;
 using System.IO;
@@ -243,7 +243,7 @@ namespace WWFontEditor
                     this.m_LoadedFont = null;
                 }
                 this.m_LoadedFontBackup = this.m_LoadedFont != null ? this.m_LoadedFont.Clone() : null;
-                if (this.m_LoadedFont.BitsPerPixel > GetEditBpp(m_LoadedFont))
+                if (m_LoadedFont != null && this.m_LoadedFont.BitsPerPixel > GetEditBpp(m_LoadedFont))
                     AdjustFontSymbolsBpp(this.m_LoadedFont);
                 Boolean loadOk = ReloadUi();
                 if (!loadOk)
@@ -272,13 +272,14 @@ namespace WWFontEditor
             this.btnShiftRight.Enabled = loadOk;
             this.btnShiftDown.Enabled = loadOk;
             this.btnCopy.Enabled = loadOk;
-            this.copySymbolToolStripMenuItem.Enabled = loadOk;
+            this.tsmiCopySymbol.Enabled = loadOk;
             this.btnPaste.Enabled = loadOk;
             this.btnRemap.Enabled = loadOk;
-            this.pasteSymbolToolStripMenuItem.Enabled = loadOk;
-            this.saveFontToolStripMenuItem.Enabled = loadOk;
-            this.saveFontAsToolStripMenuItem.Enabled = loadOk;
-            this.revertFontToolStripMenuItem.Enabled = loadOk;
+            this.tsmiPasteSymbol.Enabled = loadOk;
+            this.tsmiPasteSymbolTrans.Enabled = loadOk;
+            this.tsmiSaveFont.Enabled = loadOk;
+            this.tsmiSaveFontAs.Enabled = loadOk;
+            this.tsmiRevertFont.Enabled = loadOk;
             this.pxbFullSize.Visible = loadOk;
             if (loadOk)
             {
@@ -383,7 +384,7 @@ namespace WWFontEditor
 
         public static Color[] GetDummyPalette()
         {
-            return ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries;
+            return PaletteUtils.GenerateRainbowPalette(4, true, true, false);
         }
 
         public List<PaletteDropDownInfo> LoadDefaultPalettes()
@@ -400,21 +401,21 @@ namespace WWFontEditor
             // 4-bit and 8-bit
             if (this.m_Settings.Generate4BitRainbow)
                 //palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteRainbow, null, -1));
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteUtils.GenerateRainbowPalette(4, true, true, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, ImageUtils.GenerateDefFourBitPalette(true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, PaletteUtils.GenerateDefWindowsPalette(4, true, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, PaletteUtils.GenerateGrayPalette(4, true, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, true).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, PaletteUtils.GenerateGrayPalette(4, true, true), null, -1, false, false));
             if (this.m_Settings.Generate8BitRainbow)
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, ImageUtils.GenerateDoubleRainbow(true, true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, PaletteUtils.GenerateDoubleRainbow(true, true, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, ImageUtils.GenerateRainbowPalette(8, true, false, true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, PaletteUtils.GenerateDefWindowsPalette(8, true, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, false).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, PaletteUtils.GenerateGrayPalette(8, true, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, true).Entries, null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, PaletteUtils.GenerateGrayPalette(8, true, true), null, -1, false, false));
             return palettes;
         }
 
@@ -450,7 +451,7 @@ namespace WWFontEditor
                 }
                 // add as param later
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
-                Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
+                Color[] palette = m_CurrentPalette.ToArray();
                 palette[0] = Color.FromArgb(0xFF, palette[0]);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = 0;
@@ -514,7 +515,7 @@ namespace WWFontEditor
                 this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
                 this.m_FileName = fileName;
                 this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
-                this.revertSymbolToolStripMenuItem.Enabled = false;
+                this.tsmiRevertSymbol.Enabled = false;
                 ReloadUIWithSelection();
             }
             catch (Exception e)
@@ -859,7 +860,7 @@ namespace WWFontEditor
         private Boolean AdjustRevertButton()
         {
             Boolean enable = CheckCanRevert();
-            this.revertSymbolToolStripMenuItem.Enabled = enable;
+            this.tsmiRevertSymbol.Enabled = enable;
             return enable;
         }
 
@@ -948,8 +949,7 @@ namespace WWFontEditor
             {
                 Color paletteColor = Color.FromArgb(colindex == 0 ? 0x00 : 0xFF, cdl.Color);
                 m_CurrentPalette[colindex] = paletteColor;
-
-                ((PalettePanel)sender).Palette[colindex] = paletteColor;
+                palpanel.Palette[colindex] = paletteColor;
                 palpanel.Invalidate();
                 if (colindex == m_CurrentPaintColor1)
                     lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColor1]);
@@ -962,7 +962,7 @@ namespace WWFontEditor
             }
         }
 
-        private void OpenFontToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiOpenFont_Click(object sender, EventArgs e)
         {
             if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
                 return;
@@ -973,7 +973,7 @@ namespace WWFontEditor
             LoadFontFile(filename, selectedItem);
         }
 
-        private void SaveFontToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiSaveFont_Click(object sender, EventArgs e)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -984,7 +984,7 @@ namespace WWFontEditor
         }
 
 
-        private void SaveFontAsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiSaveFontAs_Click(object sender, EventArgs e)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1004,7 +1004,7 @@ namespace WWFontEditor
             SaveFontFile(filename);
         }
 
-        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiExit_Click(object sender, EventArgs e)
         {
             // Add changes check?
             Application.Exit();
@@ -1259,7 +1259,7 @@ namespace WWFontEditor
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private void BtnCopy_Click(object sender, EventArgs e)
+        private void tsmiCopySymbol_Click(object sender, EventArgs e)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1269,15 +1269,25 @@ namespace WWFontEditor
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
-            palette[0] = Color.FromArgb(0xFF, palette[0]);
+            //Color[] palette = PaletteUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
+            //palette[0] = Color.FromArgb(0xFF, palette[0]);
             data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex].Cells[2].Value);
-            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(palette, m_LoadedFont));
+            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont));
             data.SetData(ffs.Clone());
             Clipboard.SetDataObject(data);
         }
 
-        private void BtnPaste_Click(object sender, EventArgs e)
+        private void tsmiPasteSymbol_Click(object sender, EventArgs e)
+        {
+            Paste(false);
+        }
+
+        private void tsmiPasteSymbolTrans_Click(object sender, EventArgs e)
+        {
+            Paste(true);
+        }
+
+        private void Paste(Boolean pasteCombined)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1311,7 +1321,7 @@ namespace WWFontEditor
                 return;
             Boolean canrevert = this.AdjustRevertButton();
             // if there are unsaved changes, or the image is new and not empty, ask specifically
-            if (!CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.Width > 0 && fc.Height > 0))
+            if (!pasteCombined && !CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.Width > 0 && fc.Height > 0))
             {
                 DialogResult dr = MessageBox.Show("This will completely overwrite the current symbol.\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
@@ -1319,6 +1329,12 @@ namespace WWFontEditor
             }
             try
             {
+                if (pasteCombined)
+                {
+                    Color[] pal = this.m_CurrentPalette.ToArray();
+                    pal[0] = Color.FromArgb(0, pal[0]);
+                    clipboard = FontFileSymbol.Combine(fc, clipboard, this.m_LoadedFont, pal);
+                }
                 fc = clipboard.CloneFor(this.m_LoadedFont, GetEditBpp(m_LoadedFont));
             }
             catch (InvalidOperationException)
@@ -1393,7 +1409,7 @@ namespace WWFontEditor
             this.ReloadImageInfo(true);
         }
 
-        private void RevertFontToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiRevertFont_Click(object sender, EventArgs e)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1403,7 +1419,7 @@ namespace WWFontEditor
             ReloadUIWithSelection();
         }
 
-        private void ManagePalettesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiManagePalettes_Click(object sender, EventArgs e)
         {
             FrmManagePalettes palSave = new FrmManagePalettes(4);
             palSave.StartPosition = FormStartPosition.CenterParent;
@@ -1441,7 +1457,7 @@ namespace WWFontEditor
             }
         }
 
-        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiAbout_Click(object sender, EventArgs e)
         {
             MessageBox.Show(this, GetTitle(true) + "\n\n" + ABOUTTEXT, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -1610,7 +1626,7 @@ namespace WWFontEditor
             return m_LoadedFont.PrintText(txtPreview.Text, this.m_CurrentPalette, transparentBg, enc, width);
         }
 
-        private void EditorSettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TsmiEditorSettings_Click(object sender, EventArgs e)
         {
             Int32 oldEditBpp = GetEditBpp(this.m_LoadedFont);
             FrmSettings settingsFrm = new FrmSettings(this.m_CustomColors, this.m_Settings);
@@ -1777,5 +1793,4 @@ namespace WWFontEditor
         }
         
     }
-
 }

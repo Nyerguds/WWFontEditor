@@ -1,4 +1,4 @@
-﻿using ColorManipulation;
+﻿using Nyerguds.ImageManipulation;
 using Nyerguds.Util;
 using System;
 using System.Collections.Generic;
@@ -281,14 +281,14 @@ namespace WWFontEditor.Domain
         {
             if (index < 0 || index >= this.Length)
                 return null;
-            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero, Color.Black);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero, Color.Black);
             return this.m_ImageDataList[index].GetBitmap(palette);
         }
 
         public Bitmap[] GetAllBitmaps(Color[] colors, Boolean addTransparentZero)
         {
             Bitmap[] allPics = new Bitmap[this.Length];
-            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero);
             for (Int32 i = 0; i < allPics.Length; i++)
                 allPics[i] = this.m_ImageDataList[i].GetBitmap(palette);
             return allPics;
@@ -339,7 +339,7 @@ namespace WWFontEditor.Domain
             }
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
-            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, true);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, true);
             Bitmap fullBm = new Bitmap(fullWidth, fullHeight, PixelFormat.Format32bppPArgb);
             using (Graphics g = Graphics.FromImage(fullBm))
             {
@@ -457,7 +457,15 @@ namespace WWFontEditor.Domain
                 Int32 start = fontDataOffsetsList[i];
                 Byte width = widthsList[i];
                 Byte height = heightsList[i];
-                Byte[] data8Bit = this.ConvertTo8Bit(fileData, width, height, start, bitsLength, i, false);
+                Byte[] data8Bit;
+                try
+                {
+                    data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength, false);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
+                }
                 FontFileSymbol fc = new FontFileSymbol(data8Bit, width, height, yOffsetsList[i], bitsLength);
                 this.m_ImageDataList.Add(fc);
             }
@@ -489,7 +497,7 @@ namespace WWFontEditor.Domain
                 Byte imgHeight = (Byte)fc.Height;
                 // Small optimization; no need to go converting the TS stuff; it doesn't change.
                 if (bitsLength < 8)
-                    imageData[i] = ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength, false);
+                    imageData[i] = ImageUtils.ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength, false);
                 else
                     imageData[i] = imgData8bit.ToArray();
                 widthsList[i] = imgWidth;
@@ -599,75 +607,6 @@ namespace WWFontEditor.Domain
                 }
             }
             return refsList;
-        }
-
-        protected Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 bitsLength, Int32 index, Boolean bigEndian)
-        {
-            // Full array
-            Byte[] data8bit = new Byte[width * height];
-            // Amount of runs that end up on the same pixel
-            Int32 parts = 8 / bitsLength;
-            // Amount of bytes to read per width
-            Int32 stride = bitsLength * width;
-            stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
-            // Bit mask for reducing read and shifted data to actual bits length
-            Int32 bitmask = (1 << bitsLength) - 1;
-            Int32 size = stride * height;
-            // File check, and getting actual data.
-            if (start + size > fileData.Length)
-                throw new Exception(String.Format("Data for font entry #{0} exceeds file bounds!", index));
-            Byte[] curData = new Byte[size];
-            Array.Copy(fileData, start, curData, 0, size);
-            // Actual conversion porcess.
-            for (Int32 y = 0; y < height; y++)
-            {
-                for (Int32 x = 0; x < width; x++)
-                {
-                    // This will hit the same byte multiple times
-                    Int32 indexXbit = y * stride + x / parts;
-                    // This will always get a new index
-                    Int32 index8bit = y * width + x;
-                    // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = (x % parts) * bitsLength;
-                    // Reversed for big-endian
-                    if (bigEndian)
-                        shift = 8 - shift - bitsLength;
-                    // Get data and store it.
-                    data8bit[index8bit] = (Byte)((curData[indexXbit] >> shift) & bitmask);
-                }
-            }
-            return data8bit;
-        }
-
-        protected Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian)
-        {
-            Int32 parts = 8 / bitsLength;
-            // Amount of bytes to write per width
-            Int32 stride = bitsLength * width;
-            stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
-            // Bit mask for reducing original data to actual bits maximum.
-            // Should not be needed if data is correct, but eh.
-            Int32 bitmask = (1 << bitsLength) - 1;
-            Byte[] dataXbit = new Byte[stride * height];
-            // Actual conversion porcess.
-            for (Int32 y = 0; y < height; y++)
-            {
-                for (Int32 x = 0; x < width; x++)
-                {
-                    // This will hit the same byte multiple times
-                    Int32 indexXbit = y * stride + x / parts;
-                    // This will always get a new index
-                    Int32 index8bit = y * width + x;
-                    // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = (x % parts) * bitsLength;
-                    // Reversed for big-endian
-                    if (bigEndian)
-                        shift = 8 - shift - bitsLength;
-                    // Get data, reduce to bit rate, shift it and store it.
-                    dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
-                }
-            }
-            return dataXbit;
         }
         #endregion
 

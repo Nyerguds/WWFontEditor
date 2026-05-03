@@ -17,7 +17,7 @@ Table of Contents
 =================
 > Features list
 > Shortcuts
-> Adding palettes
+> Managing palettes
 > Full list of supported types / games
 > Note on Dune 2000 support
 > Special thanks to
@@ -60,6 +60,9 @@ The following shortcuts can be used in the editor:
 [Ctrl] + V : Paste symbol
  If the data was copied from Font Editor it will simply use the chosen palette.
  If it was an image, it will match its colours to the current palette.
+[Ctrl] + [Shift] + V : Paste symbol with transparency.
+ Can be used to copy partial symbols. Note that the pasted content cannot be
+ moved around; it will be pasted from the top left corner.
 
 [Ctrl] : Holding down [Ctrl] enables the Colour Picker.
 
@@ -75,37 +78,35 @@ The following shortcuts can be used in the editor:
  Hold the [Shift] key to apply this operation to all symbols.
 
 
----------------
-Adding palettes
----------------
+-----------------
+Managing palettes
+-----------------
 
 The editor has a bunch of automatically-generated colour palettes that allow
 quick visualisation of the fonts. However, if you would wish to add custom
 palettes this is entirely possible too. The two types of palettes that can be
-added are 16-colour palettes and 32-colour palettes.
+added are 16-colour palettes and 256-colour palettes. For both of these, the
+editor uses the classic 256-colour palette format used by all C&C games.
 
-For both of these, the editor uses the classic 256-colour palette format used
-by all Westwood C&C games.
+Palettes can be managed and added in two ways; manually, or through the editor.
+In reality, no fonts actually use 256-colour palettes, so they will probably
+not be very useful, and you'll generally always use the 16-colour palette
+manager built into the program. It can be accessed in the Edit menu, or when
+pressing the Save button on the palette exitor controls.
 
-To add a 256-colour palette to the editor, simply copy the palette file into
-the editor folder and restart the application.
+This manager can also be opened for 256-colour palettes, but only through the
+palette save button, since those generally don't need to be managed; you can
+just dump them into the game folder and restart the editor, and that's it.
 
-To add a 16-colour palette, the process is slightly more complex; the editor
-uses a C&C 256-colour palette for that too, but divides it up into 16 entries.
-To add such a palette, add the file itself, then create a .ini file with the
-same name and a [Palette] header inside it. The editor will read the entries
-below that header from 0 to 15 and add them to the editor. Palettes used as
-16-colour palettes will not show up in the 256-colour palette listing.
+For 16-colour palettes, the process is slightly more complex; the editor uses
+a C&C 256-colour palette for that too, but divides it up into 16 entries. These
+entries are named, and the names are saved in a .ini file with the same name
+and the palette file. The ini has a [Palette] header, and entries from 0 to 15
+below that to indicate which entries are named and thus used. Palettes with
+such an ini file will not show up in the 256-colour palette listing.
 
-See the included 16col.ini / 16col.pal for an example. To use more entries of
-16col.pal, simply edit the ini file and add names on the empty entries you
-want to use.
-
-
-Note that while all palettes in the editor can be edited by double-clicking
-the colours on the palette, only externally loaded palettes can be saved. The
-generated palettes can be modified to customize viewing of your fonts, but they
-can't be saved. To edit and save fonts, add a new palette as described above.
+With the addition of the palettes manager in v1.7, edited colour palettes can
+now be saved as new entries even if they are based on generated palettes.
 
 
 ------------------------------------
@@ -161,7 +162,6 @@ Dune 2000 has a text encoding translation table called "FONT.BIN", apparently
 meant to line up the used special characters in the font without leaving gaps.
 (Though, strangely, this isn't used to optimize the font in any way.)
 
-
 For example, if you need the character "ä", that's byte 0xE4 in the text
 encoding used by the game (Windows-1252; standard US / Western European).
 If you look on address 0xE4 in FONT.BIN, you'll see the value there is 0x80.
@@ -187,7 +187,7 @@ Special thanks to
 -tomsons26, Omniblade and CCHyper for their research assistance.
 -tomsons26 for the creation of the program icon, for digging through ancient
  Westwood games, and for his tireless nagging.
--Moon Flower for the help with the design of the palette manager.
+-Moon Flower for the help with the design of the palettes manager.
 
 
 --------------------
@@ -212,6 +212,10 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+
+v1.7.1: (2017/05/23 18:40)
+-Added new "Paste on symbol" option (Ctrl+Shift+V) that pastes with
+ transparency. This can be used to easily copy diacritics.
 
 v1.7: (2017/04/21 17:02)
 -Edited 16-colour palettes can now be saved using a new palette manager.

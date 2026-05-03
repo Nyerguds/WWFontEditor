@@ -1,6 +1,7 @@
 ﻿using Nyerguds.Util;
 using System;
 using System.Linq;
+using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -47,7 +48,15 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x80; i++)
             {
                 Int32 start = fontDataOffsetsList[i];
-                Byte[] curData8bit = this.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, i, true);
+                Byte[] curData8bit;
+                try
+                {
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, true);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
+                }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
                 this.m_ImageDataList.Add(fc);
             }
@@ -59,7 +68,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x80; i++)
             {
                 FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this.BitsPerPixel);
-                imageData[i] = this.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 fontDataOffset = 0x104;
             Int32 dataOffset = fontDataOffset;

@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
-using ColorManipulation;
+using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain
 {
@@ -356,6 +356,25 @@ namespace WWFontEditor.Domain
                 this.ShiftImageData(ShiftDirection.Up, false);
             this.ChangeHeight(this.Height - addedY - cutHeightBottom);
             this.YOffset += addedY;
+        }
+
+        internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Color[] transparencyGuide)
+        {
+            Int32 trueFcHeight = firstLayer.Height + firstLayer.YOffset;
+            Int32 trueClHeight = secondLayer.Height+ secondLayer.YOffset;
+            Int32 newWidth = Math.Max(secondLayer.Width, firstLayer.Width);
+            Int32 newHeight = Math.Max(trueClHeight, trueFcHeight);
+            Byte[] newSymbolData = new Byte[newWidth * newHeight];
+            Color[] pal = transparencyGuide.ToArray();
+            pal[0] = Color.FromArgb(0, pal[0]);
+            newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, firstLayer.ByteData, firstLayer.Width, firstLayer.Height, firstLayer.Width,
+                new Rectangle(0, firstLayer.YOffset, firstLayer.Width, firstLayer.Height), null);
+            newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, secondLayer.ByteData, secondLayer.Width, secondLayer.Height, secondLayer.Width,
+                new Rectangle(0, secondLayer.YOffset, secondLayer.Width, secondLayer.Height), pal);
+            secondLayer = new FontFileSymbol(newSymbolData, newWidth, newHeight, 0, firstLayer.BitsPerPixel);
+            if (fontFile.YOffsetTypeMax != 0)
+                secondLayer.OptimizeYHeight();
+            return secondLayer.CloneFor(fontFile, fontFile.BitsPerPixel);
         }
     }
 

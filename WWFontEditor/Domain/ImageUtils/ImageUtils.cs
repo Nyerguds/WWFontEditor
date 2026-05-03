@@ -6,18 +6,14 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Linq;
 
-namespace ColorManipulation
+namespace Nyerguds.ImageManipulation
 {
     public static class ImageUtils
     {
-
-
         public static void SaveImage(Bitmap image, String filename)
         {
             String ext = Path.GetExtension(filename);
             ImageFormat saveFormat = ImageFormat.Png;
-
-
             if (".bmp".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
                 saveFormat = ImageFormat.Bmp;
             else if (".gif".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
@@ -52,15 +48,18 @@ namespace ColorManipulation
         
         /// <summary>
         /// Loads an image without locking the underlying file.
-        /// Code taken from http://stackoverflow.com/a/3661892/
         /// </summary>
         /// <param name="path">Path of the image to load</param>
         /// <returns>The image</returns>
         public static Bitmap LoadImageSafe(String path)
         {
-            using (Bitmap sourceImage = (Bitmap)Image.FromFile(path))
+            Byte[] fileData = File.ReadAllBytes(path);
+            using (MemoryStream ms = new MemoryStream(fileData))
             {
-                return CloneImage(sourceImage);
+                Bitmap bm = new Bitmap(ms);
+                bm = new Bitmap(bm);
+                ms.Close();
+                return bm;
             }
         }
 
@@ -91,137 +90,6 @@ namespace ColorManipulation
             return targetImage;
         }
 
-        public static PixelFormat GetPalettedFormat(Int32 bitsPerPixel)
-        {
-            switch (bitsPerPixel)
-            {
-                case 1:
-                    return PixelFormat.Format1bppIndexed;
-                case 4:
-                    return PixelFormat.Format4bppIndexed;
-                case 8:
-                    return PixelFormat.Format8bppIndexed;
-            }
-            throw new NotSupportedException("No indexed PixelFormat available for " + bitsPerPixel + " bpp.");
-        }
-
-        public static Color[] MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero)
-        {
-            PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
-            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
-        }
-
-        public static Color[] MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero, Color? defaultColor)
-        {
-            PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
-            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, defaultColor);
-        }
-
-        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero)
-        {
-            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
-        }
-
-        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero, Color? defaultColor)
-        {
-            Int32 pfs = Image.GetPixelFormatSize(pixelFormat);
-            Color[] pal = new Color[pfs > 8 ? 0 : 1 << pfs];
-            for (Int32 i = 0; i < pal.Length; i++)
-            {
-                if (sourcePalette != null && i < sourcePalette.Length)
-                    pal[i] = sourcePalette[i];
-                else if (defaultColor.HasValue)
-                    pal[i] = defaultColor.Value;
-            }
-            // make color 0 transparent
-            if (addTransparentZero)
-                pal[0] = Color.FromArgb(0, pal[0]);
-            return pal;
-        }
-
-        public static ColorPalette GenerateGrayPalette(PixelFormat pixelFormat, Boolean addTransparentZero, Boolean reverseGenerated)
-        {
-            ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
-            Int32 palSize = 1 << Image.GetPixelFormatSize(pixelFormat);
-            // generate greyscale palette.
-            Int32 steps = 255 / (palSize - 1);
-            for (Int32 i = 0; i < pal.Entries.Length; i++)
-            {
-                Double curval = reverseGenerated ? pal.Entries.Length - 1 - i : i;
-                Byte grayval = (Byte)Math.Min(255, Math.Round(curval * steps, MidpointRounding.AwayFromZero));
-                pal.Entries[i] = Color.FromArgb(255, grayval, grayval, grayval);
-            }
-            // make color 0 transparent
-            if (addTransparentZero)
-                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
-            return pal;
-        }
-
-        public static ColorPalette GenerateDefFourBitPalette(Boolean addTransparentZero, Boolean reverseGenerated)
-        {
-            ColorPalette pal = new Bitmap(10, 10, PixelFormat.Format4bppIndexed).Palette;
-            if (reverseGenerated)
-            {
-                Color[] entries = pal.Entries.Reverse().ToArray();
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                    pal.Entries[i] = entries[i];
-            }
-            // remove transparency
-            for (Int32 i = 0; i < pal.Entries.Length; i++)
-                pal.Entries[i] = Color.FromArgb(0xFF, pal.Entries[i]);
-            // make color 0 transparent
-            if (addTransparentZero)
-                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
-            return pal;
-        }
-
-        public static ColorPalette GenerateDoubleRainbow(Boolean blackOnZero, Boolean addTransparentZero, Boolean reverseGenerated)
-        {
-            Color[] col = GenerateRainbowPalette(4, false, true, addTransparentZero, false).Entries;
-            ColorPalette pal = GenerateRainbowPalette(8, true, blackOnZero, addTransparentZero, false);
-            Array.Copy(col,0, pal.Entries, 0, col.Length);
-            if (reverseGenerated)
-            {
-                Color[] entries = pal.Entries.Reverse().ToArray();
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                    pal.Entries[i] = entries[i];
-            }
-            return pal;
-        }
-
-        public static ColorPalette GenerateRainbowPalette(Int32 bpp, Boolean keepWin16Pal, Boolean blackOnZero, Boolean addTransparentZero, Boolean reverseGenerated)
-        {
-            ColorPalette pal = new Bitmap(10, 10, GetPalettedFormat(bpp)).Palette;
-            Int32 colors = 1 << bpp;
-            if (keepWin16Pal)
-                colors -= 16;
-            if (blackOnZero && !keepWin16Pal)
-            {
-                colors--;
-                pal.Entries[0] = Color.Black;
-            }
-            Double step = 1.0 / colors * ColorHSL.SCALE;
-            Double satValue = ColorHSL.SCALE;
-            Double lumValue = 0.5 * ColorHSL.SCALE;
-            for (Int32 i = 0; i < colors; i++)
-            {
-                Double curStep = step * i;
-                pal.Entries[keepWin16Pal ? 16 + i : blackOnZero ? 1 + i : i] = new ColorHSL(curStep, satValue, lumValue);
-            }
-            if (reverseGenerated)
-            {
-                Color[] entries = pal.Entries.Reverse().ToArray();
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                    pal.Entries[i] = entries[i];
-            }
-            // remove transparency
-            for (Int32 i = 0; i < pal.Entries.Length; i++)
-                pal.Entries[i] = Color.FromArgb(0xFF, pal.Entries[i]);
-            // make color 0 transparent
-            if (addTransparentZero)
-                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
-            return pal;
-        }
 
         /// <summary>
         /// Creates a bitmap based on data, width, height, stride and pixel format.
@@ -480,6 +348,13 @@ namespace ColorManipulation
 
         public static void DrawRect8Bit(Bitmap source, Int32 startX, Int32 startY, Int32 endX, Int32 endY, Byte colorIndex, Boolean fill)
         {
+            if (source.PixelFormat != PixelFormat.Format8bppIndexed)
+                return;
+            EditRawImageBytes(source, (arr, stride) => DrawRect8Bit(arr, source.Width, source.Height, stride, startX, startY, endX, endY, colorIndex, fill));
+        }
+
+        public static void DrawRect8Bit(Byte[] dataArray, Int32 width, Int32 height, Int32 stride, Int32 startX, Int32 startY, Int32 endX, Int32 endY, Byte colorIndex, Boolean fill)
+        {
             // Switch incorrect start and end positions
             if (startX > endX)
             {
@@ -494,21 +369,16 @@ namespace ColorManipulation
                 endY = tmp;
             }
             // Check if bounds are completely outside image
-            if ((startX < 0 && endX < 0) || (startX >= source.Width && endX >= source.Width)
-                || (startY < 0 && endY < 0) || (startY >= source.Height && endX >= source.Height))
+            if ((startX < 0 && endX < 0) || (startX >= width && endX >= width)
+                || (startY < 0 && endY < 0) || (startY >= height && endX >= height))
                 return;
             // Restrict bounds to image.
-            Int32 maxw = source.Width - 1;
-            Int32 maxh = source.Height - 1;
+            Int32 maxw = width - 1;
+            Int32 maxh = height - 1;
             startX = Math.Min(maxw, Math.Max(0, startX));
             endX = Math.Min(maxw, Math.Max(0, endX));
             startY = Math.Min(maxh, Math.Max(0, startY));
             endY = Math.Min(maxh, Math.Max(0, endY));
-            EditRawImageBytes(source, (arr, stride) => FillRect8BitFunc(startX, startY, endX, endY, colorIndex, arr, stride, fill));
-        }
-
-        private static void FillRect8BitFunc(Int32 startX, Int32 startY, Int32 endX, Int32 endY, Byte colorIndex, Byte[] dataArray, Int32 stride, Boolean fill)
-        {
             for (Int32 y = startY; y <= endY; y++)
             {
                 if (fill)
@@ -530,6 +400,190 @@ namespace ColorManipulation
             }
         }
 
+        public static Int32 GetMinStride(Int32 width, Int32 bitsLength)
+        {
+            // Amount of bytes to read per width
+            Int32 stride = bitsLength * width;
+            stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
+            return stride;
+        }
+
+        public static Byte[] CopyFrom8bpp(Byte[] fileData, Int32 width, Int32 height, ref Int32 stride, Rectangle copyArea)
+        {
+            Byte[] copiedPicture = new Byte[copyArea.Width * copyArea.Height];
+            Int32 maxY = Math.Min(height - copyArea.Y, copyArea.Height);
+            Int32 maxX = Math.Min(width - copyArea.X, copyArea.Width);
+
+            for (Int32 y = 0; y < maxY; y++)
+            {
+                for (Int32 x = 0; x < maxX; x++)
+                {
+                    // This will hit the same byte multiple times
+                    Int32 indexSource = (copyArea.Y + y) * stride + copyArea.X + x;
+                    // This will always get a new index
+                    Int32 indexDest = y * copyArea.Width + x;
+                    copiedPicture[indexDest] = fileData[indexSource];
+                }
+            }
+            stride = copyArea.Width;
+            return copiedPicture;
+        }
+
+        public static Byte[] PasteOn8bpp(Byte[] fileData1, Int32 width1, Int32 height1, Int32 stride1, Byte[] fileData2, Int32 width2, Int32 height2, Int32 stride2, Rectangle targetPos, Color[] transparencyGuide)
+        {
+            if (targetPos.Width != width2 || targetPos.Height != height2)
+                fileData2 = CopyFrom8bpp(fileData2, width2, height2, ref stride2, new Rectangle(0, 0, targetPos.Width, targetPos.Height));
+
+            Byte[] finalFileData = new Byte[fileData1.Length];
+            Array.Copy(fileData1, finalFileData, fileData1.Length);
+
+            Boolean[] isTransparent = new Boolean[256];
+            if (transparencyGuide != null)
+            {
+                Int32 len = Math.Min(isTransparent.Length, transparencyGuide.Length);
+                for (Int32 i = 0; i < len; i++)
+                    isTransparent[i] = transparencyGuide[i].A < 128;
+            }
+            Int32 maxY = Math.Min(height1 - targetPos.Y, targetPos.Height);
+            Int32 maxX = Math.Min(width1 - targetPos.X, targetPos.Width);
+            for (Int32 y = 0; y < maxY; y++)
+            {
+                for (Int32 x = 0; x < maxX; x++)
+                {
+                    // This will hit the same byte multiple times
+                    Int32 indexDest = (targetPos.Y + y) * stride1 + targetPos.X + x;
+                    // This will always get a new index
+                    Int32 indexSource = y * targetPos.Width + x;
+                    Byte data = fileData2[indexSource];
+                    if (!isTransparent[data])
+                        finalFileData[indexDest] = data;
+                }
+            }
+            return finalFileData;
+        }
+
+        /// <summary>
+        /// Converts given raw image data for a paletted image to 8-bit, so we have a simple one-byte-per-pixel format to work with.
+        /// Stride is assumed to be the minimum needed to contain the data. Output stride will be the same as the width.
+        /// </summary>
+        /// <param name="fileData">The file data.</param>
+        /// <param name="width">Width of the image.</param>
+        /// <param name="height">Height of the image.</param>
+        /// <param name="start">Start offset of the image data in the fileData parameter.</param>
+        /// <param name="bitsLength">Amount of bits used by one pixel.</param>
+        /// <param name="bigEndian">True if the bits in the original image data are stored as big-endian.</param>
+        /// <returns>The image data in a 1-byte-per-pixel format, with a stride exactly the same as the width.</returns>
+        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 bitsLength, Boolean bigEndian)
+        {
+            Int32 stride = GetMinStride(width, bitsLength);
+            return ConvertTo8Bit(fileData, width, height, start, bitsLength, bigEndian, ref stride);
+        }
+
+        /// <summary>
+        /// Converts given raw image data for a paletted image to 8-bit, so we have a simple one-byte-per-pixel format to work with.
+        /// </summary>
+        /// <param name="fileData">The file data.</param>
+        /// <param name="width">Width of the image.</param>
+        /// <param name="height">Height of the image.</param>
+        /// <param name="start">Start offset of the image data in the fileData parameter.</param>
+        /// <param name="bitsLength">Amount of bits used by one pixel.</param>
+        /// <param name="bigEndian">True if the bits in the original image data are stored as big-endian.</param>
+        /// <param name="stride">Stride used in the original image data. Will be adjusted to the new stride value.</param>
+        /// <returns>The image data in a 1-byte-per-pixel format, with a stride exactly the same as the width.</returns>
+        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 bitsLength, Boolean bigEndian, ref Int32 stride)
+        {
+            if (bitsLength != 1 && bitsLength != 2 && bitsLength != 4 && bitsLength != 8)
+                throw new ArgumentOutOfRangeException("Cannot handle image data with " + bitsLength + "bits per pixel.");
+            // Full array
+            Byte[] data8bit = new Byte[width * height];
+            // Amount of runs that end up on the same pixel
+            Int32 parts = 8 / bitsLength;
+            // Amount of bytes to read per width
+            Int32 newStride = width;
+            // Bit mask for reducing read and shifted data to actual bits length
+            Int32 bitmask = (1 << bitsLength) - 1;
+            Int32 size = stride * height;
+            // File check, and getting actual data.
+            if (start + size > fileData.Length)
+                throw new IndexOutOfRangeException("Data exceeds array bounds!");
+            // Actual conversion porcess.
+            for (Int32 y = 0; y < height; y++)
+            {
+                for (Int32 x = 0; x < width; x++)
+                {
+                    // This will hit the same byte multiple times
+                    Int32 indexXbit = start + y * stride + x / parts;
+                    // This will always get a new index
+                    Int32 index8bit = y * newStride + x;
+                    // Amount of bits to shift the data to get to the current pixel data
+                    Int32 shift = (x % parts) * bitsLength;
+                    // Reversed for big-endian
+                    if (bigEndian)
+                        shift = 8 - shift - bitsLength;
+                    // Get data and store it.
+                    data8bit[index8bit] = (Byte)((fileData[indexXbit] >> shift) & bitmask);
+                }
+            }
+            stride = newStride;
+            return data8bit;
+        }
+
+        /// <summary>
+        /// Converts given raw image data for a paletted 8-bit image to lower amount of bits per pixel.
+        /// Stride is assumed to be the same as the width. Output stride is the minimum needed to contain the data.
+        /// </summary>
+        /// <param name="data8bit">The eight bit per pixel image data</param>
+        /// <param name="width">The width of the image</param>
+        /// <param name="height">The height of the image</param>
+        /// <param name="bitsLength">The new amount of bits per pixel</param>
+        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
+        /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian)
+        {
+            Int32 stride = width;
+            return ConvertFrom8Bit(data8bit, width, height, bitsLength, bigEndian, ref stride);
+        }
+
+        /// <summary>
+        /// Converts given raw image data for a paletted 8-bit image to lower amount of bits per pixel.
+        /// </summary>
+        /// <param name="data8bit">The eight bit per pixel image data</param>
+        /// <param name="width">The width of the image</param>
+        /// <param name="height">The height of the image</param>
+        /// <param name="bitsLength">The new amount of bits per pixel</param>
+        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
+        /// <param name="stride">Stride used in the original image data. Will be adjusted to the new stride value.</param>
+        /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian, ref Int32 stride)
+        {
+            Int32 parts = 8 / bitsLength;
+            // Amount of bytes to write per width
+            Int32 newStride = GetMinStride(width, bitsLength);
+            // Bit mask for reducing original data to actual bits maximum.
+            // Should not be needed if data is correct, but eh.
+            Int32 bitmask = (1 << bitsLength) - 1;
+            Byte[] dataXbit = new Byte[newStride * height];
+            // Actual conversion porcess.
+            for (Int32 y = 0; y < height; y++)
+            {
+                for (Int32 x = 0; x < width; x++)
+                {
+                    // This will hit the same byte multiple times
+                    Int32 indexXbit = y * newStride + x / parts;
+                    // This will always get a new index
+                    Int32 index8bit = y * stride + x;
+                    // Amount of bits to shift the data to get to the current pixel data
+                    Int32 shift = (x % parts) * bitsLength;
+                    // Reversed for big-endian
+                    if (bigEndian)
+                        shift = 8 - shift - bitsLength;
+                    // Get data, reduce to bit rate, shift it and store it.
+                    dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
+                }
+            }
+            stride = newStride;
+            return dataXbit;
+        }
 
     }
 }

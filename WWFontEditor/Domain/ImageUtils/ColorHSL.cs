@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 
-namespace ColorManipulation
+namespace Nyerguds.ImageManipulation
 {
     /// <summary>
     /// From http://richnewman.wordpress.com/about/code-listings-and-diagrams/hslcolor-class/

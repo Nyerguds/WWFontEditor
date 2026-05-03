@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using ColorManipulation;
+using Nyerguds.ImageManipulation;
 using Nyerguds.Ini;
 
 namespace WWFontEditor.UI.Wrappers
