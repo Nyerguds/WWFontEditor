@@ -19,7 +19,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 8; } }
         public override String ShortTypeName { get { return "IG D2K"; } }
         public override String ShortTypeDescription { get { return "IG Font (Dune 2000)"; } }
-        public override String LongTypeDescription { get { return "An 8 BPP font with a fixed set of 256 characters, which allows separate symbols to specify their width and height. It has no Y offset, but instead optimizes the space to the right of all characters."; } }
+        public override String LongTypeDescription { get { return "An 8-bpp font with a fixed set of 256 characters, which allows separate symbols to specify their width and height. It has no Y offset, but instead optimizes the space to the right of all characters."; } }
         public override String[] GamesListForType { get { return new String[] { "Dune 2000" }; } }
 
         public override void LoadFont(Byte[] fileData)
@@ -27,30 +27,39 @@ namespace WWFontEditor.Domain.FontTypes
             // Technically header + first symbol header, but whatev :p
             if (fileData.Length < 0x410)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            Byte fontLoadedFlag = fileData[00];
-            Byte spaceSize = fileData[01];
+            Byte index00 = fileData[00]; // "FontLoadedFlag" according to Siberian GRemlin. No idea why he called it that.
+            Byte spaceWidth = fileData[01];
             Byte firstSymbol = fileData[02];
-            Byte interval = fileData[03];
+            Byte padding = fileData[03];
             Byte maxHeight = fileData[04];
             Byte empty05 = fileData[05];
             Byte empty06 = fileData[06];
             Byte empty07 = fileData[07];
             //No clue if this is ok as test...
-            if (fontLoadedFlag != 1 || empty05 != 0 || empty06 != 0 || empty07 != 0)
+            if (index00 != 1 || empty05 != 0 || empty06 != 0 || empty07 != 0)
                 throw new FileTypeLoadException(ERR_BADHEADER);
             this.m_FontHeight = maxHeight;
             // Wlll be increased to the max found in the file.
-            this.m_FontWidth = spaceSize;
-            for (Int32 i = 0; i < firstSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(this));
-            if (firstSymbol > 0x20)
-                this.m_ImageDataList[0x20].ChangeWidth(spaceSize, this.TransparencyColor);
+            this.m_FontWidth = spaceWidth;
+
+            // Initialize symbols array
+            for (Int32 i = 0; i < 0x100; i++)
+                this.m_ImageDataList.Add(null);
+            // Prepare space
+            Int32 spacePos = firstSymbol - 1;
+            if (spacePos < 0)
+                spacePos += 0x100;
+            FontFileSymbol space = new FontFileSymbol(this);
+            space.ChangeWidth(spaceWidth, this.TransparencyColor);
+            // Add space
+            this.m_ImageDataList[spacePos] = space;
+            // Read the rest of the symbols.
             Int32 readOffset = 0x408;
-            // Check on "readOffset + 8" because 8 is the byte size of a next symbol header.
             Int32 datalen = fileData.Length;
-            Int32 symbolCounter = 0; // Just to be sure and stay below 256
             Byte currentSymbol = firstSymbol;
-            while (readOffset + 8 < datalen && symbolCounter < 256)
+            // Check on "readOffset + 8" because 8 is the byte size of a next symbol header.
+            // This should ignore the last symbol in the data, since it'll be a 0x0 dummy to be replaced by the space width.
+            while (readOffset + 8 < datalen && currentSymbol != spacePos)
             {
                 Int32 symbolWidth = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, readOffset, 4, true);
                 this.m_FontWidth = Math.Max(symbolWidth, this.m_FontWidth);
@@ -63,29 +72,35 @@ namespace WWFontEditor.Domain.FontTypes
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolData.Length);
                 // should happen after the currentSymbol byte wraps around to 0
                 FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel, this.TransparencyColor);
-                if (this.m_ImageDataList.Count > currentSymbol)
-                    this.m_ImageDataList[currentSymbol] = ffs;
-                else
-                    this.m_ImageDataList.Add(ffs);
+                this.m_ImageDataList[currentSymbol] = ffs;
                 readOffset += symbolData.Length;
-                symbolCounter++;
+                // Byte will wrap around after 0xFF
                 currentSymbol++;
             }
+            // Probably not needed, but eh, just to be safe.
+            for (Int32 i = 0; i < 0x100; i++)
+                if (this.m_ImageDataList[i] == null)
+                    this.m_ImageDataList[i] = new FontFileSymbol(this);
             // interval is right-edge X optimization much like WW does Y optimization. Pad it onto the font. The Save will trim it off again.
-            if (interval > 0)
+            if (padding > 0)
             {
-                this.m_FontWidth += interval;
+                this.m_FontWidth += padding;
                 foreach (FontFileSymbol fs in this.m_ImageDataList)
                     if (fs.Width != 0 || fs.Height != 0)
-                        fs.ChangeWidth(fs.Width + interval, this.TransparencyColor);
+                        fs.ChangeWidth(fs.Width + padding, this.TransparencyColor);
             }
         }
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             FontFileSymbol[] baseList = new List<FontFileSymbol>(this.m_ImageDataList).ToArray();
-            FontFileSymbol[] newList = new FontFileSymbol[255];
-            Byte spaceWidth = (Byte)this.m_ImageDataList[0x20].Width;
+            FontFileSymbol[] newList = new FontFileSymbol[256];
+            FontFileSymbol newSpace = baseList[0x20].Clone();
+            Byte spaceWidth = (Byte)newSpace.Width;
+            // Final saved data does in fact contain a 0x0 dummy entry for the space character... further invalidating the whole optimisation effort.
+            newSpace.ChangeWidth(0, this.TransparencyColor);
+            newSpace.ChangeHeight(0, this.TransparencyColor);
+            baseList[0x20] = newSpace;
             Byte firstSymbol = 0x21;
             // this is FF and not 100 because the space itself is omitted.
             Int32 remainingSymbols = newList.Length - firstSymbol; // 222 ?
@@ -127,8 +142,6 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 // font width should not be reduced by globalOpenSpace; it is unused in the saving process.
             }
-            // TODO: ADD CODE HERE TO DECREASE FONT WIDTHS BY ABOVE CALCULATED AMOUNT OF PIXELS
-
             Int32 fileLen = 0x408 + newList.Select(x => x.ByteData.Length + 8).Sum();
             Byte[] fileData = new Byte[fileLen];
             fileData[0] = 0x01;
@@ -140,7 +153,6 @@ namespace WWFontEditor.Domain.FontTypes
             //fileData[6] = 0x00;
             //fileData[7] = 0x00;
             //0x08 => 0x408: giant load of crap. Leave empty, I guess?
-            // newlist should contain all except the space
             Int32 writeOffset = 0x408;
             foreach (FontFileSymbol fs in newList)
             {

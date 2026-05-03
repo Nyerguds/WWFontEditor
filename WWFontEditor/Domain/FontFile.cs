@@ -56,7 +56,7 @@ namespace WWFontEditor.Domain
         public virtual Boolean CustomSymbolHeightsForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
         public virtual Int32 FontTypePaddingBottom { get { return 0; } }
-        /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
+        /// <summary>Padding between the characters of the font. Used for the preview function and to determine if padding is needed when automatically optimizing symbol widths.</summary>
         public virtual Int32 FontTypePaddingRight { get { return 0; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
@@ -163,7 +163,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileDynV4),
             typeof(FontFileDynV5),
             typeof(FontFileDynV6),
-            typeof(FontFileDyn96),
+            typeof(FontFileDynSQ5),
             typeof(FontFileCent),
             typeof(FontFileKort),
             typeof(FontFileMythos),
@@ -189,16 +189,16 @@ namespace WWFontEditor.Domain
             typeof(FontFileD2K),
             typeof(FontFileKort),
             // rather weak file size / content based checks.
-            typeof(FontFileDyn96),
+            typeof(FontFileDynSQ5),
             typeof(FontFileCent),
             typeof(FontFileDynV2),
             typeof(FontFileDynV1b),
             typeof(FontFileDynV1a),
-            typeof(FontFileTran),
             typeof(FontFileMythos),
+            typeof(FontFileKotB),
+            typeof(FontFileTran),
             // File size only; leave it at the end.
             typeof(FontFileWsV1),
-            typeof(FontFileKotB),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
         };
 
@@ -329,8 +329,8 @@ namespace WWFontEditor.Domain
 
             for (Int32 i = 0; i < newFont.SymbolsTypeMin; i++)
             {
-                FontFileSymbol image = i < m_ImageDataList.Count? this.m_ImageDataList[i] : new FontFileSymbol(newFont);
-                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor, targetBpp));
+                FontFileSymbol symbol = i < m_ImageDataList.Count? this.m_ImageDataList[i] : new FontFileSymbol(newFont);
+                newFont.m_ImageDataList.Add(symbol.CloneFor(newFont, overflowColor, targetBpp));
             }
             for (Int32 i = newFont.SymbolsTypeMin; i < Math.Min(m_ImageDataList.Count, newFont.SymbolsTypeMax); i++)
             {
@@ -501,7 +501,7 @@ namespace WWFontEditor.Domain
         /// <summary>
         ///     Creates a 16-bit little endian index of reference addresses, starting from the given fontOffset.
         ///     After the procedure, fontOffset will have the address behind the last data to write.
-        ///     if "optimize" is enabled this will remove duplicate images in the process.
+        ///     If "optimize" is enabled this will remove duplicate images in the process.
         /// </summary>
         /// <param name="imageData">Image data. Duplicate arrays in this are set to 0-sized ones.</param>
         /// <param name="startIndex">Start index in the imageData array.</param>
@@ -513,7 +513,7 @@ namespace WWFontEditor.Domain
         /// <returns>The list of reference addresses, relative to the given font offset.</returns>
         protected Byte[] CreateImageIndex(Byte[][] imageData, Int32 startIndex, Boolean reduce, ref Int32 fontOffset, Boolean usesNullOffset, Boolean optimise, Boolean unsigned)
         {
-            Int32 maxValue = unsigned ? (Int32)UInt16.MaxValue : Int16.MaxValue;
+            Int32 maxValue = unsigned ? (Int32) UInt16.MaxValue : Int16.MaxValue;
             Int32[] refslist = optimise ? this.CreateOptimizedRefsList(imageData, startIndex) : null;
             Int32 symbols = imageData.Length;
             Int32 writeDiff = reduce ? -startIndex : 0;
@@ -531,7 +531,7 @@ namespace WWFontEditor.Domain
                 else if (replacei == i)
                 {
                     if (fontOffset > maxValue)
-                        throw new IndexOutOfRangeException("Data too large: this format cannot address data that exceeds " + maxValue + " bytes!");
+                        throw new OverflowException("Data too large: this format cannot address data that exceeds " + maxValue + " bytes!");
                     // Data is not null and not a duplicate: write offset and advance offset ptr.
                     ArrayUtils.WriteIntToByteArray(fontDataOffsetsList, (i + writeDiff) * 2, 2, true, (UInt32)fontOffset);
                     fontOffset += imageData[i].Length;
@@ -577,7 +577,9 @@ namespace WWFontEditor.Domain
 
         public Boolean Equals(FontFile other)
         {
-            if (this.GetType() != other.GetType())
+            if (ReferenceEquals(this, other))
+                return true;
+            if (other == null || this.GetType() != other.GetType())
                 return false;
             if (this.FontWidth != other.FontWidth || this.FontHeight != other.FontHeight || this.Length != other.Length)
                 return false;

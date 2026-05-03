@@ -5,7 +5,7 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Very old 1bpp Westwood Studios font format, without file header, with fixed 8x8 symbols.
+    /// Very old 1-bpp Westwood Studios font format, without file header, with fixed 8x8 symbols.
     /// </summary>
     public class FontFileWsV1 : FontFile
     {
@@ -19,7 +19,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 1; } }
         public override String ShortTypeName { get { return "WwFont v1"; } }
         public override String ShortTypeDescription { get { return "WWFont v1 (WarConst/ElmStr/DrStr/CirEdg)"; } }
-        public override String LongTypeDescription { get { return "A simple 1 BPP font without header data; it's always a 128-item list of 8x8 symbols."; } }
+        public override String LongTypeDescription { get { return "A simple 1-bpp font without header data; it's always a 128-item list of 8x8 symbols."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "Wargame Construction Set",

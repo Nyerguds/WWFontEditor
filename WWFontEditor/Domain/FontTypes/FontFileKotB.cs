@@ -13,7 +13,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 SymbolsTypeFirst { get { return 0x00; } }
         public override Int32 FontHeightTypeMax { get { return 0x6; } }
         public override Int32 FontHeightTypeMin { get { return 0x6; } }
-        public override Int32 FontWidthTypeMin { get { return 0x00; } }
+        public override Int32 FontWidthTypeMin { get { return 0x08; } }
         public override Int32 FontWidthTypeMax { get { return 0x08; } }
         public override Int32 YOffsetTypeMax { get { return 0x0; } }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
@@ -24,9 +24,9 @@ namespace WWFontEditor.Domain.FontTypes
         /// <summary>File extension typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "fnt" }; } }
         public override String ShortTypeName { get { return "KotBFont"; } }
-        public override String ShortTypeDescription { get { return "King of the Beach Font"; } }
+        public override String ShortTypeDescription { get { return "Kings of the Beach Font"; } }
         public override String LongTypeDescription { get { return "An 8x6 pixel 1-bit font that supports custom character widths, but lacks a real header."; } }
-        public override String[] GamesListForType { get { return new String[] { "King of the Beach" }; } }
+        public override String[] GamesListForType { get { return new String[] { "Kings of the Beach" }; } }
 
         protected const Int32 NrOfSymbols = 0x5B;
 
@@ -50,16 +50,9 @@ namespace WWFontEditor.Domain.FontTypes
             }
             for (Int32 i = 0; i < NrOfSymbols; i++)
             {
-                Byte[] curData8bit;
-                try
-                {
-                    curData8bit = ImageUtils.ConvertTo8Bit(characterData[i], characterWidths[i], this.m_FontHeight,0, this.BitsPerPixel, true);
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", this.ShortTypeName, i));
-                }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, characterWidths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
+                Int32 charWidth = characterWidths[i];
+                Byte[] curData8bit = ImageUtils.ConvertTo8Bit(characterData[i], charWidth, this.m_FontHeight, 0, this.BitsPerPixel, true);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, charWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }

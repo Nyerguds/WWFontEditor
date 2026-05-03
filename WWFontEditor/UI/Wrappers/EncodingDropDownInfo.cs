@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace WWFontEditor.UI.Wrappers
+namespace Nyerguds.Util.UI.Wrappers
 {
     public class EncodingDropDownInfo
     {

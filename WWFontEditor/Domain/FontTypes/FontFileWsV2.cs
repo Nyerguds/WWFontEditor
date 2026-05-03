@@ -6,7 +6,7 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Old 1bpp Westwood Studios font format
+    /// Old 1-bpp Westwood Studios font format
     /// </summary>
     public class FontFileWsV2 : FontFile
     {
@@ -20,7 +20,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
         public override String ShortTypeName { get { return "WWFont v2"; } }
         public override String ShortTypeDescription { get { return "WWFont v2 (BattleTech/EoB)"; } }
-        public override String LongTypeDescription { get { return "A 1 BPP font with a fixed set of 128 characters, with a maximum width of 8 pixels, with the file header specifying the global width and height for all symbols."; } }
+        public override String LongTypeDescription { get { return "A 1-bpp font with a fixed set of 128 characters, with a maximum width of 8 pixels, with the file header specifying the global width and height for all symbols."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "BattleTech - The Crescent Hawk's Revenge",

@@ -56,17 +56,6 @@ namespace Nyerguds.ImageManipulation
             return Image.GetPixelFormatSize(image.PixelFormat);
         }
 
-        public static Boolean[] GetTransparencyGuide(Color[] palette)
-        {
-            Boolean[] isTransparent = new Boolean[256];
-            if (palette == null)
-                return isTransparent;
-            Int32 len = Math.Min(isTransparent.Length, palette.Length);
-            for (Int32 i = 0; i < len; i++)
-                isTransparent[i] = palette[i].A < 128;
-            return isTransparent;
-        }
-
         public static ColorPalette GetColorPalette(Color[] colors, PixelFormat pf)
         {
             ColorPalette cp = new Bitmap(1, 1, pf).Palette;
@@ -100,7 +89,6 @@ namespace Nyerguds.ImageManipulation
 
         public static Byte[] GetSavedImageData(Bitmap image, ref String filename)
         {
-            image = CloneImage(image);
             String ext = Path.GetExtension(filename);
             ImageFormat saveFormat = ImageFormat.Png;
 
@@ -112,6 +100,7 @@ namespace Nyerguds.ImageManipulation
                 saveFormat = ImageFormat.Jpeg;
             else if (!".png".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
                 filename += ".png";
+            using (image = CloneImage(image))
             using (MemoryStream ms = new MemoryStream())
             {
                 if (saveFormat.Equals(ImageFormat.Jpeg))
@@ -127,7 +116,7 @@ namespace Nyerguds.ImageManipulation
                             break;
                         }
                     }
-                    System.Drawing.Imaging.Encoder qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
+                    Encoder qualityEncoder = Encoder.Quality;
                     EncoderParameters encparams = new EncoderParameters(1);
                     encparams.Param[0] = new EncoderParameter(qualityEncoder, 100L);
                     image.Save(ms, jpegEncoder, encparams);
@@ -137,15 +126,15 @@ namespace Nyerguds.ImageManipulation
                     // 4-bit images don't get converted right; they get dumped on the standard windows 256 colour palette. So we convert it manually before the save.
                     Int32 stride;
                     Byte[] fourBitData = GetImageData(image, out stride);
-                    // data returned from this always has the exact width as stride.
                     Byte[] eightBitData = ConvertTo8Bit(fourBitData, image.Width, image.Height, 0, 4, true, ref stride);
-                    image = BuildImage(eightBitData, image.Width, image.Height, stride, PixelFormat.Format8bppIndexed, image.Palette.Entries, Color.Black);
-                    image.Save(ms, saveFormat);
+                    using (Bitmap img2 = BuildImage(eightBitData, image.Width, image.Height, stride, PixelFormat.Format8bppIndexed, image.Palette.Entries, Color.Black))
+                        img2.Save(ms, saveFormat);
                 }
                 else if (saveFormat.Equals(ImageFormat.Png))
                     BitmapHandler.GetPngImageData(image, 0);
                 else
                     image.Save(ms, saveFormat);
+                // Clean up temp image.
                 return ms.ToArray();
             }
         }
@@ -166,6 +155,17 @@ namespace Nyerguds.ImageManipulation
             return ((GetMinimumStride(width, bitsLength) + 3) / 4) * 4;
         }
 
+        public static PixelFormat GetIndexedPixelFormat(Int32 bpp)
+        {
+            switch (bpp)
+            {
+                case 1: return PixelFormat.Format1bppIndexed;
+                case 4: return PixelFormat.Format4bppIndexed;
+                case 8: return PixelFormat.Format8bppIndexed;
+                default: throw new NotSupportedException("Unsupported indexed pixel format '" + bpp + "'!");
+            }
+        }
+
         public static Bitmap ConvertToPalettedGrayscale(Bitmap image)
         {
             return ConvertToPalettedGrayscale(image, 8, false);
@@ -173,7 +173,7 @@ namespace Nyerguds.ImageManipulation
 
         public static Bitmap ConvertToPalettedGrayscale(Bitmap image, Int32 bpp, Boolean bigEndianBits)
         {
-            PixelFormat pf = PaletteUtils.GetPalettedFormat(bpp);
+            PixelFormat pf = GetIndexedPixelFormat(bpp);
             if (image.PixelFormat == pf && ColorUtils.HasGrayPalette(image))
                 return CloneImage(image);
             if (image.PixelFormat != PixelFormat.Format32bppArgb)
@@ -191,7 +191,7 @@ namespace Nyerguds.ImageManipulation
             using (Graphics gr = Graphics.FromImage(bp))
             {
                 if (transparencyFillColor.HasValue)
-                    using (System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(Color.FromArgb(255, transparencyFillColor.Value)))
+                    using (SolidBrush myBrush = new SolidBrush(Color.FromArgb(255, transparencyFillColor.Value)))
                         gr.FillRectangle(myBrush, new Rectangle(0, 0, image.Width, image.Height));
                 gr.DrawImage(image, new Rectangle(0, 0, bp.Width, bp.Height));
             }
@@ -257,24 +257,9 @@ namespace Nyerguds.ImageManipulation
             return newImageData;
         }
 
-        public static PixelFormat GetPixelFormat(Int32 bpp)
-        {
-            switch (bpp)
-            {
-                case 1:
-                    return PixelFormat.Format1bppIndexed;
-                case 4:
-                    return PixelFormat.Format4bppIndexed;
-                case 8:
-                    return PixelFormat.Format8bppIndexed;
-                default:
-                    throw new NotSupportedException("Unsupported indexed pixel format '" + bpp + "'!");
-            }
-        }
-
         public static Bitmap ConvertToPalette(Bitmap originalImage, Int32 bpp, Color[] palette)
         {
-            PixelFormat pf = GetPixelFormat(bpp);
+            PixelFormat pf = GetIndexedPixelFormat(bpp);
             Int32 stride;
             if (originalImage.PixelFormat != PixelFormat.Format32bppArgb)
                 originalImage = PaintOn32bpp(originalImage, Color.Black);
@@ -289,7 +274,8 @@ namespace Nyerguds.ImageManipulation
                 throw new ArgumentException("Stride is smaller than one pixel line!", "stride");
             Byte[] newImageData = new Byte[width * height];
             List<Int32> transparentIndices = new List<Int32>();
-            for (Int32 i = 0; i < palette.Length; i++)
+            Int32 maxLen = Math.Min(0x100, palette.Length);
+            for (Int32 i = 0; i < maxLen; i++)
                 if (palette[i].A == 0)
                     transparentIndices.Add(i);
             for (Int32 y = 0; y < height; y++)
@@ -321,7 +307,23 @@ namespace Nyerguds.ImageManipulation
         /// <returns>The raw bytes of the image.</returns>
         public static Byte[] GetImageData(Bitmap sourceImage, out Int32 stride)
         {
-            BitmapData sourceData = sourceImage.LockBits(new Rectangle(0, 0, sourceImage.Width, sourceImage.Height), ImageLockMode.ReadOnly, sourceImage.PixelFormat);
+            return GetImageData(sourceImage, out stride, sourceImage.PixelFormat);
+        }
+
+        /// <summary>
+        /// Gets the raw bytes from an image.
+        /// </summary>
+        /// <param name="sourceImage">The image to get the bytes from.</param>
+        /// <param name="stride">Stride of the retrieved image data.</param>
+        /// <param name="desiredPixelFormat">PixelFormat in which the data needs to be retrieved.</param>
+        /// <returns>The raw bytes of the image.</returns>
+        public static Byte[] GetImageData(Bitmap sourceImage, out Int32 stride, PixelFormat desiredPixelFormat)
+        {
+            if (sourceImage == null)
+                throw new ArgumentNullException("sourceImage", "Source image is null!");
+            if (((desiredPixelFormat & PixelFormat.Indexed) != 0) && ((sourceImage.PixelFormat & PixelFormat.Indexed) == 0))
+                throw new ArgumentException("An RGB pixel format cannot be converted to an indexed pixel format.", "desiredPixelFormat");
+            BitmapData sourceData = sourceImage.LockBits(new Rectangle(0, 0, sourceImage.Width, sourceImage.Height), ImageLockMode.ReadOnly, desiredPixelFormat);
             stride = sourceData.Stride;
             Byte[] data = new Byte[stride * sourceImage.Height];
             Marshal.Copy(sourceData.Scan0, data, 0, data.Length);
@@ -337,36 +339,34 @@ namespace Nyerguds.ImageManipulation
         /// <returns>The cloned image</returns>
         public static Bitmap CloneImage(Bitmap sourceImage)
         {
-            return CloneImage(sourceImage, null);
-        }
-
-        /// <summary>
-        /// Clones an image object to free it from any backing resources.
-        /// This function can also cut a specific piece out of the original image.
-        /// Code taken from http://stackoverflow.com/a/3661892/ with some extra fixes.
-        /// </summary>
-        /// <param name="sourceImage">The image to clone</param>
-        /// <param name="sourceRect">Piece to cut out of the original image.</param>
-        /// <returns>The cloned image</returns>
-        public static Bitmap CloneImage(Bitmap sourceImage, Rectangle? sourceRect)
-        {
-            Rectangle rect;
-            if (sourceRect.HasValue)
-                rect = sourceRect.Value;
-            else
-                rect = new Rectangle(0, 0, sourceImage.Width, sourceImage.Height);
-            if (rect.X + rect.Width > rect.Width || rect.Y + rect.Height > sourceImage.Height)
-                throw new IndexOutOfRangeException("Cutout size for image is larger than image!");
+            Rectangle rect = new Rectangle(0, 0, sourceImage.Width, sourceImage.Height);
             Bitmap targetImage = new Bitmap(rect.Width, rect.Height, sourceImage.PixelFormat);
+            targetImage.SetResolution(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
             BitmapData sourceData = sourceImage.LockBits(rect, ImageLockMode.ReadOnly, sourceImage.PixelFormat);
-            BitmapData targetData = targetImage.LockBits(new Rectangle(0, 0, targetImage.Width, targetImage.Height), ImageLockMode.WriteOnly, targetImage.PixelFormat);
-            CopyMemory(targetData.Scan0, sourceData.Scan0, sourceData.Stride * sourceData.Height, 1024, 1024);
+            BitmapData targetData = targetImage.LockBits(rect, ImageLockMode.WriteOnly, targetImage.PixelFormat);
+            Int32 actualDataWidth = ((Image.GetPixelFormatSize(sourceImage.PixelFormat) * rect.Width) + 7) / 8;
+            Int32 h = sourceImage.Height;
+            Int32 origStride = sourceData.Stride;
+            Int32 targetStride = targetData.Stride;
+            Byte[] imageData = new Byte[actualDataWidth];
+            IntPtr sourcePos = sourceData.Scan0;
+            IntPtr destPos = targetData.Scan0;
+            // Copy line by line, skipping by stride but copying actual data width
+            for (Int32 y = 0; y < h; y++)
+            {
+                Marshal.Copy(sourcePos, imageData, 0, actualDataWidth);
+                Marshal.Copy(imageData, 0, destPos, actualDataWidth);
+                sourcePos = new IntPtr(sourcePos.ToInt64() + origStride);
+                destPos = new IntPtr(destPos.ToInt64() + targetStride);
+            }
             targetImage.UnlockBits(targetData);
             sourceImage.UnlockBits(sourceData);
             // For indexed images, restore the palette. This is not linking to a referenced
-            // object in the original image; the getter creates a new object when called.
-            if ((sourceImage.PixelFormat & System.Drawing.Imaging.PixelFormat.Indexed) != 0)
+            // object in the original image; the getter of Palette creates a new object when called.
+            if ((sourceImage.PixelFormat & PixelFormat.Indexed) != 0)
                 targetImage.Palette = sourceImage.Palette;
+            // Restore DPI settings
+            targetImage.SetResolution(sourceImage.HorizontalResolution, sourceImage.VerticalResolution);
             return targetImage;
         }
 
@@ -385,8 +385,17 @@ namespace Nyerguds.ImageManipulation
         {
             Bitmap newImage = new Bitmap(width, height, pixelFormat);
             BitmapData targetData = newImage.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
-            CopyToMemory(targetData.Scan0, sourceData, 0, sourceData.Length, stride, targetData.Stride);
+            Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
+            // Compensate for possible negative stride on BMP format.
+            Boolean isFlipped = targetData.Stride < 0;
+            Int32 targetStride = Math.Abs(targetData.Stride);
+            Int64 scan0 = targetData.Scan0.ToInt64();
+            for (Int32 y = 0; y < height; y++)
+                Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
             newImage.UnlockBits(targetData);
+            // Fix negative stride on BMP format.
+            if (isFlipped)
+                newImage.RotateFlip(RotateFlipType.Rotate180FlipX);
             // For indexed images, set the palette.
             if ((pixelFormat & PixelFormat.Indexed) != 0 && palette != null)
             {
@@ -405,43 +414,52 @@ namespace Nyerguds.ImageManipulation
             return newImage;
         }
 
-        private static void CopyToMemory(IntPtr target, Byte[] bytes, Int32 startPos, Int32 length, Int32 origStride, Int32 targetStride)
+        public static Bitmap fromTwoDimIntArray(Int32[,] data)
         {
-            Int32 sourcePos = startPos;
-            IntPtr destPos = target;
-            Int32 minStride = Math.Min(origStride, targetStride);
-            while (length >= targetStride)
+            Int32 width = data.GetLength(0);
+            Int32 height = data.GetLength(1);
+            Int32 byteIndex = 0;
+            Byte[] dataBytes = new Byte[height * width * 4];
+            for (Int32 y = 0; y < height; y++)
             {
-                Marshal.Copy(bytes, sourcePos, destPos, minStride);
-                length -= origStride;
-                sourcePos += origStride;
-                destPos = new IntPtr(destPos.ToInt64() + targetStride);
+                for (Int32 x = 0; x < width; x++)
+                {
+                    // UInt32 0xAARRGGBB = Byte[] { BB, GG, RR, AA }
+                    UInt32 val = (UInt32)data[x, y];
+                    // This code clears out everything but a specific part of the value
+                    // and then shifts the remaining piece down to the lowest byte
+                    dataBytes[byteIndex + 0] = (Byte)(val & 0x000000FF); // B
+                    dataBytes[byteIndex + 1] = (Byte)((val & 0x0000FF00) >> 08); // G
+                    dataBytes[byteIndex + 2] = (Byte)((val & 0x00FF0000) >> 16); // R
+                    dataBytes[byteIndex + 3] = (Byte)((val & 0xFF000000) >> 24); // A
+                    // More efficient than multiplying
+                    byteIndex += 4;
+                }
             }
-            if (length > 0)
-            {
-                Marshal.Copy(bytes, sourcePos, destPos, length);
-            }
+            return BuildImage(dataBytes, width, height, width, PixelFormat.Format32bppArgb, null, null);
         }
 
-        private static void CopyMemory(IntPtr target, IntPtr source, Int32 length, Int32 origStride, Int32 targetStride)
+        public static Bitmap fromTwoDimIntArrayGray(Int32[,] data)
         {
-            IntPtr sourcePos = source;
-            IntPtr destPos = target;
-            Int32 minStride = Math.Min(origStride, targetStride);
-            Byte[] imageData = new Byte[targetStride];
-            while (length >= minStride && length > 0)
+            Int32 width = data.GetLength(0);
+            Int32 height = data.GetLength(1);
+            Int32 byteIndex = 0;
+            Byte[] dataBytes = new Byte[height * width * 4];
+            for (Int32 y = 0; y < height; y++)
             {
-                Marshal.Copy(sourcePos, imageData, 0, minStride);
-                Marshal.Copy(imageData, 0, destPos, targetStride);
-                length -= origStride;
-                sourcePos = new IntPtr(sourcePos.ToInt64() + origStride);
-                destPos = new IntPtr(destPos.ToInt64() + targetStride);
+                for (Int32 x = 0; x < width; x++)
+                {
+                    // Int32 0xAARRGGBB = Byte[] { BB, GG, RR, AA }
+                    // This uses the lowest byte, which is the blue component.
+                    dataBytes[byteIndex] = (Byte)((UInt32)data[x, y] & 0xFF);
+                    // More efficient than multiplying
+                    byteIndex++;
+                }
             }
-            if (length > 0)
-            {
-                Marshal.Copy(sourcePos, imageData, 0, length);
-                Marshal.Copy(imageData, 0, destPos, length);
-            }
+            Color[] palette = new Color[256];
+            for (Int32 i = 0; i < palette.Length; i++)
+                palette[i] = Color.FromArgb(i, i, i);
+            return BuildImage(dataBytes, width, height, width, PixelFormat.Format8bppIndexed, palette, null);
         }
 
         /// <summary>
@@ -456,7 +474,7 @@ namespace Nyerguds.ImageManipulation
                 return false;
             Int32 colDepth = Image.GetPixelFormatSize(bitmap.PixelFormat);
             Int32 height = bitmap.Height;
-            Int32 width = bitmap.Height;
+            Int32 width = bitmap.Width;
             Int32 stride;
             // Indexed formats. Special case because the colours on the palette have the transparency.
             if ((bitmap.PixelFormat & PixelFormat.Indexed) != 0 && colDepth <= 8)
@@ -464,7 +482,7 @@ namespace Nyerguds.ImageManipulation
                 ColorPalette pal = bitmap.Palette;
                 // Find the transparent indices on the palette.
                 List<Int32> transCols = new List<Int32>();
-                for (int i = 0; i < pal.Entries.Length; i++)
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
                 {
                     Color col = pal.Entries[i];
                     if (col.A != 255)
@@ -533,17 +551,17 @@ namespace Nyerguds.ImageManipulation
         {
             if (width == 0 || height == 0)
                 return null;
-            Color[] pal = GeneratePalette(colors, Color.Empty);
             Byte[] patternArray = new Byte[width * height];
-            for (Int32 y = 0; y < width; y++)
+            for (Int32 y = 0; y < height; y++)
             {
+                Int32 offset = width*y;
                 for (Int32 x = 0; x < width; x++)
                 {
-                    Int32 offset = x + y * height;
                     patternArray[offset] = (Byte)(((x + y) % 2 == 0) ? 1 : 0);
+                    offset++;
                 }
             }
-            return BuildImage(patternArray, width, height, width, PixelFormat.Format8bppIndexed, pal, Color.Empty);
+            return BuildImage(patternArray, width, height, width, PixelFormat.Format8bppIndexed, colors, Color.Black);
         }
 
         public static Bitmap GenerateGridImage(Int32 origWidth, Int32 origHeight, Int32 zoomFactor, Color[] colors, Byte bgColor, Byte gridcolor, Byte outLineColor)
@@ -583,17 +601,32 @@ namespace Nyerguds.ImageManipulation
         public static void EditRawImageBytes(Bitmap source, Action<Byte[], Int32> editDelegate)
         {
             BitmapData sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, source.PixelFormat);
-            // Could technically design this to edit the bytes directly instead of copying, but this way doesn't require (technically) unsafe code.
-            Byte[] picData = new Byte[sourceData.Stride * sourceData.Height];
-            Int32 sourceStride = sourceData.Stride;
-            Marshal.Copy(sourceData.Scan0, picData, 0, picData.Length);
+            // Compensate for possible negative stride on BMP format.
+            Boolean isFlipped = sourceData.Stride < 0;
+            Int32 sourceStride = Math.Abs(sourceData.Stride);
+            Int32 height = source.Height;
+            Int64 scan0 = sourceData.Scan0.ToInt64();
+            Int32 dataWidth = ((Image.GetPixelFormatSize(source.PixelFormat) * source.Width) + 7) / 8;
+            Byte[] picData = new Byte[dataWidth * sourceData.Height];
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 line = isFlipped ? height - 1 - y : y;
+                Marshal.Copy(new IntPtr(scan0 + line * sourceStride), picData, y * dataWidth, dataWidth);
+            }
             source.UnlockBits(sourceData);
             // =======================================
             // Call delegate function to perform the actual actions.
-            editDelegate(picData, sourceStride);
+            editDelegate(picData, dataWidth);
             // =======================================
             BitmapData destData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.WriteOnly, source.PixelFormat);
-            CopyToMemory(destData.Scan0, picData, 0, picData.Length, sourceStride, destData.Stride);
+            Int32 destStride = Math.Abs(destData.Stride);
+            isFlipped = sourceData.Stride < 0;
+            scan0 = destData.Scan0.ToInt64();
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 line = isFlipped ? height - 1 - y : y;
+                Marshal.Copy(picData, y * dataWidth, new IntPtr(scan0 + line * destStride), dataWidth);
+            }
             source.UnlockBits(destData);
         }
 
@@ -684,49 +717,6 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Changes the stride of the given image data.
-        /// </summary>
-        /// <param name="buffer">Source byte array.</param>
-        /// <param name="origStride">Original stride</param>
-        /// <param name="height">Height of the image</param>
-        /// <param name="targetStride">Target stride</param>
-        /// <param name="fromLeft">True to add/remove bytes at the left side instead of the right.</param>
-        /// <param name="fillValue">Byte value used to fill any added space.</param>
-        /// <returns>The adjusted array, with the target stride.</returns>
-        public static Byte[] ChangeStride(Byte[] buffer, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft, Byte fillValue)
-        {
-            Int32 sourcePos = 0;
-            Int32 destPos = 0;
-            Int32 minStride = Math.Min(origStride, targetStride);
-            Int32 length = buffer.Length;
-            Int32 targetSize = height * targetStride;
-            Byte[] target = new Byte[targetSize];
-            if (fillValue != 0)
-                for (Int32 i = 0; i < targetSize; i++)
-                    target[i] = fillValue;
-            Int32 diff = origStride - targetStride;
-            while (length >= origStride && length > 0)
-            {
-                Int32 sourcePos1 = sourcePos;
-                Int32 destPos1 = destPos;
-                if (fromLeft)
-                {
-                    if (diff > 0)
-                        sourcePos1 += diff;
-                    else
-                        destPos1 -= diff;
-                }
-                Array.Copy(buffer, sourcePos1, target, destPos1, minStride);
-                length -= origStride;
-                sourcePos += origStride;
-                destPos += targetStride;
-            }
-            if (length > 0)
-                Array.Copy(buffer, sourcePos, target, destPos, length);
-            return target;
-        }
-
-        /// <summary>
         /// Copies a piece out of an 8-bit image. The stride of the output will always equal the width.
         /// </summary>
         /// <param name="fileData">Byte data of the image.</param>
@@ -768,12 +758,12 @@ namespace Nyerguds.ImageManipulation
         /// <param name="pasteHeight">Height of the image to paste.</param>
         /// <param name="pasteStride">Stride of the image to paste.</param>
         /// <param name="targetPos">Position at which to paste the image.</param>
-        /// <param name="transparentIndices">Colour palette of the images, to determine which colours should be treated as transparent. Use null for no transparency.</param>
+        /// <param name="transparencyGuide">Colour palette of the images, to determine which colours should be treated as transparent. Use null for no transparency.</param>
         /// <param name="modifyOrig">True to modify the original array rather than returning a copy.</param>
         /// <returns>A new Byte array with the combined data, and the same stride as the source image.</returns>
         public static Byte[] PasteOn8bpp(Byte[] sourceFileData, Int32 sourceWidth, Int32 sourceHeight, Int32 sourceStride,
             Byte[] pasteFileData, Int32 pasteWidth, Int32 pasteHeight, Int32 pasteStride,
-            Rectangle targetPos, Boolean[] transparentIndices, Boolean modifyOrig)
+            Rectangle targetPos, Color[] transparencyGuide, Boolean modifyOrig)
         {
             if (targetPos.Width != pasteWidth || targetPos.Height != pasteHeight)
                 pasteFileData = CopyFrom8bpp(pasteFileData, pasteWidth, pasteHeight, pasteStride, new Rectangle(0, 0, targetPos.Width, targetPos.Height));
@@ -787,6 +777,13 @@ namespace Nyerguds.ImageManipulation
                 finalFileData = new Byte[sourceFileData.Length];
                 Array.Copy(sourceFileData, finalFileData, sourceFileData.Length);
             }
+            Boolean[] isTransparent = new Boolean[256];
+            if (transparencyGuide != null)
+            {
+                Int32 len = Math.Min(isTransparent.Length, transparencyGuide.Length);
+                for (Int32 i = 0; i < len; i++)
+                    isTransparent[i] = transparencyGuide[i].A < 128;
+            }
             Int32 maxY = Math.Min(sourceHeight - targetPos.Y, targetPos.Height);
             Int32 maxX = Math.Min(sourceWidth - targetPos.X, targetPos.Width);
             for (Int32 y = 0; y < maxY; y++)
@@ -798,7 +795,7 @@ namespace Nyerguds.ImageManipulation
                     // This will always get a new index
                     Int32 indexSource = y * targetPos.Width + x;
                     Byte data = pasteFileData[indexSource];
-                    if (transparentIndices == null || !transparentIndices[data])
+                    if (!isTransparent[data])
                         finalFileData[indexDest] = data;
                 }
             }
@@ -909,7 +906,7 @@ namespace Nyerguds.ImageManipulation
         /// <param name="width">The width of the image</param>
         /// <param name="height">The height of the image</param>
         /// <param name="bitsLength">The new amount of bits per pixel</param>
-        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
+        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian. One-bit images should generally be big-endian, while 4-bit ones should not be.</param>
         /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
         public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian)
         {
@@ -966,7 +963,6 @@ namespace Nyerguds.ImageManipulation
             Int32 fullImageWidth = tilesX * tileWidth;
             Int32 fullImageHeight = yDim * tileHeight;
             Byte[] fullImageData = new Byte[fullImageWidth * fullImageHeight];
-            Boolean[] isTrans = GetTransparencyGuide(palette);
             for (Int32 y = 0; y < yDim; y++)
             {
                 for (Int32 x = 0; x < tilesX; x++)
@@ -978,7 +974,7 @@ namespace Nyerguds.ImageManipulation
                     Byte[] curTile = tiles[index];
                     PasteOn8bpp(fullImageData, fullImageWidth, fullImageHeight, fullImageWidth,
                         curTile, tileWidth, tileHeight, tileStride,
-                        new Rectangle(x * tileWidth, y * tileHeight, tileWidth, tileHeight), isTrans, true);
+                        new Rectangle(x * tileWidth, y * tileHeight, tileWidth, tileHeight), palette, true);
                 }
             }
             return fullImageData;
@@ -1005,7 +1001,7 @@ namespace Nyerguds.ImageManipulation
             }
             return images.ToArray();
         }
-        
+
         /// <summary>Trims empty lines off the bottom of an image buffer.</summary>
         /// <param name="buffer">Image data buffer</param>
         /// <param name="width">Image width (technically stride).</param>
@@ -1045,12 +1041,12 @@ namespace Nyerguds.ImageManipulation
         /// <param name="width">Image width (technically stride).</param>
         /// <param name="height">Image height. Will be adjusted by this function.</param>
         /// <param name="yOffset">Current Y-offset to increase.</param>
-        /// <param name="alsoTrimBottom">Trim both top and bottom of the image.</param>
+        /// <param name="AlsoTrimBottom">Trim both top and bottom of the image.</param>
         /// <param name="valueToTrim">Value to trim.</param>
         /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
         /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
         /// <returns>The trimmed image, if adjustBuffer is true.</returns>
-        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean alsoTrimBottom, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
+        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean AlsoTrimBottom, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (height == 0)
@@ -1072,7 +1068,7 @@ namespace Nyerguds.ImageManipulation
                 if (!tempArray.All(x => x == valueToTrim))
                     break;
             }
-            if (alsoTrimBottom)
+            if (AlsoTrimBottom)
             {
                 for (trimmedYBottom = height; trimmedYBottom > trimmedYTop; trimmedYBottom--)
                 {
@@ -1140,7 +1136,6 @@ namespace Nyerguds.ImageManipulation
                     break;
                 trimmedXRight++;
             }
-            
             Int32 newWidth = width - trimmedXRight;
             buffer = CopyFrom8bpp(buffer, width, height, width, new Rectangle(0, 0, newWidth, height));
             width = newWidth;
@@ -1154,12 +1149,12 @@ namespace Nyerguds.ImageManipulation
         /// <param name="width">Image width (technically stride). Will be adjusted by this function.</param>
         /// <param name="height">Image height.</param>
         /// <param name="xOffset">Current X-offset to increase.</param>
-        /// <param name="alsoTrimRight">Trim both left and right side of the image.</param>
+        /// <param name="AlsoTrimRight">Trim both left and right side of the image.</param>
         /// <param name="valueToTrim">Value to trim.</param>
         /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
         /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
         /// <returns>The trimmed image, if adjustBuffer is true.</returns>
-        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean alsoTrimRight, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
+        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean AlsoTrimRight, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (width == 0)
@@ -1195,7 +1190,7 @@ namespace Nyerguds.ImageManipulation
                 xOffset = 0;
                 return new Byte[0];
             }
-            if (alsoTrimRight)
+            if (AlsoTrimRight)
             {
                 for (Int32 x = width - 1; x >= 0; x--)
                 {
@@ -1223,6 +1218,49 @@ namespace Nyerguds.ImageManipulation
             else
                 xOffset += trimmedXLeft;
             return buffer;
+        }
+
+        /// <summary>
+        /// Changes the stride of the given image data.
+        /// </summary>
+        /// <param name="buffer">Source byte array.</param>
+        /// <param name="origStride">Original stride</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="targetStride">Target stride</param>
+        /// <param name="fromLeft">True to add/remove bytes at the left side instead of the right.</param>
+        /// <param name="fillValue">Byte value used to fill any added space.</param>
+        /// <returns>The adjusted array, with the target stride.</returns>
+        public static Byte[] ChangeStride(Byte[] buffer, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft, Byte fillValue)
+        {
+            Int32 sourcePos = 0;
+            Int32 destPos = 0;
+            Int32 minStride = Math.Min(origStride, targetStride);
+            Int32 length = buffer.Length;
+            Int32 targetSize = height * targetStride;
+            Byte[] target = new Byte[targetSize];
+            if (fillValue != 0)
+                for (Int32 i = 0; i < targetSize; i++)
+                    target[i] = fillValue;
+            Int32 diff = origStride - targetStride;
+            while (length >= origStride && length > 0)
+            {
+                Int32 sourcePos1 = sourcePos;
+                Int32 destPos1 = destPos;
+                if (fromLeft)
+                {
+                    if (diff > 0)
+                        sourcePos1 += diff;
+                    else
+                        destPos1 -= diff;
+                }
+                Array.Copy(buffer, sourcePos1, target, destPos1, minStride);
+                length -= origStride;
+                sourcePos += origStride;
+                destPos += targetStride;
+            }
+            if (length > 0)
+                Array.Copy(buffer, sourcePos, target, destPos, length);
+            return target;
         }
 
         /// <summary>
@@ -1303,6 +1341,212 @@ namespace Nyerguds.ImageManipulation
             Int32 max = colorFreq.Values.Max();
             // Get the first colour that matches that maximum.
             return colorFreq.FirstOrDefault(x => x.Value == max).Key;
+        }
+
+        public static Rectangle GetCropBounds(Bitmap image, Color blankPixel, Int32 borderSizePixels = 5, Rectangle? searchArea = null)
+        {
+            // Not too worried about the other boundaries; the "for" loops will exclude those anyway.
+            Int32 yStart = searchArea.HasValue ? Math.Max(0, searchArea.Value.Y) : 0;
+            Int32 yEnd = searchArea.HasValue ? Math.Min(image.Height, searchArea.Value.Y + searchArea.Value.Height) : image.Height;
+            Int32 xStart = searchArea.HasValue ? Math.Max(0, searchArea.Value.X) : 0;
+            Int32 xEnd = searchArea.HasValue ? Math.Min(image.Width, searchArea.Value.X + searchArea.Value.Width) : image.Width;
+            // Values to calculate
+            Int32 top;
+            Int32 bottom;
+            Int32 left;
+            Int32 right;
+            // Convert to 32bppARGB and get bytes and stride out.
+            Byte[] data;
+            Int32 stride;
+            using (Bitmap bm = new Bitmap(image))
+            {
+                BitmapData sourceData = bm.LockBits(new Rectangle(0, 0, bm.Width, bm.Height), ImageLockMode.ReadOnly, bm.PixelFormat);
+                stride = sourceData.Stride;
+                data = new Byte[stride * bm.Height];
+                Marshal.Copy(sourceData.Scan0, data, 0, data.Length);
+                bm.UnlockBits(sourceData);
+            }
+            // ============= Y =============
+            // Top = first found row which contains data
+            for (top = yStart; top < yEnd; top++)
+            {
+                Int32 index = top * stride;
+                if (!RowClear(data, index, 4, xStart, xEnd, blankPixel))
+                    break;
+            }
+            // Sanity check: no data on image. Abort.
+            if (top == yEnd)
+                return new Rectangle(xStart, yStart, 0, 0);
+            // Bottom = last found row which contains data
+            for (bottom = yEnd - 1; bottom > top; bottom--)
+            {
+                Int32 index = bottom * stride;
+                if (!RowClear(data, index, 4, xStart, xEnd, blankPixel))
+                    break;
+            }
+            // Make bottom the first actually clear row.
+            bottom++;
+            // ============= X =============
+            // Left = first found column which contains data
+            for (left = xStart; left < xEnd; left++)
+            {
+                Int32 index = left * 4;
+                if (!ColClear(data, index, stride, yStart, yEnd, blankPixel))
+                    break;
+            }
+            // Right = last found row which contains data
+            for (right = xEnd - 1; right > left; right--)
+            {
+                Int32 index = right * 4;
+                if (!ColClear(data, index, stride, yStart, yEnd, blankPixel))
+                    break;
+            }
+            // Make right the first actually clear column
+            right++;
+            // Calculate final rectangle values, including border.
+            Int32 rectX = Math.Max(xStart, left - borderSizePixels);
+            Int32 rectY = Math.Max(yStart, top - borderSizePixels);
+            Int32 rectW = Math.Min(xEnd, right + borderSizePixels) - rectX;
+            Int32 rectH = Math.Min(yEnd, bottom + borderSizePixels) - rectY;
+            return new Rectangle(rectX, rectY, rectW, rectH);
+        }
+
+        public static Boolean RowClear(Byte[] data, Int32 index, Int32 pixelWidth, Int32 xStart, Int32 xEnd, Color blankPixel)
+        {
+            Boolean rowOk = true;
+            Int32 start = index + pixelWidth * xStart;
+            Int32 end = index + pixelWidth * xEnd;
+            for (Int32 x = start; x < end; x += pixelWidth)
+            {
+                if (blankPixel.A != data[x + 3]) rowOk = false;
+                else if (blankPixel.R != data[x + 2]) rowOk = false;
+                else if (blankPixel.G != data[x + 1]) rowOk = false;
+                else if (blankPixel.B != data[x + 0]) rowOk = false;
+                if (!rowOk)
+                    return false;
+            }
+            return true;
+        }
+
+        public static Boolean ColClear(Byte[] data, Int32 index, Int32 stride, Int32 yStart, Int32 yEnd, Color blankPixel)
+        {
+            Boolean colOk = true;
+            Int32 start = index + stride * yStart;
+            Int32 end = index + stride * yEnd;
+            for (Int32 y = start; y < end; y += stride)
+            {
+                if (blankPixel.A != data[y + 3]) colOk = false;
+                else if (blankPixel.R != data[y + 2]) colOk = false;
+                else if (blankPixel.G != data[y + 1]) colOk = false;
+                else if (blankPixel.B != data[y + 0]) colOk = false;
+                if (!colOk)
+                    return false;
+            }
+            return true;
+        }
+
+        public static void ReorderBits(Byte[] imageData, Int32 width, Int32 height, ref Int32 stride, PixelFormatter inputFormat, PixelFormatter outputFormat)
+        {
+            if (!inputFormat.BitsAmounts.SequenceEqual(outputFormat.BitsAmounts))
+                throw new ArgumentException("Output format's bytes per pixel do not match input format!", "outputFormat");
+            // This code relies on the fact that both formats have 5 bits per color component and one bit for alpha,
+            // meaning that, once converted to an [R,G,B,A] array, they are 100% compatible.
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 offset = y * stride;
+                for (Int32 x = 0; x < width; x++)
+                {
+                    UInt32[] rgbaValues = inputFormat.GetRawComponents(imageData, offset);
+                    outputFormat.WriteRawComponents(imageData, offset, rgbaValues);
+                    offset += 2;
+                }
+            }
+        }
+
+        public static Bitmap GrayImageFromCsv(String[] lines, Int32 startColumn, Int32 maxValue)
+        {
+            // maxValue cannot exceed 255
+            maxValue = Math.Min(maxValue, 255);
+            // Read lines; this gives us the data, and the height.
+            //String[] lines = File.ReadAllLines(path);
+            if (lines == null || lines.Length == 0)
+                return null;
+            Int32 bottom = lines.Length;
+            // Trim any empty lines from the start and end.
+            while (bottom > 0 && lines[bottom - 1].Trim().Length == 0)
+                bottom--;
+            if (bottom == 0)
+                return null;
+            Int32 top = 0;
+            while (top < bottom && lines[top].Trim().Length == 0)
+                top++;
+            Int32 height = bottom - top;
+            // This removes the top-bottom stuff; the new array is compact.
+            String[][] values = new String[height][];
+            for (Int32 i = top; i < bottom; i++)
+                values[i - top] = lines[i].Split(',');
+            // Find width: maximum csv line length minus the amount of columns to skip.
+            Int32 width = values.Max(line => line.Length) - startColumn;
+            if (width <= 0)
+                return null;
+            // Create the array. Since it's 8-bit, this is one byte per pixel.
+            Byte[] imageArray = new Byte[width * height];
+            // Parse all values into the array
+            // Y = lines, X = csv values
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 offset = y * width;
+                // Skip indices before "startColumn". Target offset starts from the start of the line anyway.
+                for (Int32 x = startColumn; x < values[y].Length; x++)
+                {
+                    Int32 val;
+                    // Don't know if Trim is needed here. Depends on the file.
+                    if (Int32.TryParse(values[y][x].Trim(), out val))
+                        imageArray[offset] = (Byte)Math.Max(0, Math.Min(val, maxValue));
+                    offset++;
+                }
+            }
+            // generate gray palette for the given range, by calculating the factor to multiply by.
+            Double mulFactor = 255d / maxValue;
+            Color[] palette = new Color[maxValue + 1];
+            for (Int32 i = 0; i <= maxValue; i++)
+            {
+                // Away from zero rounding: 2.4 => 2 ; 2.5 => 3
+                Byte v = (Byte)Math.Round(i * mulFactor, MidpointRounding.AwayFromZero);
+                palette[i] = Color.FromArgb(v, v, v);
+            }
+            return BuildImage(imageArray, width, height, width, PixelFormat.Format8bppIndexed, palette, Color.White);
+        }
+
+        public static Bitmap GetGreyImage(Image img, Int32 width, Int32 height)
+        {
+            // get image data
+            Bitmap b = new Bitmap(img, width, height);
+            BitmapData sourceData = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            Int32 stride = sourceData.Stride;
+            Byte[] data = new Byte[stride * b.Height];
+            Marshal.Copy(sourceData.Scan0, data, 0, data.Length);
+            // iterate
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 offset = y * stride;
+                for (Int32 x = 0; x < width; x++)
+                {
+                    Byte colB = data[offset + 0]; // B
+                    Byte colG = data[offset + 1]; // G
+                    Byte colR = data[offset + 2]; // R
+                    //Int32 ColA = data[offset + 3]; // A
+                    Byte grayValue = ColorUtils.GetGreyValue(colR, colG, colB);
+                    data[offset + 0] = grayValue; // B
+                    data[offset + 1] = grayValue; // G
+                    data[offset + 2] = grayValue; // R
+                    data[offset + 3] = 0xFF; // A
+                    offset += 4;
+                }
+            }
+            Marshal.Copy(data, 0, sourceData.Scan0, data.Length);
+            b.UnlockBits(sourceData);
+            return b;
         }
     }
 }

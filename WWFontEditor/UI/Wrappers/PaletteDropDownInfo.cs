@@ -7,7 +7,7 @@ using System.Text;
 using Nyerguds.ImageManipulation;
 using Nyerguds.Ini;
 
-namespace WWFontEditor.UI.Wrappers
+namespace Nyerguds.Util.UI.Wrappers
 {
     public class PaletteDropDownInfo
     {

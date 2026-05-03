@@ -6,7 +6,7 @@ using System.Drawing;
 using System.ComponentModel;
 using System.Reflection;
 
-namespace WWFontEditor.UI.Tools
+namespace Nyerguds.Util.UI
 {
     public class DataGridViewScrollSupport : DataGridView
     {

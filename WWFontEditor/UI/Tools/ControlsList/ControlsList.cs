@@ -8,11 +8,11 @@ namespace Nyerguds.Util.Ui
     /// <summary>
     /// Offers the ability to list user controls, which can send updates of their child controls back to a controller.
     /// </summary>
-    /// <typeparam name="T">Type of the user controls with which to populate the list.</typeparam>
-    /// <typeparam name="U">Type of the information objects that contain all information to create/manage a listed control.</typeparam>
-    public abstract partial class ControlsList<T,U> : UserControl where T : Control
+    /// <typeparam name="TControl">Type of the user controls with which to populate the list.</typeparam>
+    /// <typeparam name="TInfoObject">Type of the information objects that contain all information to create/manage a listed control.</typeparam>
+    public abstract partial class ControlsList<TControl,TInfoObject> : UserControl where TControl : Control
     {
-        protected List<T> m_Contents = new List<T>();
+        protected List<TControl> m_Contents = new List<TControl>();
 
         protected ControlsList()
         {
@@ -22,21 +22,21 @@ namespace Nyerguds.Util.Ui
         /// <summary>
         /// Populate the list with controls.
         /// </summary>
-        /// <param name="cci">Contains a list of information objects with which to create the custom controls.</param>
-        /// <param name="ebc">The controller to assign to the created custom controls.</param>
-        public void Populate(CustomControlInfo<T, U> cci, ListedControlController<U> ebc)
+        /// <param name="customControlInfo">Contains a list of information objects with which to create the custom controls.</param>
+        /// <param name="controller">The controller to assign to the created custom controls.</param>
+        public void Populate(CustomControlInfo<TControl, TInfoObject> customControlInfo, ListedControlController<TInfoObject> controller)
         {
             this.Reset();
-            if (cci == null)
+            if (customControlInfo == null)
                 return;
             this.SuspendLayout();
-            this.lblTypeName.Text = cci.Name;
-            foreach (U vsi in cci.Properties)
+            this.lblTypeName.Text = customControlInfo.Name;
+            foreach (TInfoObject controlInfo in customControlInfo.Properties)
             {
                 try
                 {
-                    T eb = cci.MakeControl(vsi, ebc);
-                    this.AddControl(eb, false);
+                    TControl control = customControlInfo.MakeControl(controlInfo, controller);
+                    this.AddControl(control, false);
                 }
                 catch (NotImplementedException) { /* ignore */ }
             }
@@ -57,12 +57,12 @@ namespace Nyerguds.Util.Ui
         /// Focus the item. Can be overridden to focus a specific sub-control on the item.
         /// </summary>
         /// <param name="control">The control to focus.</param>
-        protected virtual void FocusItem(T control)
+        protected virtual void FocusItem(TControl control)
         {
             control.Focus();
         }
 
-        protected void AddControl(T control, Boolean refresh)
+        protected void AddControl(TControl control, Boolean refresh)
         {
             if (refresh)
                 this.SuspendLayout();
@@ -71,7 +71,7 @@ namespace Nyerguds.Util.Ui
                 YPos = this.lblTypeName.Location.Y * 2 + this.lblTypeName.Size.Height;
             else
             {
-                T lastControl = m_Contents[m_Contents.Count - 1];
+                TControl lastControl = m_Contents[m_Contents.Count - 1];
                 YPos = lastControl.Location.Y + lastControl.Size.Height;
             }
             control.Location = new Point(0, YPos);
@@ -88,7 +88,7 @@ namespace Nyerguds.Util.Ui
         {
             this.SuspendLayout();
             this.lblTypeName.Text = String.Empty;
-            foreach (T c in m_Contents)
+            foreach (TControl c in m_Contents)
             {
                 this.Controls.Remove(c);
                 c.Dispose();
@@ -100,7 +100,7 @@ namespace Nyerguds.Util.Ui
         protected void EffectBarList_Resize(object sender, EventArgs e)
         {
             this.SuspendLayout();
-            foreach (T c in m_Contents)
+            foreach (TControl c in m_Contents)
                 c.Size = new Size(this.DisplayRectangle.Width, c.Size.Height);
             this.PerformLayout();
         }

@@ -15,7 +15,7 @@ namespace Nyerguds.ImageManipulation
     public static class BitmapHandler
     {
         private static Byte[] PNG_IDENTIFIER = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-        private static Byte[] PNG_BLANK = { 0x08, 0xD7, 0x63, 0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01};
+        private static Byte[] PNG_DATA_BLANK = { 0x08, 0xD7, 0x63, 0x60, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01};
 
         /// <summary>
         /// Loads an image, checks if it is a PNG containing palette transparency, and if so, ensures it loads correctly.
@@ -84,7 +84,7 @@ namespace Nyerguds.ImageManipulation
                     }
                     loadedImage.Palette = pal;
                 }
-                return ImageUtils.CloneImage(loadedImage, null);
+                return ImageUtils.CloneImage(loadedImage);
             }
         }
 
@@ -187,8 +187,8 @@ namespace Nyerguds.ImageManipulation
             Int32 lenPng = PNG_IDENTIFIER.Length;
             const Int32 lenHdr = 0x0D;
             Int32 lenPal = Math.Min(colors.Length, 0x100) * 3;
-            Int32 lenData = PNG_BLANK.Length;
-            Int32 fullLen = lenPng + lenHdr + chunkExtraLen + lenPal + chunkExtraLen + lenData + chunkExtraLen + chunkExtraLen;
+            Int32 lenData = PNG_DATA_BLANK.Length;
+            Int32 fullLen = lenPng + lenHdr + chunkExtraLen + lenPal + chunkExtraLen + lenData + chunkExtraLen /* + lenEnd */ + chunkExtraLen;
             Int32 offset = 0;
             Byte[] emptyPng = new Byte[fullLen];
             Array.Copy(PNG_IDENTIFIER, 0, emptyPng, 0, PNG_IDENTIFIER.Length);
@@ -204,22 +204,21 @@ namespace Nyerguds.ImageManipulation
             ArrayUtils.WriteIntToByteArray(header, 9, 1, false, 3);
             WritePngChunk(emptyPng, offset, "IHDR", header);
             offset += lenHdr + chunkExtraLen;
-            // Don't even need to fill this in. We just need the size.
+            // Don't even need to fill this in. We just need the size. Still need to make it though, for the crc.
             Byte[] palette = new Byte[lenPal];
             WritePngChunk(emptyPng, offset, "PLTE", palette);
             offset += lenPal + chunkExtraLen;
-            WritePngChunk(emptyPng, offset, "IDAT", PNG_BLANK);
+            WritePngChunk(emptyPng, offset, "IDAT", PNG_DATA_BLANK);
             offset += lenData + chunkExtraLen;
             WritePngChunk(emptyPng, offset, "IEND", new Byte[0]);
+            ColorPalette pal;
             using (MemoryStream ms = new MemoryStream(emptyPng))
             using (Bitmap loadedImage = new Bitmap(ms))
-            {
-                ColorPalette pal = loadedImage.Palette;
-                // Since we just gave an empty array as palette before, let's fill it in now.
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                    pal.Entries[i] = colors[i];
-                return pal;
-            }
+                pal = loadedImage.Palette;
+            // Since we just gave an empty array as palette before, let's fill it in now.
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+                pal.Entries[i] = colors[i];
+            return pal;
         }
 
         /// <summary>

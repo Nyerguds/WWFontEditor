@@ -22,7 +22,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override String[] FileExtensions { get { return new String[] { "bin" }; } }
         public override String ShortTypeName { get { return "MKFont"; } }
         public override String ShortTypeDescription { get { return "MKFont"; } }
-        public override String LongTypeDescription { get { return "A simple 8 BPP font without header data."; } }
+        public override String LongTypeDescription { get { return "A simple 8-bpp font without header data."; } }
         public override String[] GamesListForType { get { return new String[] { "Mortal Kombat 1" }; } }
         public override Boolean CanSave { get { return false; } }
 

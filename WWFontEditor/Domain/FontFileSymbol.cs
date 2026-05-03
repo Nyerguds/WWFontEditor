@@ -22,6 +22,8 @@ namespace WWFontEditor.Domain
         public Int32 BitsPerPixel { get; private set; }
         public Byte TransparencyColor { get; private set; }
         
+        /// <summary>Creates a new symbol for the given font type.</summary>
+        /// <param name="source">Font the symbol is meant for; the symbol will adhere to the restrictions of this font.</param>
         public FontFileSymbol(FontFile source)
         {
             this.ByteData = new Byte[0];
@@ -46,7 +48,7 @@ namespace WWFontEditor.Domain
             this.TransparencyColor = source.TransparencyColor;
             this.Width = Math.Min(source.FontWidth, image.Width);
             this.Height = Math.Min(source.FontHeight, image.Height);
-            this.ByteData = new Byte[Width * Height];
+            this.ByteData = new Byte[this.Width * this.Height];
             Byte[] hiColImg;
             Int32 stride;
             Boolean hasTrans;
@@ -62,22 +64,22 @@ namespace WWFontEditor.Domain
             {
                 // Only filter out the transparency colour if the image has alpha.
                 trans = new List<Int32>();
-                trans.Add(TransparencyColor);
+                trans.Add(this.TransparencyColor);
             }
-            for (Int32 y = 0; y < Height; y++)
+            for (Int32 y = 0; y < this.Height; y++)
             {
                 Int32 inputOffs = y * stride;
-                for (Int32 x = 0; x < Width; x++)
+                for (Int32 x = 0; x < this.Width; x++)
                 {
                     Color col = Color.FromArgb(hiColImg[inputOffs + 3], hiColImg[inputOffs + 2], hiColImg[inputOffs + 1], hiColImg[inputOffs]);
                     inputOffs += 4;
                     if (hasTrans && col.A < 128)
-                        this.ByteData[y * Width + x] = TransparencyColor;
+                        this.ByteData[y * this.Width + x] = this.TransparencyColor;
                     else
-                        this.ByteData[y * Width + x] = (Byte)ColorUtils.GetClosestPaletteIndexMatch(col, palette, trans);
+                        this.ByteData[y * this.Width + x] = (Byte)ColorUtils.GetClosestPaletteIndexMatch(col, palette, trans);
                 }
             }
-            AdaptSizeToFont(this, source);
+            this.AdaptSizeToFont(this, source);
         }
 
         public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel, Byte transparencyColor)
@@ -98,7 +100,7 @@ namespace WWFontEditor.Domain
 
         public FontFileSymbol CloneFor(FontFile targetVersion, Int32 targetBpp)
         {
-            return CloneFor(targetVersion, null, targetBpp);
+            return this.CloneFor(targetVersion, null, targetBpp);
         }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
@@ -114,9 +116,9 @@ namespace WWFontEditor.Domain
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
-            Byte[] newByteData = ConvertDataToBpp(defaultValue, targetBpp);
+            Byte[] newByteData = this.ConvertDataToBpp(defaultValue, targetBpp);
             FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp, font.TransparencyColor);
-            AdaptSizeToFont(newSymbol, font);
+            this.AdaptSizeToFont(newSymbol, font);
             return newSymbol;
         }
 
@@ -149,7 +151,7 @@ namespace WWFontEditor.Domain
         {
             if (this.BitsPerPixel == targetBpp)
                 return;
-            this.ByteData = ConvertDataToBpp(defaultValue, targetBpp);
+            this.ByteData = this.ConvertDataToBpp(defaultValue, targetBpp);
             this.BitsPerPixel = targetBpp;
         }
 
@@ -210,20 +212,20 @@ namespace WWFontEditor.Domain
 
         public void PaintPixel(Int32 x, Int32 y, Byte value)
         {
-            if (x < 0 || x >= Width || y < 0 || y >= Height)
+            if (x < 0 || x >= this.Width || y < 0 || y >= this.Height)
                 return; // Ignore without error. Might accidentally occur when dragging or something I guess.
             Int32 pxf = this.BitsPerPixel;
             Int32 maxSize = 1 << pxf;
             if (maxSize <= value)
                 throw new IndexOutOfRangeException("Byte value too large for " + pxf + " bit image!");
-            this.ByteData[y * Width + x] = value;
+            this.ByteData[y * this.Width + x] = value;
         }
 
         public Byte GetPixelValue(Int32 x, Int32 y)
         {
-            if (x < 0 || x >= Width || y < 0 || y >= Height)
+            if (x < 0 || x >= this.Width || y < 0 || y >= this.Height)
                 return 0; // Ignore without error. Might accidentally occur when dragging or something I guess.
-            return this.ByteData[y * Width + x];
+            return this.ByteData[y * this.Width + x];
         }
 
         public void ChangeHeight(Int32 newHeight, Byte backColor)
@@ -236,7 +238,7 @@ namespace WWFontEditor.Domain
 
         public void ChangeWidth(Int32 newWidth, Byte backColor)
         {
-            if (Width == newWidth)
+            if (this.Width == newWidth)
                 return;
             this.ByteData = ImageUtils.ChangeStride(this.ByteData, this.Width, this.Height, newWidth, false, backColor);
             this.Width = newWidth;
@@ -251,13 +253,13 @@ namespace WWFontEditor.Domain
                 case ShiftDirection.Up:
                     if (this.Height >= maxHeight || this.YOffset <= 0)
                         return false;
-                    ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
+                    this.ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
                     this.YOffset--;
                     return false;
                 case ShiftDirection.Down:
                     if (this.Height >= maxHeight)
                         return false;
-                    ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
+                    this.ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
                     break;
                 case ShiftDirection.Left:
                     // can't expand to the left.
@@ -265,7 +267,7 @@ namespace WWFontEditor.Domain
                 case ShiftDirection.Right:
                     if (this.Width >= maxWidth)
                         return false;
-                    ChangeWidth(this.Width + 1, parentFont.TransparencyColor);
+                    this.ChangeWidth(this.Width + 1, parentFont.TransparencyColor);
                     break;
             }
             return true;
@@ -273,7 +275,7 @@ namespace WWFontEditor.Domain
 
         public void ShiftImageData(ShiftDirection direction, Boolean wrap, Byte backColor)
         {
-            if (ByteData.Length == 0)
+            if (this.ByteData.Length == 0)
                 return;
             switch (direction)
             {
@@ -304,6 +306,10 @@ namespace WWFontEditor.Domain
         
         public Boolean Equals(FontFileSymbol other)
         {
+            if (ReferenceEquals(this, other))
+                return true;
+            if (other == null)
+                return false;
             // left out bpp; it isn't really relevant since it should get set explicitly on any non-internal clone operation anyway.
             if (this.Width != other.Width || this.Height != other.Height || this.YOffset != other.YOffset)
                 return false;
@@ -323,7 +329,7 @@ namespace WWFontEditor.Domain
                 yOffsetMax = Int32.MaxValue;
             Int32 height = this.Height;
             Int32 yoffSet = this.YOffset;
-            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor, yOffsetMax, true);
+            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, this.TransparencyColor, yOffsetMax, true);
             this.Height = height;
             this.YOffset = yoffSet;
         }
@@ -338,7 +344,7 @@ namespace WWFontEditor.Domain
         {
             Int32 width = this.Width;
             Int32 xoffSet = 0;
-            this.ByteData = ImageUtils.OptimizeXWidth(this.ByteData, ref width, this.Height, ref xoffSet, alsoTrimRight, TransparencyColor, 0, true);
+            this.ByteData = ImageUtils.OptimizeXWidth(this.ByteData, ref width, this.Height, ref xoffSet, alsoTrimRight, this.TransparencyColor, 0, true);
             this.Width = width;
             return xoffSet;
         }
@@ -351,7 +357,7 @@ namespace WWFontEditor.Domain
         public void CropRightSide()
         {
             Int32 width = this.Width;
-            this.ByteData = ImageUtils.TrimXWidth(this.ByteData, ref width, this.Height, TransparencyColor);
+            this.ByteData = ImageUtils.TrimXWidth(this.ByteData, ref width, this.Height, this.TransparencyColor);
             this.Width = width;
         }
 
@@ -363,7 +369,7 @@ namespace WWFontEditor.Domain
         public void CropBottomSide()
         {
             Int32 height = this.Height;
-            this.ByteData = ImageUtils.TrimYHeight(this.ByteData, this.Width, ref height, TransparencyColor);
+            this.ByteData = ImageUtils.TrimYHeight(this.ByteData, this.Width, ref height, this.TransparencyColor);
             this.Height= height;
         }
 
@@ -374,11 +380,10 @@ namespace WWFontEditor.Domain
             Int32 newWidth = Math.Max(secondLayer.Width, firstLayer.Width);
             Int32 newHeight = Math.Max(trueClHeight, trueFcHeight);
             Byte[] newSymbolData = new Byte[newWidth * newHeight];
-            Boolean[] trans = ImageUtils.GetTransparencyGuide(transparencyGuide);
             newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, firstLayer.ByteData, firstLayer.Width, firstLayer.Height, firstLayer.Width,
                 new Rectangle(0, firstLayer.YOffset, firstLayer.Width, firstLayer.Height), null, true);
             newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, secondLayer.ByteData, secondLayer.Width, secondLayer.Height, secondLayer.Width,
-                new Rectangle(0, secondLayer.YOffset, secondLayer.Width, secondLayer.Height), trans, true);
+                new Rectangle(0, secondLayer.YOffset, secondLayer.Width, secondLayer.Height), transparencyGuide, true);
             secondLayer = new FontFileSymbol(newSymbolData, newWidth, newHeight, 0, firstLayer.BitsPerPixel, fontFile.TransparencyColor);
             if (fontFile.YOffsetTypeMax != 0)
                 secondLayer.OptimizeYHeight(fontFile.YOffsetTypeMax);

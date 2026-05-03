@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-
+using System.Linq;
 namespace Nyerguds.Util.UI
 {
     /// <summary>
@@ -50,13 +50,41 @@ namespace Nyerguds.Util.UI
         private Decimal _EnteredValue = 0;
         private Boolean _ScrollValidatesEnter = true;
         private Boolean _UpDownValidatesEnter = true;
-
+        private TextBox textBox;
 
         public EnhNumericUpDown()
         {
             this.MouseWheelIncrement = 1;
             this.KeyDown += CheckKeyPress;
-            //this.TextChanged += EnhNumericUpDown_TextChanged;
+            foreach (Control control in this.Controls)
+            {
+                if (control is TextBox)
+                {
+                    textBox = control as TextBox;
+                    break;
+                }
+            }
+        }
+        
+        /// <summary>Gets or sets the starting point of text selected in the text box.</summary>
+        public Int32 SelectionStart
+        {
+            get { return textBox.SelectionStart; }
+            set { textBox.SelectionStart = value; }
+        }
+
+        /// <summary>Gets or sets the number of characters selected in the text box.</summary>
+        public Int32 SelectionLength
+        {
+            get { return textBox.SelectionLength; }
+            set { textBox.SelectionLength = value; }
+        }
+
+        /// <summary>Gets or sets a value indicating the currently selected text in the control.</summary>
+        public String SelectedText
+        {
+            get { return textBox.SelectedText; }
+            set { textBox.SelectedText = value; }
         }
 
         protected override void OnTextChanged(EventArgs e)

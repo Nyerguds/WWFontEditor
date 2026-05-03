@@ -40,22 +40,22 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontWidth = fontWidthBytes * 8;
             this.m_FontHeight = fileData[1];
 
-            Byte[] characterWidths = new Byte[NrOfSymbols];
-            Array.Copy(fileData, 2, characterWidths, 0, NrOfSymbols);
-            if (characterWidths.Any(w => w > this.m_FontWidth))
+            Byte[] symbolWidths = new Byte[NrOfSymbols];
+            Array.Copy(fileData, 2, symbolWidths, 0, NrOfSymbols);
+            if (symbolWidths.Any(w => w > this.m_FontWidth))
                 throw new FileTypeLoadException("Character widths data exceeds maximum width.");
-            Byte[] characterYOffsets = new Byte[NrOfSymbols];
-            Array.Copy(fileData, NrOfSymbols + 2, characterYOffsets, 0, NrOfSymbols);
-            if (characterYOffsets.Any(w => w > this.m_FontHeight))
+            Byte[] symbolYOffsets = new Byte[NrOfSymbols];
+            Array.Copy(fileData, NrOfSymbols + 2, symbolYOffsets, 0, NrOfSymbols);
+            if (symbolYOffsets.Any(w => w > this.m_FontHeight))
                 throw new FileTypeLoadException("Character delta-Y exceeds maximum height.");
 
-            Byte[][] characterData = new Byte[NrOfSymbols][];
+            Byte[][] symbolData = new Byte[NrOfSymbols][];
             Int32 charSize = this.m_FontHeight * fontWidthBytes;
             for (Int32 i = 0; i < NrOfSymbols; i++)
             {
                 Byte[] charData = new Byte[charSize];
                 Array.Copy(fileData, NrOfSymbols * 2 + 2 + i * charSize, charData, 0, charSize);
-                characterData[i] = charData;
+                symbolData[i] = charData;
             }
             for (Int32 i = 0; i < StartSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
@@ -64,13 +64,13 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(characterData[i], characterWidths[i], this.m_FontHeight, 0, this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(symbolData[i], symbolWidths[i], this.m_FontHeight, 0, this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
                     throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, characterWidths[i], this.m_FontHeight, this.m_FontHeight - characterYOffsets[i], this.BitsPerPixel, this.TransparencyColor);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, symbolWidths[i], this.m_FontHeight, this.m_FontHeight - symbolYOffsets[i], this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }

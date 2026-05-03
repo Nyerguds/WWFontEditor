@@ -22,7 +22,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override String[] FileExtensions { get { return new String[] { "gda" }; } }
         public override String ShortTypeName { get { return "TranFont"; } }
         public override String ShortTypeDescription { get { return "Transylvania 1 & 2 Font"; } }
-        public override String LongTypeDescription { get { return "A simple 1 BPP font with a tiny header of seemingly fixed values."; } }
+        public override String LongTypeDescription { get { return "A simple 1-bpp font with a tiny header of seemingly fixed values."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "Transylvania",

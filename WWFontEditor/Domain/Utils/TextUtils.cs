@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WWFontEditor.Domain
+namespace Nyerguds.Util
 {
     public class TextUtils
     {
         private static readonly Byte[] asciiValues = Enumerable.Range(0, 128).Select(b => (Byte)b).ToArray();
         private static readonly String asciiChars = new String(asciiValues.Select(b => (Char)b).ToArray());
         
-        public static bool IsAsciiCompatible(Encoding encoding)
+        public static Boolean IsAsciiCompatible(Encoding encoding)
         {
             try
             {

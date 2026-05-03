@@ -217,7 +217,7 @@ KORT font
 Mythos font
 -Sherlock Holmes: The Case of Serrated Scalpel
 
-KotB font (extracted from the exe file)
+KotB font (extracted from the decompressed exe file)
 -Kings of the Beach
 
 --------------------------
@@ -268,12 +268,14 @@ Source code licenses
 Most of the code is licensed as WTFPL. Meaning, go nuts, do whatever the F you
 want to do with it.
 
-The PixelBox control is licensed under the Code Project Open License 1.02
-(CPOL 1.02), which apparently doesn't allow its use for immoral activities.
+The non-blurring pixel zoom method used in the PixelBox is based on an answer
+on StackOverflow, which means it is licensed under the Creative Commons
+Attribution-Share Alike. Any code in this project based on StackOverflow
+content has links to the original SO posts in the source code files.
 
 The IniHandler is licensed under a license I made ages ago which boils down to
 more or less the same as the WTFPL, but with code-only author attribution, and
-endorsement of use in supervillain activities. Unlike the CPOL 1.02 :P
+endorsement of use in supervillain activities.
 
 In essence, none of these licenses are restrictive in any way. Want to use this
 code in something, go ahead. I just made this font editor so it would exist.
@@ -285,7 +287,11 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 Acknowledgements
 ----------------
 
-The C&C1 and RA1 font format were figured out by Gordan Ugarkovic.
+The Westwood Font v3 was figured out by Gordan Ugarkovic.
+http://xhp.xwis.net/documents/ccfonts.txt
+
+The Dune 2000 font was analysed by Roman "Siberian GRemlin" Lotchenov.
+http://xhp.xwis.net/cgi-bin/forum.cgi?a=26;mid=11613
 
 The Dynamix v4 format was figured out thanks to code from ScummVM. ScummVM is
 licensed under the GNU General Public License, but I only used it as reference
@@ -300,6 +306,21 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.12.2: (2018/06/04 13:25)
+-Restricted the amount of symbols in Dynamix fonts v2/3/4/5/6 to 255 so fonts
+ don't save their amount of symbols as "0".
+-Enhanced the "base line" detection algorithm by finding the most commonly
+ used lowest pixel Y-position of the most commonly used colour.
+-Renamed "Dynamix font '96" to "Dynamix Space Quest V Font".
+-Added font height and index optimising save options to Space Quest V font.
+-Fixed Dune 2000 font saving to include a 0x0 entry for the space character.
+-Added index optimisation option to Dynamix v6 font.
+-Fixed new font creation to take the transparency colour into account.
+-Fixed autodetect fallback failure in Mythos VGS format.
+-Improved error handling on file load.
+-Characters below the space now show the DOS ASCII symbols. This is only
+ visual; the original data is still used when copying the character.
 
 v1.12.1: (2018/02/05 14:00)
 -Fixed bug where 16-bit indices in some Westwood and Dynamix fonts were seen

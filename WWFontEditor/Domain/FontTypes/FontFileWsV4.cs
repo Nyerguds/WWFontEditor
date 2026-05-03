@@ -15,7 +15,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 8; } }
         public override String ShortTypeName { get { return "WWFont v4"; } }
         public override String ShortTypeDescription { get { return "WWFont v4 (Tiberian Sun)"; } }
-        public override String LongTypeDescription { get { return "An 8 BPP font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset."; } }
+        public override String LongTypeDescription { get { return "An 8-bpp font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset. It is optimised by saving duplicate symbols only one time."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "Command & Conquer Tiberian Sun",

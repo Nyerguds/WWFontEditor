@@ -81,21 +81,21 @@
             this.chkWrapPreview = new System.Windows.Forms.CheckBox();
             this.lblZoomPreview = new System.Windows.Forms.Label();
             this.pnlImagePreview = new Nyerguds.Util.UI.SelectablePanel();
-            this.pxbPreview = new RedCell.UI.Controls.PixelBox();
+            this.pxbPreview = new Nyerguds.Util.UI.PixelBox();
             this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numFontWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numSymbols = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
-            this.dgrvSymbolsList = new WWFontEditor.UI.Tools.DataGridViewScrollSupport();
+            this.dgrvSymbolsList = new Nyerguds.Util.UI.DataGridViewScrollSupport();
             this.palColorSelector = new Nyerguds.Util.UI.PalettePanel();
             this.numZoomPreview = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.pnlImageScroll = new Nyerguds.Util.UI.SelectablePanel();
-            this.pxbEditGridFront = new RedCell.UI.Controls.PixelBox();
-            this.pxbImage = new RedCell.UI.Controls.PixelBox();
-            this.pxbEditGridBehind = new RedCell.UI.Controls.PixelBox();
-            this.pxbFullSize = new RedCell.UI.Controls.PixelBox();
+            this.pxbEditGridFront = new Nyerguds.Util.UI.PixelBox();
+            this.pxbImage = new Nyerguds.Util.UI.PixelBox();
+            this.pxbEditGridBehind = new Nyerguds.Util.UI.PixelBox();
+            this.pxbFullSize = new Nyerguds.Util.UI.PixelBox();
             ((System.ComponentModel.ISupportInitialize)(this.numYOffset)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
@@ -379,6 +379,9 @@
             0,
             0});
             this.numYOffset.Name = "numYOffset";
+            this.numYOffset.SelectedText = "";
+            this.numYOffset.SelectionLength = 0;
+            this.numYOffset.SelectionStart = 0;
             this.numYOffset.Size = new System.Drawing.Size(94, 20);
             this.numYOffset.TabIndex = 66;
             this.toolTip1.SetToolTip(this.numYOffset, "Change Y-offset (Ctrl+PgUp/PgDown)\r\nHold [Shift] to apply to all images");
@@ -434,6 +437,9 @@
             0,
             0});
             this.numWidth.Name = "numWidth";
+            this.numWidth.SelectedText = "";
+            this.numWidth.SelectionLength = 0;
+            this.numWidth.SelectionStart = 0;
             this.numWidth.Size = new System.Drawing.Size(94, 20);
             this.numWidth.TabIndex = 62;
             this.numWidth.ValueChanged += new System.EventHandler(this.NumWidth_ValueChanged);
@@ -453,6 +459,9 @@
             0,
             0});
             this.numHeight.Name = "numHeight";
+            this.numHeight.SelectedText = "";
+            this.numHeight.SelectionLength = 0;
+            this.numHeight.SelectionStart = 0;
             this.numHeight.Size = new System.Drawing.Size(94, 20);
             this.numHeight.TabIndex = 64;
             this.numHeight.ValueChanged += new System.EventHandler(this.NumHeight_ValueChanged);
@@ -752,6 +761,9 @@
             0});
             this.numFontHeight.MouseWheelIncrement = 0;
             this.numFontHeight.Name = "numFontHeight";
+            this.numFontHeight.SelectedText = "";
+            this.numFontHeight.SelectionLength = 0;
+            this.numFontHeight.SelectionStart = 0;
             this.numFontHeight.Size = new System.Drawing.Size(40, 20);
             this.numFontHeight.TabIndex = 7;
             this.numFontHeight.ValueChanged += new System.EventHandler(this.NumFontHeight_ValueChanged);
@@ -772,6 +784,9 @@
             0});
             this.numFontWidth.MouseWheelIncrement = 0;
             this.numFontWidth.Name = "numFontWidth";
+            this.numFontWidth.SelectedText = "";
+            this.numFontWidth.SelectionLength = 0;
+            this.numFontWidth.SelectionStart = 0;
             this.numFontWidth.Size = new System.Drawing.Size(40, 20);
             this.numFontWidth.TabIndex = 5;
             this.numFontWidth.ValueChanged += new System.EventHandler(this.NumFontWidth_ValueChanged);
@@ -792,6 +807,9 @@
             0});
             this.numSymbols.MouseWheelIncrement = 0;
             this.numSymbols.Name = "numSymbols";
+            this.numSymbols.SelectedText = "";
+            this.numSymbols.SelectionLength = 0;
+            this.numSymbols.SelectionStart = 0;
             this.numSymbols.Size = new System.Drawing.Size(128, 20);
             this.numSymbols.TabIndex = 3;
             this.numSymbols.ValueChanged += new System.EventHandler(this.NumSymbols_ValueChanged);
@@ -877,6 +895,9 @@
             0,
             0});
             this.numZoomPreview.Name = "numZoomPreview";
+            this.numZoomPreview.SelectedText = "";
+            this.numZoomPreview.SelectionLength = 0;
+            this.numZoomPreview.SelectionStart = 0;
             this.numZoomPreview.Size = new System.Drawing.Size(51, 20);
             this.numZoomPreview.TabIndex = 123;
             this.numZoomPreview.Value = new decimal(new int[] {
@@ -901,6 +922,9 @@
             0,
             0});
             this.numZoom.Name = "numZoom";
+            this.numZoom.SelectedText = "";
+            this.numZoom.SelectionLength = 0;
+            this.numZoom.SelectionStart = 0;
             this.numZoom.Size = new System.Drawing.Size(51, 20);
             this.numZoom.TabIndex = 42;
             this.numZoom.Value = new decimal(new int[] {
@@ -1070,10 +1094,10 @@
         private System.Windows.Forms.Label lblSymbolWidth;
         private System.Windows.Forms.Label lblSymbolHeight;
         private System.Windows.Forms.Label lblSymbolYOffset;
-        private RedCell.UI.Controls.PixelBox pxbFullSize;
-        private RedCell.UI.Controls.PixelBox pxbEditGridBehind;
-        private RedCell.UI.Controls.PixelBox pxbImage;
-        private RedCell.UI.Controls.PixelBox pxbEditGridFront;
+        private Nyerguds.Util.UI.PixelBox pxbFullSize;
+        private Nyerguds.Util.UI.PixelBox pxbEditGridBehind;
+        private Nyerguds.Util.UI.PixelBox pxbImage;
+        private Nyerguds.Util.UI.PixelBox pxbEditGridFront;
         private System.Windows.Forms.Label lblPaintColor1;
         private Nyerguds.Util.UI.PalettePanel palColorSelector;
         private System.Windows.Forms.Label lblPaintColor2;
@@ -1081,7 +1105,7 @@
         private Nyerguds.Util.UI.ImageButtonCheckBox chkGrid;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkOutline;
         private Nyerguds.Util.UI.EnhNumericUpDown numYOffset;
-        private WWFontEditor.UI.Tools.DataGridViewScrollSupport dgrvSymbolsList;
+        private Nyerguds.Util.UI.DataGridViewScrollSupport dgrvSymbolsList;
         private Nyerguds.Util.UI.ComboBoxSmartWidth cmbEncodings;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.MenuStrip menuStrip1;
@@ -1116,7 +1140,7 @@
         private System.Windows.Forms.Button btnResetPalette;
         private System.Windows.Forms.ToolStripMenuItem tsmiEditorSettings;
         private System.Windows.Forms.TextBox txtPreview;
-        private RedCell.UI.Controls.PixelBox pxbPreview;
+        private Nyerguds.Util.UI.PixelBox pxbPreview;
         private System.Windows.Forms.Button btnRemap;
         private System.Windows.Forms.Button btnValType;
         private System.Windows.Forms.ToolStripMenuItem tsmiManagePalettes;

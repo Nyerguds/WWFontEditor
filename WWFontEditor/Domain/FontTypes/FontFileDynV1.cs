@@ -7,7 +7,7 @@ using System.Text;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// 1bpp Dynamix font format without header.
+    /// 1-bpp Dynamix font format without header.
     /// </summary>
     public abstract class FontFileDynV1 : FontFile
     {
@@ -22,11 +22,11 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 1; } }
         public override Boolean CustomSymbolWidthsForType { get { return false; } }
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
-        public override String LongTypeDescription { get { return "An 8-pixel wide, 96-symbol, 1 BPP font, which is saved as " + this.InternalBpp + "bpp, but with 0 and " + this.MaxValue.ToString("X") + " as only used value. Doesn't have any kind of file header."; } }
+        public override String LongTypeDescription { get { return "An 8-pixel wide, 96-symbol, 1-bpp font, which is saved as " + this.InternalBpp + "bpp, but with 0x0 and 0x" + this.MaxValue.ToString("X") + " as only used values. Doesn't have any kind of file header."; } }
 
         public abstract Int32 InternalBpp { get; }
         protected Byte MaxValue { get { return (Byte)((1 << this.InternalBpp) - 1); } }
-        
+
         public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length == 0 || fileData.Length % (this.InternalBpp * 0x60) != 0)
@@ -37,21 +37,21 @@ namespace WWFontEditor.Domain.FontTypes
             Byte nrOfSymbols = 0x60;
             // fill in dummy symbols. Will need to be trimmed on save.
             for (Int32 i = 0; i < startSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight *this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            Int32 symbolsize = this.m_FontHeight *this.InternalBpp;
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight * this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
+            Int32 symbolsize = this.m_FontHeight * this.InternalBpp;
+            // Caching to avoid unnecessary calls and calculations
+            Byte maxVal = this.MaxValue;
             for (Int32 i = 0; i < nrOfSymbols; i++)
             {
                 Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, this.m_FontWidth, this.m_FontHeight, symbolsize * i, this.InternalBpp, true);
                 for (Int32 b = 0; b < curData8bit.Length; b++)
                 {
                     Byte val = curData8bit[b];
-                    if (val != 0)
-                    {
-                        if (val != this.MaxValue)
-                            throw new FileTypeLoadException(this.ShortTypeDescription + " only accepts 0 and " + this.MaxValue + " as values");
-                        else
-                            curData8bit[b] = 1;
-                    }
+                    if (val == 0)
+                        continue;
+                    if (val != maxVal)
+                        throw new FileTypeLoadException(this.ShortTypeDescription + " only accepts 0 and " + maxVal + " as values");
+                    curData8bit[b] = 1;
                 }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
@@ -61,13 +61,15 @@ namespace WWFontEditor.Domain.FontTypes
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Byte[][] imageData = new Byte[0x60][];
+            // Caching to avoid unnecessary calls and calculations
+            Byte maxVal = this.MaxValue;
             for (Int32 i = 0; i < 0x60; i++)
             {
                 Byte[] eightBitData = this.m_ImageDataList[i + 0x20].ByteData;
                 for (Int32 b = 0; b < eightBitData.Length; b++)
                 {
                     if (eightBitData[b] != 0)
-                        eightBitData[b] = this.MaxValue;
+                        eightBitData[b] = maxVal;
                 }
                 imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.InternalBpp, true);
             }

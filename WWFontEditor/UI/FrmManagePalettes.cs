@@ -12,7 +12,7 @@ using Nyerguds.ImageManipulation;
 using Nyerguds.Ini;
 using Nyerguds.Util.UI;
 using WWFontEditor.Domain;
-using WWFontEditor.UI.Wrappers;
+using Nyerguds.Util.UI.Wrappers;
 
 namespace WWFontEditor.UI
 {

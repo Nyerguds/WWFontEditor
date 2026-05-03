@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace WWFontEditor.UI.Tools
+namespace Nyerguds.Util.UI
 {
     public class EnhRichTextBox : RichTextBox
     {

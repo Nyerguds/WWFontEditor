@@ -55,7 +55,7 @@
     <Compile Include="Domain\FontTypes\FontFileMythos.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV6.cs" />
     <Compile Include="Domain\FontTypes\FontFileTran.cs" />
-    <Compile Include="Domain\FontTypes\FontFileDyn96.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynSQ5.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV1.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV3.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV5.cs" />
@@ -65,7 +65,6 @@
     <Compile Include="Domain\FontTypes\FontFileMK.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV2.cs" />
     <Compile Include="Domain\Utils\ClipboardImage.cs" />
-    <Compile Include="Domain\Utils\ClipboardImageNoTools.cs" />
     <Compile Include="Domain\Utils\Crc32.cs" />
     <Compile Include="Domain\Utils\ImageUtils\BitmapHandler.cs" />
     <Compile Include="Domain\Utils\ImageUtils\ColorHSL.cs" />

@@ -3,13 +3,13 @@ using System.Windows.Forms;
 
 namespace Nyerguds.Util.Ui
 {
-    public abstract class CustomControlInfo<T, U> where T : Control
+    public abstract class CustomControlInfo<TControl, TInfoObject> where TControl : Control
     {
         public String Name { get; set; }
         public String ClassName { get; set; }
-        public U[] Properties { get; set; }
+        public TInfoObject[] Properties { get; set; }
 
-        public abstract T MakeControl(U property, ListedControlController<U> controller);
+        public abstract TControl MakeControl(TInfoObject property, ListedControlController<TInfoObject> controller);
 
         public override String ToString()
         {

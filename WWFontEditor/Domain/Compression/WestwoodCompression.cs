@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 // Disabled for now. Check the project properties for this file, and set them back to "Compile" to enable.
-namespace Compression
+namespace Nyerguds.GameData.Westwood
 {
     public class WestwoodCompression
     {

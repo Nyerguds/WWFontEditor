@@ -31,7 +31,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Boolean CustomSymbolHeightsForType { get { return true; } }
         public override String ShortTypeName { get { return "MythFont"; } }
         public override String ShortTypeDescription { get { return "Mythos Software font"; } }
-        public override String LongTypeDescription { get { return "An 8bpp font with Y-offset support, where FF is used for transparency, and which starts from the first character after the space. The font data does not contain spacing size between the symbols, does not contain the space, and skips symbol #127."; } }
+        public override String LongTypeDescription { get { return "An 8-bpp font with Y-offset support, where FF is used for transparency, and which starts from the first character after the space. The font data does not contain spacing size between the symbols, does not contain the space, and skips symbol #127."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "The Lost Files of Sherlock Holmes: The Case of Serrated Scalpel",
@@ -55,7 +55,7 @@ namespace WWFontEditor.Domain.FontTypes
 
             this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Read data
-            while (offset < fileData.Length)
+            while (offset + 4 < fileData.Length)
             {
                 // Dummy symbol after 126
                 if (this.m_ImageDataList.Count == 127)
@@ -81,13 +81,15 @@ namespace WWFontEditor.Domain.FontTypes
                     if (comprByte != 1)
                         throw new FileTypeLoadException("Unknown compression type: " + comprByte);
                     skipLen = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset, 2, true) - 8;
+                    if (skipLen < 0)
+                        throw new FileTypeLoadException("Bad compressed size in header.");
                 }
                 else
                 {
                     skipLen = dataLen;
                 }
                 if (fileData.Length < offset + skipLen)
-                    throw new FileTypeLoadException("header references offset outside file data.");
+                    throw new FileTypeLoadException("Header references offset outside file data.");
 
                 if (compressed)
                 {

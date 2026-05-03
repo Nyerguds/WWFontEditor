@@ -7,7 +7,7 @@ using Nyerguds.Util;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Main 4bpp Westwood Studios font format
+    /// Main 4-bpp Westwood Studios font format
     /// </summary>
     public class FontFileWsV3 : FontFile
     {
@@ -19,7 +19,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 4; } }
         public override String ShortTypeName { get { return "WWFont v3"; } }
         public override String ShortTypeDescription { get { return "WWFont v3 (D2/C&C1/RA1/LoL/Kyr)"; } }
-        public override String LongTypeDescription { get { return "A 4 BPP font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset."; } }
+        public override String LongTypeDescription { get { return "A 4-bpp font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset. It is optimised by saving duplicate symbols only one time."; } }
         public override String[] GamesListForType
         {
             get
@@ -59,8 +59,8 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            Int32 fileSize = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
-            if (fileSize != fileLength)
+            Int32 fileLSizeHeader = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
+            if (fileLSizeHeader != fileLength)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             Byte dataFormat = fileData[0x02];
             //Byte unknown03 = fileData[0x03];
@@ -78,8 +78,9 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 if (!forV4)
                     throw new FileTypeLoadException("Load type identifies as v4.");
-                // Byte 0x11 is not filled in on TS fonts, so instead, calculate it from the header offsets.
-                Int32[] headerVals = new Int32[] { fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset }.OrderBy(n => n).Take(2).ToArray();
+                // "last symbol" byte 0x11 is not filled in on TS fonts, so instead, calculate it from the header offsets. Sort by offset and take the lowest two.
+                Int32[] headerVals = new Int32[] {fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset}.OrderBy(n => n).Take(2).ToArray();
+                // The difference between these two, divided by the item length in that particular list, is the amount of symbols.
                 Int32 divval = 1;
                 if (headerVals[0] == fontDataOffsetsListOffset || headerVals[0] == heightsListOffset)
                     divval = 2;
@@ -89,7 +90,7 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 if (forV4)
                     throw new FileTypeLoadException("Load type identifies as v3.");
-                length = fileData[0x11] +1;
+                length = fileData[0x11] + 1; // "last symbol" byte, so actual amount is this value + 1.
             }
             else
                 throw new FileTypeLoadException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
@@ -98,7 +99,7 @@ namespace WWFontEditor.Domain.FontTypes
             if (fontDataOffsetsListOffset + length * 2 > fileLength)
                 throw new FileTypeLoadException("File data too short for offsets list!");
             if (widthsListOffset + length > fileLength)
-                throw new FileTypeLoadException("File data too short for symbol widths list starting from offset !");
+                throw new FileTypeLoadException("File data too short for symbol widths list starting from offset!");
             if (heightsListOffset + length * 2 > fileLength)
                 throw new FileTypeLoadException("File data too short for symbol heights list!");
 
@@ -137,9 +138,9 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength, false);
                 }
-                catch (IndexOutOfRangeException)
+                catch (IndexOutOfRangeException ex)
                 {
-                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
+                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i), ex);
                 }
                 FontFileSymbol fc = new FontFileSymbol(data8Bit, width, height, yOffsetsList[i], bitsLength, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
@@ -185,6 +186,8 @@ namespace WWFontEditor.Domain.FontTypes
             if (!forV4)
                 heightsListOffset = fontOffset;
             Int32 fullLength = !forV4 ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
+            if (fullLength > UInt16.MaxValue)
+                throw new OverflowException("The full font data size exceeds the maximum of " + UInt16.MaxValue + " bytes supported for " + ShortTypeName + ".");
             Byte[] fullData = new Byte[fullLength];
 
             // write header

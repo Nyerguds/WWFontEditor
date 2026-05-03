@@ -320,10 +320,14 @@ namespace Nyerguds.Util
                 Int32 headerSize = (Int32)ArrayUtils.ReadIntFromByteArray(dibBytes, 0, 4, true);
                 // Only supporting 124-byte DIBV5 in this.
                 // If it fails, try the other type ;)
-                if (headerSize == 40)
-                    return ImageFromClipboardDib(dibBytes);
-                if (headerSize != 0x7C)
+                Int32 dibHeaderSize = Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+                Int32 dib5HeaderSize = Marshal.SizeOf(typeof(BITMAPV5HEADER));
+                if (headerSize != dib5HeaderSize)
+                {
+                    if (headerSize == dibHeaderSize)
+                        return ImageFromClipboardDib(dibBytes);
                     return null;
+                }
                 Byte[] header = new Byte[headerSize];
                 Array.Copy(dibBytes, header, headerSize);
                 BITMAPV5HEADER dibHdr = StructFromByteArray<BITMAPV5HEADER>(header);
@@ -335,46 +339,6 @@ namespace Nyerguds.Util
                 Int32 height = dibHdr.bV5Height;
                 Int32 bitCount = dibHdr.bV5BitCount;
                 PixelFormat fmt = PixelFormat.Undefined;
-                switch (bitCount)
-                {
-                    case 32:
-                        if (dibHdr.bV5Compression == BITMAPCOMPRESSION.BI_BITFIELDS)
-                        {
-                            if (dibHdr.bV5RedMask == 0x00FF0000 && dibHdr.bV5GreenMask == 0x0000FF00 && dibHdr.bV5BlueMask == 0x000000FF)
-                            {
-                                if (dibHdr.bV5AlphaMask == 0x00000000)
-                                    fmt = PixelFormat.Format32bppRgb;
-                                else if (dibHdr.bV5AlphaMask == 0xFF000000)
-                                    fmt = PixelFormat.Format32bppArgb;
-                            }
-                        }
-                        else
-                            fmt = PixelFormat.Format32bppRgb;
-                        break;
-                    case 24:
-                        fmt = PixelFormat.Format24bppRgb;
-                        break;
-                    case 16:
-                        if (dibHdr.bV5Compression == BITMAPCOMPRESSION.BI_BITFIELDS)
-                        {
-                            if (dibHdr.bV5RedMask == 0x7C00 && dibHdr.bV5GreenMask == 0x03E0 && dibHdr.bV5BlueMask == 0x01F)
-                            {
-                                if (dibHdr.bV5AlphaMask == 0x0000)
-                                    fmt = PixelFormat.Format16bppRgb555;
-                                else if (dibHdr.bV5AlphaMask == 0x8000)
-                                    fmt = PixelFormat.Format16bppArgb1555;
-                            }
-                            else if (dibHdr.bV5RedMask == 0xF800 && dibHdr.bV5GreenMask == 0x07E0 && dibHdr.bV5BlueMask == 0x01F)
-                                fmt = PixelFormat.Format16bppRgb565;
-                        }
-                        else
-                            fmt = PixelFormat.Format16bppRgb555;
-                        break;
-                    default:
-                        return null;
-                }
-                if (fmt == PixelFormat.Undefined)
-                    return null;
                 Int32 dataLen = dibBytes.Length - imageIndex;
                 // Detect BI_BITFIELDS idiocy applied to DIB5. No, I'm not even kidding... Chrome does this.
                 if (dibHdr.bV5Compression == BITMAPCOMPRESSION.BI_BITFIELDS
@@ -391,6 +355,55 @@ namespace Nyerguds.Util
                 Byte[] image = new Byte[dataLen];
                 Array.Copy(dibBytes, imageIndex, image, 0, image.Length);
                 Int32 stride = ImageUtils.GetClassicStride(width, bitCount);
+                if (fmt == PixelFormat.Undefined)
+                {
+                    switch (bitCount)
+                    {
+                        case 32:
+                            if (dibHdr.bV5Compression == BITMAPCOMPRESSION.BI_BITFIELDS)
+                            {
+                                fmt = dibHdr.bV5AlphaMask == 0 ? PixelFormat.Format32bppRgb : PixelFormat.Format32bppArgb;
+                                if (dibHdr.bV5RedMask != 0x00FF0000 || dibHdr.bV5GreenMask != 0x0000FF00 || dibHdr.bV5BlueMask != 0x000000FF)
+                                {
+                                    // Any kind of custom format can be handled here.
+                                    PixelFormatter pf = new PixelFormatter(2, dibHdr.bV5RedMask, dibHdr.bV5GreenMask, dibHdr.bV5BlueMask, dibHdr.bV5AlphaMask, true);
+                                    ImageUtils.ReorderBits(image, width, height, ref stride, PixelFormatter.Format32BitArgb, pf);
+                                }
+                            }
+                            else
+                                fmt = PixelFormat.Format32bppRgb;
+                            break;
+                        case 24:
+                            fmt = PixelFormat.Format24bppRgb;
+                            break;
+                        case 16:
+                            if (dibHdr.bV5Compression == BITMAPCOMPRESSION.BI_BITFIELDS)
+                            {
+                                if (dibHdr.bV5RedMask == 0x7C00 && dibHdr.bV5GreenMask == 0x03E0 && dibHdr.bV5BlueMask == 0x01F)
+                                {
+                                    if (dibHdr.bV5AlphaMask == 0x0000)
+                                        fmt = PixelFormat.Format16bppRgb555;
+                                    else if (dibHdr.bV5AlphaMask == 0x8000)
+                                        fmt = PixelFormat.Format16bppArgb1555;
+                                }
+                                else if (dibHdr.bV5RedMask == 0xF800 && dibHdr.bV5GreenMask == 0x07E0 && dibHdr.bV5BlueMask == 0x01F)
+                                    fmt = PixelFormat.Format16bppRgb565;
+                            }
+                            else
+                            {
+                                // Any kind of custom format can be handled here.
+                                fmt = PixelFormat.Format16bppArgb1555;
+                                //UInt32 alphaMask = 0xFFFF & ~(dibHdr.bV5RedMask | dibHdr.bV5GreenMask | dibHdr.bV5BlueMask);
+                                PixelFormatter pf = new PixelFormatter(2, dibHdr.bV5RedMask, dibHdr.bV5GreenMask, dibHdr.bV5BlueMask, dibHdr.bV5AlphaMask, true);
+                                ImageUtils.ReorderBits(image, width, height, ref stride, PixelFormatter.Format16BitArgb1555, pf);
+                            }
+                            break;
+                        default:
+                            return null;
+                    }
+                }
+                if (fmt == PixelFormat.Undefined)
+                    return null;
                 Bitmap bitmap = ImageUtils.BuildImage(image, width, height, stride, fmt, null, null);
                 // This is bmp; reverse image lines.
                 bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
@@ -409,12 +422,16 @@ namespace Nyerguds.Util
             try
             {
                 Int32 headerSize = (Int32)ArrayUtils.ReadIntFromByteArray(dibBytes, 0, 4, true);
-                if (headerSize == 0x7C)
-                    return ImageFromClipboardDib5(dibBytes);
-                if (headerSize != 40)
+                Int32 dibHeaderSize = Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+                Int32 dib5HeaderSize = Marshal.SizeOf(typeof(BITMAPV5HEADER));
+                if (headerSize != dibHeaderSize)
+                {
+                    if (headerSize == dib5HeaderSize)
+                        return ImageFromClipboardDib5(dibBytes);
                     return null;
-                Byte[] header = new Byte[40];
-                Array.Copy(dibBytes, header, 40);
+                }
+                Byte[] header = new Byte[headerSize];
+                Array.Copy(dibBytes, header, headerSize);
                 BITMAPINFOHEADER dibHdr = StructFromByteArray<BITMAPINFOHEADER>(header);
                 // Not dealing with non-standard formats
                 if (dibHdr.biPlanes != 1 || (dibHdr.biCompression != BITMAPCOMPRESSION.BI_RGB && dibHdr.biCompression != BITMAPCOMPRESSION.BI_BITFIELDS))
@@ -467,29 +484,25 @@ namespace Nyerguds.Util
                             break;
                         }
                     }
-                    if (fmt != PixelFormat.Format32bppPArgb)
+                    if (fmt != PixelFormat.Format32bppPArgb && bitCount == 16 || bitCount == 32)
                     {
                         // Reformat bytes.
-                        PixelFormatter pf = new PixelFormatter((Byte)(bitCount / 8), redMask, greenMask, blueMask, 0);
-                        PixelFormatter pf32Argb = PixelFormatter.Format32BitArgb;
-                        Int32 strideArgb = ImageUtils.GetClassicStride(width, 32);
-                        Byte[] imageArgb = new Byte[height * strideArgb];
-                        Int32 srcbytesPerPixel = bitCount / 8;
-                        for (Int32 y = 0; y < height; y++)
+                        UInt32 alphaMask = (UInt32)Math.Min(UInt32.MaxValue, 1 << bitCount - 1) & ~(redMask | greenMask | blueMask);
+                        PixelFormatter pf = new PixelFormatter((Byte)(bitCount / 8), redMask, greenMask, blueMask, alphaMask, true);
+                        PixelFormatter pfTarget;
+                        if (bitCount == 16)
                         {
-                            Int32 offs = y * stride;
-                            Int32 offs32 = y * strideArgb;
-                            for (Int32 x = 0; x < width; x++)
-                            {
-                                Color c = pf.GetColor(image, offs);
-                                pf32Argb.WriteColor(imageArgb, offs32, c);
-                                offs += srcbytesPerPixel;
-                                offs32 += 4;
-                            }
+                            pfTarget = PixelFormatter.Format16BitArgb1555;
+                            if (alphaMask != 0)
+                                fmt = PixelFormat.Format16bppArgb1555;
                         }
-                        image = imageArgb;
-                        fmt = PixelFormat.Format32bppArgb;
-                        stride = strideArgb;
+                        else
+                        {
+                            pfTarget = PixelFormatter.Format32BitArgb;
+                            if (alphaMask != 0)
+                                fmt = PixelFormat.Format32bppArgb;
+                        }
+                        ImageUtils.ReorderBits(image, width, height, ref stride, pf, pfTarget);
                     }
                 }
                 Bitmap bitmap = ImageUtils.BuildImage(image, width, height, stride, fmt, null, null);

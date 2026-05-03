@@ -1,19 +1,13 @@
-﻿// ===========================================================================
-// This control is licensed under the Code Project Open License (CPOL) 1.02.
-// See https://www.codeproject.com/info/cpol10.aspx for more info.
-// Code taken from https://www.codeproject.com/articles/717312/pixelbox
-// Written by Yvan Rodrigues, 28 Jan 2014.
-// ===========================================================================
-
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace RedCell.UI.Controls
+namespace Nyerguds.Util.UI
 {
     /// <summary>
-    /// A PictureBox with configurable interpolation mode.
+    /// A PictureBox with configurable interpolation mode. Based on
+    /// https://stackoverflow.com/a/13484101/395685
     /// </summary>
     public class PixelBox : PictureBox
     {
@@ -46,8 +40,11 @@ namespace RedCell.UI.Controls
         protected override void OnPaint (PaintEventArgs pe)
         {
             pe.Graphics.InterpolationMode = this.InterpolationMode;
-            // docs on this are wrong; putting it to Half PREVENTS it from shifting the whole thing up and to the left by half a (zoomed) pixel.
-            pe.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
+            // The docs on this are wrong; if the interpolation mode is NearestNeighbor, putting it on
+            // Half makes it NOT shift the whole thing up and to the left by half a (zoomed) pixel.
+            // I'm frankly baffled they didn't just make this an automatic part of the interpolation modes.
+            if (this.InterpolationMode == InterpolationMode.NearestNeighbor)
+                pe.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
             base.OnPaint(pe);
         }
         #endregion

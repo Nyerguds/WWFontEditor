@@ -13,7 +13,7 @@ using Nyerguds.Util.UI;
 using Nyerguds.Util.Ui.SaveOptions;
 using WWFontEditor.Domain;
 using WWFontEditor.Domain.FontTypes;
-using WWFontEditor.UI.Wrappers;
+using Nyerguds.Util.UI.Wrappers;
 
 namespace WWFontEditor.UI
 {
@@ -22,12 +22,14 @@ namespace WWFontEditor.UI
         private const Int32 PALETTE_MAX_DIM = 162;
         private const String PROG_NAME = "Westwood Font Editor";
         private const String PROG_AUTHOR = "Created by Nyerguds";
+        private const String ASCII_CONVERT = " ☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼";
         private const String QUESTION_RESETFONT = "This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?";
         private const String QUESTION_REVERTSYMBOL = "This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?";
         private const String QUESTION_SAVEFILE_OPENNEW = "The font has unsaved changes!\n\nDo you want to save the changes to the current font?";
         private const String QUESTION_SAVEFILE_CLOSE = "The font has unsaved changes!\n\nDo you want to save the changes to the font?";
         private const String ABOUTTEXT = "Program icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26\n\nPalette manager design assisted by Moon Flower";
         private const String NEWFONTNAME = "newfont.";
+        private const String UNHANDLED_EXCEPTION_MESSAGE = "Unhandled exception. Please copy this message to the clipboard using Ctrl+C and send it to the development team.\n\n";
 
         private Boolean m_Loading;
         private Boolean m_Clicking;
@@ -99,7 +101,7 @@ namespace WWFontEditor.UI
                 allPalettesForBpp.Add(new PaletteDropDownInfo("Rainbow", 4, GetDummyPalette(), null, -1, false, false));
             this.cmbPalettes.DataSource = allPalettesForBpp;
 
-            // PixelBox hierarchy init            
+            // PixelBox hierarchy init
             this.pxbEditGridBehind.Parent = this.pxbFullSize;
             this.pxbEditGridBehind.BackColor = Color.Transparent;
             this.pxbEditGridBehind.Location = new Point(0, 0);
@@ -147,7 +149,7 @@ namespace WWFontEditor.UI
 
         private List<D2KEncoding> ScanForD2KEncodings()
         {
-            Regex codePageRegex = new Regex("^FONT(\\d+)\\.BIN$");
+            Regex codePageRegex = new Regex("^FONT_?(\\d+).*?\\.BIN$");
             String appFolder = Path.GetDirectoryName(Application.ExecutablePath);
             FileInfo[] files = new DirectoryInfo(appFolder).GetFiles("FONT*.BIN");
             List<D2KEncoding> d2kEncodings = new List<D2KEncoding>();
@@ -204,43 +206,53 @@ namespace WWFontEditor.UI
             this.m_Loading = true;
             try
             {
-                this.m_FileName = path;
                 String error = null;
+                Byte[] data = null;
                 try
                 {
-                    this.m_LoadedFont = null;
-                    Byte[] data = File.ReadAllBytes(path);
-                    if (fontFile != null)
-                    {
-                        try
-                        {
-                            fontFile.LoadFont(data);
-                            this.m_LoadedFont = fontFile;
-                        }
-                        catch (FileTypeLoadException e)
-                        {
-                            this.m_LoadedFont = null;
-                            error = "Could not load font file as " + fontFile.ShortTypeDescription + ":\n\n" + e.Message;
-                        }
-                    }
-                    else
-                    {
-                        List<FileTypeLoadException> loadErrors;
-                        this.m_LoadedFont = FontFile.LoadFontFile(path, data, out loadErrors);
-                        if (this.m_LoadedFont == null)
-                        {
-                            String errors = String.Join("\n", loadErrors.Select(er => er.AttemptedLoadedType + ": " + er.Message).ToArray());
-                            MessageBox.Show(this, "Font type could not be identified. Errors returned by all attempts:\n\n" + errors, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                    }
+                    data = File.ReadAllBytes(path);
+                }
+                catch (IOException ex)
+                {
+                    error = ex.Message;
                 }
                 catch (Exception ex)
                 {
-                    error = ex.Message;
-                    this.m_LoadedFont = null;
+                    error = UNHANDLED_EXCEPTION_MESSAGE + ex.GetType() + ": " + ex.Message + "\n\n" + ex.StackTrace;
                 }
-                this.FinishLoading(error, false);
+                if (error == null && data != null)
+                {
+                    if (fontFile != null)
+                    {
+                        try { fontFile.LoadFont(data); }
+                        catch (FileTypeLoadException ftle) { error = ftle.Message; }
+                        catch (Exception ex) { error = UNHANDLED_EXCEPTION_MESSAGE + ex.GetType() + ": " + ex.Message + "\n\n" + ex.StackTrace; }
+                        if (error != null)
+                            error = "Could not load font file as " + fontFile.ShortTypeDescription + ":\n\n" + error;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            List<FileTypeLoadException> loadErrors;
+                            fontFile = FontFile.LoadFontFile(path, data, out loadErrors);
+                            if (fontFile == null)
+                                error = "Font type could not be identified. Errors returned by all attempts:\n\n" + String.Join("\n", loadErrors.Select(er => er.AttemptedLoadedType + ": " + er.Message).ToArray());
+                        }
+                        catch (Exception ex)
+                        {
+                            error = UNHANDLED_EXCEPTION_MESSAGE + ex.GetType() + ": " + ex.Message + "\n\n" + ex.StackTrace;
+                        }
+                    }
+                }
+                if (error != null)
+                {
+                    MessageBox.Show(this, "Font loading failed: " + error, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                this.m_LoadedFont = fontFile;
+                this.m_FileName = path;
+                this.FinishLoading(false);
             }
             finally
             {
@@ -248,14 +260,14 @@ namespace WWFontEditor.UI
             }
         }
 
-        private void FinishLoading(String previousError, Boolean isNew)
+        private void FinishLoading(Boolean isNew)
         {
             this.m_LoadedFontBackup = this.m_LoadedFont == null || isNew ? null : this.m_LoadedFont.Clone();
             if (this.m_LoadedFont != null && this.m_LoadedFont.BitsPerPixel > this.GetEditBpp(this.m_LoadedFont))
                 this.AdjustFontSymbolsBpp(this.m_LoadedFont);
             Boolean loadOk = this.ReloadUi(true);
             if (!loadOk)
-                MessageBox.Show(this, "Font loading failed" + (previousError == null ? "." : ": " + previousError), GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Font loading failed!", GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private Boolean ReloadUi(Boolean newFontLoaded)
@@ -487,7 +499,7 @@ namespace WWFontEditor.UI
                     DataRow row = symbolsTable.NewRow();
                     row[0] = "0x" + i.ToString("X2");
                     row[1] = i;
-                    row[2] = enc.GetString(new Byte[] { (Byte)i });
+                    row[2] = i < 0x20 ? ASCII_CONVERT[i].ToString() : enc.GetString(new Byte[] { (Byte)i });
                     Bitmap bm = symbol.GetBitmapFullSize(palette, this.m_LoadedFont, false);
                     row[3] = bm;
                     symbolsTable.Rows.Add(row);
@@ -860,7 +872,7 @@ namespace WWFontEditor.UI
             Int32 picX = mouseX / (Int32)this.numZoom.Value;
             Int32 picY = mouseY / (Int32)this.numZoom.Value;
             // Optimize by aborting immediately if location is unchanged
-            Boolean inBounds = picX >= 0 && picX < gridFront.Width && picY >= 0 && picY < gridFront.Height;
+            Boolean inBounds = mouseX >= 0 && picX < gridFront.Width && mouseY >= 0 && picY < gridFront.Height;
             Boolean hasntMoved = this.m_LastHoverPixelX == picX && this.m_LastHoverPixelY == picY;
             Boolean isLeftClick = (pressedbuttons & MouseButtons.Left) != 0;
             Boolean isRightClick = (pressedbuttons & MouseButtons.Right) != 0;
@@ -1134,18 +1146,21 @@ namespace WWFontEditor.UI
                 return;
             FontFile targetFontFile = fontConvertDialog.TargetFontFile;
             sourceFontFile.CloneInto(targetFontFile, 0, this.GetEditBpp(targetFontFile));
+            if (targetFontFile.TransparencyColor != sourceFontFile.TransparencyColor)
+                foreach (FontFileSymbol ffs in targetFontFile.GetAllSymbols())
+                    ffs.ReplaceColor(sourceFontFile.TransparencyColor, targetFontFile.TransparencyColor);
             this.OptimizeFontWidths(targetFontFile, false);
             FontFileSymbol space = targetFontFile.GetSymbol(0x20);
             if (space != null)
             {
                 if (targetFontFile.CustomSymbolWidthsForType)
                     space.ChangeWidth(5,targetFontFile.TransparencyColor);
-                if (targetFontFile.YOffsetTypeMax > 0 && targetFontFile.YOffsetTypeMax <= 6)
-                    space.YOffset = 6;
+                if (targetFontFile.YOffsetTypeMax >= targetFontFile.FontHeight)
+                    space.YOffset = targetFontFile.FontHeight;
             }
             this.m_LoadedFont = targetFontFile;
             this.m_FileName = null;
-            this.FinishLoading(null, true);
+            this.FinishLoading(true);
         }
 
         private void TsmiOpenFont_Click(Object sender, EventArgs e)
@@ -1391,8 +1406,10 @@ namespace WWFontEditor.UI
             while (control is IContainerControl)
             {
                 control = ((IContainerControl)control).ActiveControl;
-                if (control is TextBox || control is DataGridView)
+                if (control is TextBox || control is DataGridView || control is NumericUpDown)
+                {
                     return;
+                }
             }
             ShiftDirection sd;
             Boolean yShift = false;
@@ -1431,6 +1448,7 @@ namespace WWFontEditor.UI
                 this.ShiftCurrentImage(sd, processAll, e.Alt);
             }
         }
+
         protected override void OnKeyUp(KeyEventArgs e)
         {
             if ((ModifierKeys & Keys.Control) == 0)
@@ -1439,19 +1457,35 @@ namespace WWFontEditor.UI
 
         protected override Boolean ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            // override of menu shortcuts to allow copying and pasting text in the preview text field.
+            // override of menu shortcuts to allow copying and pasting text in the preview text field and numeric up/down controls.
             Boolean isCtrlC = keyData == (Keys.Control | Keys.C);
             Boolean isCtrlV = keyData == (Keys.Control | Keys.V);
-            TextBox tb = this.ActiveControl as TextBox;
-            if (tb == null || (!isCtrlC && !isCtrlV))
+            if (!isCtrlC && !isCtrlV)
                 return base.ProcessCmdKey(ref msg, keyData);
-            if (isCtrlC)
+            TextBox tb = this.ActiveControl as TextBox;
+            EnhNumericUpDown num = this.ActiveControl as EnhNumericUpDown;
+            if (tb == null && num == null)
+                return base.ProcessCmdKey(ref msg, keyData);
+            if (tb == null)
             {
-                if (!String.IsNullOrEmpty(tb.SelectedText))
-                    Clipboard.SetText(tb.SelectedText);
-            }                    
+                if (isCtrlC)
+                {
+                    if (!String.IsNullOrEmpty(num.SelectedText))
+                        Clipboard.SetText(num.SelectedText);
+                }
+                else
+                    num.SelectedText = Clipboard.GetText();
+            }
             else
-                tb.SelectedText = Clipboard.GetText();
+            {
+                if (isCtrlC)
+                {
+                    if (!String.IsNullOrEmpty(tb.SelectedText))
+                        Clipboard.SetText(tb.SelectedText);
+                }
+                else
+                    tb.SelectedText = Clipboard.GetText();
+            }
             return true;
         }
 
@@ -1471,14 +1505,19 @@ namespace WWFontEditor.UI
             using (Bitmap image = ffs.GetBitmapFullSize(this.m_CurrentPalette, this.m_LoadedFont, true))
             {
                 // As text character
-                data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - this.m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
+                Int32 index = (Int32)this.dgrvSymbolsList.Rows[curIndex - this.m_LoadedFont.SymbolsTypeFirst].Cells[1].Value;
+                // Reconvert from encoding to compensate for 0x00-0x20 ASCII substitution.
+                Encoding enc = ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
+                String str = enc.GetString(new Byte[] {(Byte) index});
+                data.SetData(DataFormats.Text, str);
+                //data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - this.m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
                 // As Font Editor object
                 data.SetData(typeof(FontFileSymbol), ffs.Clone());
                 // if one of the symbol dimensions is 0, the image will be null. In that case, don't copy it to the clipboard.
                 if (image != null)
                     ClipboardImage.SetClipboardImage(image, imageNoTr, data);
                 else
-                    Clipboard.SetDataObject(data);
+                    Clipboard.SetDataObject(data, true);
             }
         }
 
@@ -1680,18 +1719,44 @@ namespace WWFontEditor.UI
             if (font == null || !font.CustomSymbolWidthsForType)
                 return;
             FontFileSymbol[] symbols = font.GetAllSymbols();
+            //Saves the number of symbols encountered for each trim amount.
+            Dictionary<Int32, Int32> trimValueAmounts = new Dictionary<Int32, Int32>();
+            Int32 totalTrimmed = 0;
+            FontFileSymbol space = null;
             for (Int32 i = 0; i < symbols.Length; i++)
             {
+                FontFileSymbol symbol = symbols[i];
                 // Skip space.
                 if (i == 0x20)
+                {
+                    space = symbol;
                     continue;
-                FontFileSymbol symbol = symbols[i];
+                }
+                Int32 initialWidth = symbol.Width;
                 if (alsoTrimLeft)
                     symbol.OptimizeXWidth(true);
                 else
                     symbol.CropRightSide();
                 if (symbol.Width > 0 && symbol.Width < font.FontWidth && font.FontTypePaddingRight == 0)
                     symbol.ChangeWidth(symbol.Width + 1, font.TransparencyColor);
+                // only count 'normal' characters, which contain data.
+                if (initialWidth > 0 && i > 0x20)
+                {
+                    Int32 diff = initialWidth - symbol.Width;
+                    if (trimValueAmounts.ContainsKey(diff))
+                        trimValueAmounts[diff] = trimValueAmounts[diff] + 1;
+                    else trimValueAmounts.Add(diff, 1);
+                    totalTrimmed++;
+                }
+            }
+            if (trimValueAmounts.Keys.Count > 0)
+            {
+                Int32 maxTrimmed = trimValueAmounts.Values.Max();
+                Double percentage = (Double)maxTrimmed / (Double)totalTrimmed;
+                Int32 trimmed = trimValueAmounts.FirstOrDefault(x => x.Value == maxTrimmed).Key;
+                // only adjust space if at least 90% of the trimmed normal-range characters had the same amount trimmed off.
+                if (percentage > 0.90d && space.Width > trimmed)
+                    space.ChangeWidth(space.Width - trimmed, 0);
             }
         }
 
@@ -1971,8 +2036,8 @@ namespace WWFontEditor.UI
             Color[] noTransPal = this.m_CurrentPalette.ToArray();
             if (noTransPal.Length > this.m_LoadedFont.TransparencyColor)
                 noTransPal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(255, noTransPal[this.m_LoadedFont.TransparencyColor]);
-            using (Bitmap prevNoTrans = this.GeneratePreview(0, false))
-            using (Bitmap prevTrans = this.GeneratePreview(0, asTransparent))
+            using (Bitmap prevNoTrans = this.GeneratePreview(this.chkWrapPreview.Checked ? 0 : -1, false))
+            using (Bitmap prevTrans = this.GeneratePreview(this.chkWrapPreview.Checked ? 0 : -1, asTransparent))
                 ClipboardImage.SetClipboardImage(prevTrans, prevNoTrans, null);
         }
 

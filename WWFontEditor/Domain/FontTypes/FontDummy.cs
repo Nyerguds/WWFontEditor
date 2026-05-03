@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -28,7 +26,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Boolean CustomSymbolHeightsForType { get { return true; } }
         public override String ShortTypeName { get { return "DummyFont"; } }
         public override String ShortTypeDescription { get { return "Dummy font for creating new fonts"; } }
-        public override String LongTypeDescription { get { return "This is anot a real font type. It is a basic initialisation designed to be as universal as possible for converting to other types."; } }
+        public override String LongTypeDescription { get { return "This is not a real font type. It is a basic initialisation designed to be as universal as possible for converting to other types."; } }
         public override String[] GamesListForType { get { return new String[0]; } }
         /// <summary>Supported types can always be loaded, but this indicates if save functionality to this type is also available.</summary>
         public override Boolean CanSave { get { return false; } }
@@ -37,9 +35,8 @@ namespace WWFontEditor.Domain.FontTypes
         {
             this.m_FontWidth = 8;
             this.m_FontHeight = 8;
-            // Byte data inside a FontFileSymbol gets copied anyway so we only need to define this array once.
+            // Byte data inside a FontFileSymbol gets copied, so we only need to define this array once.
             Byte[] byteData = new Byte[this.m_FontWidth * this.m_FontHeight];
-            // There should be a check on fail conditions here, but the file itself doesn't match an exact multiple of 8*15 bytes.
             for (Int32 i = 0; i < 0x80; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(byteData, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
         }
@@ -49,7 +46,7 @@ namespace WWFontEditor.Domain.FontTypes
             throw new NotSupportedException();
         }
 
-        public override Byte[] SaveFont(Nyerguds.Util.SaveOption[] saveOptions)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             throw new NotSupportedException();
         }

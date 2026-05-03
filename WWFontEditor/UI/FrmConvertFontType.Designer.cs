@@ -37,7 +37,7 @@
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.lblNote = new System.Windows.Forms.Label();
-            this.rtbGamesList = new WWFontEditor.UI.Tools.EnhRichTextBox();
+            this.rtbGamesList = new Nyerguds.Util.UI.EnhRichTextBox();
             this.SuspendLayout();
             // 
             // cmbTypes
@@ -190,6 +190,6 @@
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label lblNote;
-        private WWFontEditor.UI.Tools.EnhRichTextBox rtbGamesList;
+        private Nyerguds.Util.UI.EnhRichTextBox rtbGamesList;
     }
 }
