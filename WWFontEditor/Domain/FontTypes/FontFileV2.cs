@@ -26,7 +26,7 @@ namespace WWFontEditor.Domain.FontTypes
             "Eye of the Beholder III Character Generator"
         }; } }
 
-        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
+        public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length < 0x104)
                 throw new LoadFailedException(ERR_NOHEADER);

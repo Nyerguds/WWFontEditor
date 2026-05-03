@@ -24,7 +24,7 @@ namespace RedCell.UI.Controls
         public PixelBox ()
         {
             // Set default.
-            InterpolationMode = InterpolationMode.Default;
+            InterpolationMode = InterpolationMode.NearestNeighbor;
         }
         #endregion
 
@@ -34,7 +34,7 @@ namespace RedCell.UI.Controls
         /// </summary>
         /// <value>The interpolation mode.</value>
         [Category("Behavior")]
-        [DefaultValue(InterpolationMode.Default)]
+        [DefaultValue(InterpolationMode.NearestNeighbor)]
         public InterpolationMode InterpolationMode { get; set; }
         #endregion
 
@@ -45,7 +45,7 @@ namespace RedCell.UI.Controls
         /// <param name="pe">A <see cref="T:System.Windows.Forms.PaintEventArgs"/> that contains the event data. </param>
         protected override void OnPaint (PaintEventArgs pe)
         {
-            pe.Graphics.InterpolationMode = InterpolationMode;
+            pe.Graphics.InterpolationMode = this.InterpolationMode;
             // docs on this are wrong; putting it to Half PREVENTS it from shifting the whole thing up and to the left by half a (zoomed) pixel.
             pe.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
             base.OnPaint(pe);

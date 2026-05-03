@@ -47,7 +47,7 @@
             this.btnShiftRight = new System.Windows.Forms.Button();
             this.btnShiftUp = new System.Windows.Forms.Button();
             this.btnRemap = new System.Windows.Forms.Button();
-            this.cmbEncodings = new System.Windows.Forms.ComboBox();
+            this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -63,7 +63,7 @@
             this.editorSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cmbPalettes = new System.Windows.Forms.ComboBox();
+            this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.btnSavePalette = new System.Windows.Forms.Button();
             this.btnResetPalette = new System.Windows.Forms.Button();
             this.txtPreview = new System.Windows.Forms.TextBox();
@@ -952,7 +952,7 @@
         private Nyerguds.Util.UI.ImageButtonCheckBox chkOutline;
         private Nyerguds.Util.UI.EnhNumericUpDown numYOffset;
         private WWFontEditor.UI.Tools.DataGridViewScrollSupport dgrvSymbolsList;
-        private System.Windows.Forms.ComboBox cmbEncodings;
+        private Nyerguds.Util.UI.ComboBoxSmartWidth cmbEncodings;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
@@ -981,7 +981,7 @@
         private Nyerguds.Util.UI.ImageButtonCheckBox chkPaint;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkPicker;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkShiftWrap;
-        private System.Windows.Forms.ComboBox cmbPalettes;
+        private Nyerguds.Util.UI.ComboBoxSmartWidth cmbPalettes;
         private System.Windows.Forms.Button btnSavePalette;
         private System.Windows.Forms.Button btnResetPalette;
         private System.Windows.Forms.ToolStripMenuItem editorSettingsToolStripMenuItem;

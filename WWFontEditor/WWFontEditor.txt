@@ -1,6 +1,6 @@
-﻿=========================
-Westwood Font Editor v1.5
-========================= Created by Nyerguds
+﻿====================
+Westwood Font Editor
+==================== Created by Nyerguds
 
 This editor can read and write paletted fonts of pretty much every Westwood
 game ever released, plus Dune 2000, which is technically not made by Westwood.
@@ -20,17 +20,18 @@ Table of Contents
 > Full list of supported types / games
 > Note on Dune 2000 support
 > Special thanks to
+> Source code licenses
 > Version history
 
 
--------------
+--------------
 Features list
 -------------
 
 * Can edit fonts from pretty much all pre-RA2 Westwood games (see full list).
 * Fonts can be converted to other font types.
-* Character sizes can be adjusted (if the font type supports it).
-* New characters can be added (if the font type supports it).
+* Symbol sizes can be adjusted (if the font type supports it).
+* New symbols can be added (if the font type supports it).
 * Symbol images can be shifted up/down/left/right.
 * Ctrl + arrow keys act as as shortcuts for symbol shifting.
 * Holding Shift while doing a symbol shift will shift all symbols in the font.
@@ -160,9 +161,33 @@ Special thanks to
  Westwood games, and for his tireless nagging.
 
 
+--------------------
+Source code licenses
+--------------------
+
+Most of the code is licensed as WTFPL. Meaning, go nuts, do whatever the F you
+want to do with it.
+
+The PixelBox control is licensed under the Code Project Open License 1.02
+(CPOL 1.02), which apparently doesn't allow its use for immoral activities.
+
+The IniHandler is licensed under a license I made ages ago which boils down to
+more or less the same as the WTFPL, but with code-only author attribution, and
+endorsement of use in supervillain activities. Unlike the CPOL 1.02 :P
+
+In essence, none of these licenses are restrictive in any way. Want to use this
+code in something, go ahead. I just made this font editor so it would exist.
+
+Just, do please adhere to Wheaton's Law: don't be a dick :)
+
 ---------------
 Version history
 ---------------
+
+v1.5.3:
+-Added code page numbers to encodings dropdown, and put 437 with DOS encodings.
+-WWFont v3 and v4 will now do automatic height and Y-offset optimization.
+-Fixed Dune 2000 text encoding handling so it can accept custom FONT.BIN files.
 
 v1.5.2:
 -Improved "save as" logic with font type selection.

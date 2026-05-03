@@ -61,13 +61,17 @@ namespace WWFontEditor.Domain
         /// <param name="fileData">The file data to read the font from.</param>
         /// <param name="fromAutoDetect">From autodetect; means stricter failure conditions. Always fail if not detected as exactly this type.</param>
         /// <returns>False if the font was not identified as this type.</returns>
-        public abstract void LoadFont(Byte[] fileData, Boolean fromAutoDetect);
+        public abstract void LoadFont(Byte[] fileData);
 
         /// <summary>
         /// Saves the font data to a byte array and returns it.
         /// </summary>
         /// <returns>The font data to be written to disk.</returns>
         public abstract Byte[] SaveFont();
+
+        // any actions to be taken after conversion to this type. Free to override by subclasses.
+        protected virtual void PostConvertCleanup() { }
+
         #endregion
 
         #region General functions and properties
@@ -125,8 +129,6 @@ namespace WWFontEditor.Domain
         {
             typeof (FontFileV4),
             typeof (FontFileV3),
-            // disabled for now; there's not much use to it anyway. Just a single header byte difference which the games themselves probably don't even check.
-            //typeof (FontFileV3_1),
             typeof (FontFileV2),
             // V1's "check" is file size only; leave it at the end.
             typeof (FontFileV1),
@@ -161,7 +163,7 @@ namespace WWFontEditor.Domain
                     continue;
                 try
                 {
-                    fontInstance.LoadFont(fileData, true);
+                    fontInstance.LoadFont(fileData);
                     return fontInstance;
                 }
                 catch (LoadFailedException e)
@@ -171,6 +173,17 @@ namespace WWFontEditor.Domain
                 }
             }
             return null;
+        }
+
+        public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
+        {
+            if (this.BitsPerPixel <= bitsPerPixel)
+                return false;
+            Int32 colValLimit = (Int32)Math.Pow(2, bitsPerPixel);
+            foreach (FontFileSymbol ffs in m_ImageDataList)
+                if (ffs.HasTooHighDataFor(bitsPerPixel))
+                    return true;
+            return false;
         }
 
         /// <summary>
@@ -212,8 +225,8 @@ namespace WWFontEditor.Domain
             {
                 newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor));
             }
+            newFont.PostConvertCleanup();
         }
-
         public void RestorePicFromBackup(Int32 index, FontFile backup)
         {
             if (index < 0 || backup.Length <= index || this.Length <= index)
@@ -361,7 +374,7 @@ namespace WWFontEditor.Domain
 
         #region V3 / V4 loading and saving
 
-        protected void LoadV3V4Font(Byte[] fileData, FontFileVersion checkType, Boolean doV3Checks)
+        protected void LoadV3V4Font(Byte[] fileData, Boolean forV4)
         {
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
@@ -387,7 +400,7 @@ namespace WWFontEditor.Domain
             Boolean isV4 = dataFormat == 0x02;
             if (isV4)
             {
-                if (checkType != FontFileVersion.WW_V4)
+                if (!forV4)
                     throw new LoadFailedException("Load type identifies as v4.");
                 // isn't in the header? Calculate.
                 Int32[] headerVals = new Int32[] {fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset}.OrderBy(n => n).Take(2).ToArray();
@@ -398,22 +411,8 @@ namespace WWFontEditor.Domain
             }
             else if (dataFormat == 0x00)
             {
-                if (checkType == FontFileVersion.WW_V4)
-                    throw new LoadFailedException("Load type identifies as v4.");
-                if (doV3Checks)
-                {
-                    if (unknown0E == 0x1011)
-                    {
-                        if (checkType != FontFileVersion.WW_V3_1)
-                            throw new LoadFailedException("Load identifies as v3.1.");
-                    }
-                    else if (unknown0E == 0x1012)
-                    {
-                        if (checkType != FontFileVersion.WW_V3)
-                            throw new LoadFailedException("Load identifies as v3.");
-                    }
-                    // else... just let it pass. It'll come out as 3.2.
-                }
+                if (forV4)
+                    throw new LoadFailedException("Load type identifies as v3.");
                 length++;
             }
             else
@@ -461,10 +460,12 @@ namespace WWFontEditor.Domain
             }
         }
                 
-        protected Byte[] SaveV3V4Font(FontFileVersion fontver)
+        protected Byte[] SaveV3V4Font(Boolean forV4)
         {
+            // Y-optimization.
+            foreach (FontFileSymbol ffs in m_ImageDataList)
+                ffs.OptimizeYHeight();
             Int32 imagesCount = this.m_ImageDataList.Count;
-            Boolean isTibSun = fontver == FontFileVersion.WW_V4;
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
             Byte[] heightsList = new Byte[imagesCount * 2];
@@ -473,9 +474,9 @@ namespace WWFontEditor.Domain
             Int32 widthsListOffset = offsetsListOffset + imagesCount * 2;
             Int32 heightsListOffset = 0;
             // V3 (TS) has its Y/height list before the image data.
-            if (isTibSun)
+            if (forV4)
                 heightsListOffset = widthsListOffset + +imagesCount;
-            Int32 fontOffsetStart = (!isTibSun) ? widthsListOffset + imagesCount : heightsListOffset + imagesCount * 2;
+            Int32 fontOffsetStart = (!forV4) ? widthsListOffset + imagesCount : heightsListOffset + imagesCount * 2;
             Int32 bitsLength = this.BitsPerPixel;
             for (Int32 i = 0; i < imagesCount; i++)
             {
@@ -492,36 +493,27 @@ namespace WWFontEditor.Domain
                 heightsList[i * 2] = (Byte)fc.YOffset;
                 heightsList[i * 2 + 1] = imgHeight;
             }
-            Int32 fontOffset = isTibSun ? 0 : fontOffsetStart;
+            Int32 fontOffset = forV4 ? 0 : fontOffsetStart;
             Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, ref fontOffset);
             // V2 (C&C) has its Y/height list before the image data.
-            if (!isTibSun)
+            if (!forV4)
                 heightsListOffset = fontOffset;
-            Int32 fullLength = !isTibSun ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
+            Int32 fullLength = !forV4 ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
             Byte[] fullData = new Byte[fullLength];
-
-            Byte unknown03 = (Byte)(isTibSun ? 0 : 5);
-            Int16 unknown0E;
-            if (fontver == FontFileVersion.WW_V3_1)
-                unknown0E = 0x1011;
-            else if (fontver == FontFileVersion.WW_V3)
-                unknown0E = 0x1012;
-            else // V3
-                unknown0E = 0;
-
+            
             // write header
             ArrayUtils.SetLEShortInByteArray(fullData, 0, (Int16)fullLength);
-            fullData[0x02] = (Byte)(isTibSun ? 0x02 : 0x00);    // Byte DataFormat
-            fullData[0x03] = unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
+            fullData[0x02] = (Byte)(forV4 ? 0x02 : 0x00);       // Byte DataFormat
+            fullData[0x03] = (Byte)(forV4 ? 0 : 5);             // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
             fullData[0x04] = 0x0e;                              // Int16 Unknown04, low byte; (always 0x0e)
             fullData[0x05] = 0x00;                              // Int16 Unknown04, high byte; (always 0x00)
             ArrayUtils.SetLEShortInByteArray(fullData, 0x06, (Int16)offsetsListOffset);
             ArrayUtils.SetLEShortInByteArray(fullData, 0x08, (Int16)widthsListOffset);
             ArrayUtils.SetLEShortInByteArray(fullData, 0x0A, (Int16)fontOffsetStart);
             ArrayUtils.SetLEShortInByteArray(fullData, 0x0C, (Int16)heightsListOffset);
-            ArrayUtils.SetLEShortInByteArray(fullData, 0x0E, (Int16)unknown0E);
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x0E, (Int16)(forV4 ? 0 : 0x1012));
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
-            fullData[0x11] = (Byte)(isTibSun ? 0 : imagesCount - 1);  // Byte LastSymbolIndex (for non-TS)
+            fullData[0x11] = (Byte)(forV4 ? 0 : imagesCount - 1);  // Byte LastSymbolIndex (for non-TS)
             fullData[0x12] = (Byte)m_FontHeight;                // Byte FontHeight
             fullData[0x13] = (Byte)m_FontWidth;                 // Byte FontWidth
             Array.Copy(fontDataOffsetsList, 0, fullData, offsetsListOffset, fontDataOffsetsList.Length);
@@ -675,20 +667,6 @@ namespace WWFontEditor.Domain
             return dataXbit;
         }
         #endregion
-
-        /// <summary>
-        /// Basic FontFile contains the reading and writing implementation of V3 and V4 because they are similar,
-        /// and the originally supported type. This enum distinguishes between them inside common operations.
-        /// </summary>
-        protected enum FontFileVersion
-        {
-            /// <summary>Legend of Kyrandia</summary>
-            WW_V3_1,
-            /// <summary>Dune II, Lands of Lore, Command & Conquer, Red Alert, etc.</summary>
-            WW_V3,
-            /// <summary>Tiberian Sun</summary>
-            WW_V4,
-        }
 
         public Boolean Equals(FontFile other)
         {

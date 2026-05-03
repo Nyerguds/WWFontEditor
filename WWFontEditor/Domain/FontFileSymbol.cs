@@ -19,8 +19,7 @@ namespace WWFontEditor.Domain
         public Int32 Height { get; set; }
         public Int32 YOffset { get; set; }
         public Int32 BitsPerPixel { get; private set; }
-
-
+        
         public FontFileSymbol(Int32 bitsPerPixel)
         {
             this.ByteData = new Byte[0];
@@ -60,6 +59,15 @@ namespace WWFontEditor.Domain
         public FontFileSymbol CloneFor(FontFile targetVersion)
         {
             return CloneFor(targetVersion, null);
+        }
+
+        public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
+        {
+            // shouldn't. Let's assume that's implemented correctly ;)
+            if (this.BitsPerPixel <= bitsPerPixel)
+                return false;
+            Int32 colValLimit = (Int32)Math.Pow(2, bitsPerPixel);
+            return this.ByteData.Any(x => x >= colValLimit);
         }
 
         public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue)
@@ -282,6 +290,37 @@ namespace WWFontEditor.Domain
             if (this.Width != other.Width || this.Height != other.Height || this.YOffset != other.YOffset)
                 return false;
             return this.ByteData.SequenceEqual(other.ByteData);
+        }
+
+        /// <summary>
+        /// Crop the image in Y-dimension and adjust the Y offset instead.
+        /// This can not be performed on fonts that don't support Y-offset!
+        /// </summary>
+        public void OptimizeYHeight()
+        {
+            Int32 addedY = 0;
+            Int32 cutHeightBottom = 0;
+            Byte[] tempArray = new Byte[Width];
+            for (Int32 y = 0; y < Height; y ++)
+            {
+                Array.Copy(ByteData, Width * y, tempArray, 0, Width);
+                if (tempArray.All(x => x == 0))
+                    addedY++;
+                else
+                    break;
+            }
+            for (Int32 y = Height - 1; y >= this.YOffset + addedY; y--)
+            {
+                Array.Copy(ByteData, Width * y, tempArray, 0, Width);
+                if (tempArray.All(x => x == 0))
+                    cutHeightBottom++;
+                else
+                    break;
+            }
+            for (Int32 i = 0; i < addedY; i++)
+                this.ShiftImageData(ShiftDirection.Up, false);
+            this.ChangeHeight(this.Height - addedY - cutHeightBottom);
+            this.YOffset += addedY;
         }
     }
 

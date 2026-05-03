@@ -75,7 +75,6 @@
     <Compile Include="Domain\FontTypes\FontFileV1.cs" />
     <Compile Include="Domain\FontTypes\FontFileV4.cs" />
     <Compile Include="Domain\FontTypes\FontFileV2.cs" />
-    <Compile Include="Domain\FontTypes\FontFileV3_1.cs" />
     <Compile Include="Domain\FontTypes\FontFileV3.cs" />
     <Compile Include="Domain\GeneralUtils.cs" />
     <Compile Include="Domain\ImageUtils.cs" />
@@ -128,6 +127,9 @@
     <Compile Include="UI\Tools\FrmPalette.designer.cs">
       <DependentUpon>FrmPalette.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\Tools\ComboBoxSmartWidth.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\Tools\PalettePanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -140,6 +142,9 @@
     <Compile Include="UI\Tools\SelectablePanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="UI\Wrappers\EncodingDropDownInfo.cs" />
+    <Compile Include="UI\Wrappers\FontFileDialogItem.cs" />
+    <Compile Include="UI\Wrappers\PaletteDropDownInfo.cs" />
     <EmbeddedResource Include="UI\FrmReplaceColor.resx">
       <DependentUpon>FrmReplaceColor.cs</DependentUpon>
     </EmbeddedResource>
@@ -192,11 +197,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="license.txt" />
-    <Content Include="Research\d2kfontspecs.txt" />
-    <Content Include="Research\fnt_format_info.txt" />
-    <Content Include="Research\HWorks64_2016-12-10_00-13-25.png" />
-    <Content Include="Research\HWorks64_2016-12-10_00-13-28.png" />
-    <Content Include="Research\td-font-pals.txt" />
     <Content Include="Resources\icon_colorchange.png" />
     <Content Include="Resources\icon_colpicker.png" />
     <Content Include="Resources\icon_copy.png" />

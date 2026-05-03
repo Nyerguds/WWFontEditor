@@ -30,7 +30,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         protected const Int32 m_FontSize = 0x400;
 
-        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
+        public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length != m_FontSize)
                 throw new LoadFailedException("File size is not " + m_FontSize + " bytes.");

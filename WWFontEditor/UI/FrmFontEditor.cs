@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using WWFontEditor.UI;
 using Nyerguds.Ini;
+using WWFontEditor.UI.Wrappers;
 
 namespace WWFontEditor
 {
@@ -177,7 +178,7 @@ namespace WWFontEditor
                 String ext = Path.GetExtension(path);
                 if (".fnt".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    if (!testUnsavedConfirm(QUESTION_OPENNEWFONT))
+                    if (AbortForUnsavedChanges(QUESTION_OPENNEWFONT))
                         return;
                     LoadFontFile(path, null);
                 }
@@ -199,7 +200,7 @@ namespace WWFontEditor
                     {
                         try
                         {
-                            fontFile.LoadFont(data, false);
+                            fontFile.LoadFont(data);
                             m_LoadedFont = fontFile;
                         }
                         catch (LoadFailedException e)
@@ -524,6 +525,7 @@ namespace WWFontEditor
                 this.m_FileName = fileName;
                 this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.revertSymbolToolStripMenuItem.Enabled = false;
+                ReloadUIWithSelection();
                 return true;
             }
             catch (Exception e)
@@ -957,7 +959,7 @@ namespace WWFontEditor
 
         private void OpenFontToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!testUnsavedConfirm(QUESTION_OPENNEWFONT))
+            if (AbortForUnsavedChanges(QUESTION_OPENNEWFONT))
                 return;
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Multiselect = false;
@@ -1190,7 +1192,7 @@ namespace WWFontEditor
                 return;
             Boolean canrevert = this.AdjustRevertButton();
             // if there are unsaved changes, or the image is new and not empty, ask specifically
-            if (!CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.ByteData.Length > 0))
+            if (!CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.Width > 0 && fc.Height > 0))
             {
                 DialogResult dr = MessageBox.Show("This will completely overwrite the current symbol.\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
@@ -1281,7 +1283,7 @@ namespace WWFontEditor
         {
             if (this.m_LoadedFont == null)
                 return;
-            if (!testUnsavedConfirm(QUESTION_RESETFONT))
+            if (AbortForUnsavedChanges(QUESTION_RESETFONT))
                 return;
             this.m_LoadedFont = this.m_LoadedFontBackup.Clone();
             ReloadUIWithSelection();
@@ -1534,21 +1536,7 @@ namespace WWFontEditor
                 targetFontFile = fontConvertDialog.TargetFontFile;
             }
             Byte replaceIndex = 0;
-            Boolean tooHigh = sourceFontFile.BitsPerPixel > targetFontFile.BitsPerPixel;
-            if (tooHigh)
-            {
-                tooHigh = false;
-                Int32 colValLimit = (Int32)Math.Pow(2, targetFontFile.BitsPerPixel);
-                foreach (FontFileSymbol ffs in m_LoadedFont.GetAllSymbols())
-                {
-                    if (ffs.ByteData.Any(x => x >= colValLimit))
-                    {
-                        tooHigh = true;
-                        break;
-                    }
-                }
-            }
-            if (tooHigh)
+            if (sourceFontFile.HasTooHighDataFor(targetFontFile.BitsPerPixel))
             {
                 FrmConvertToLowerBpp convertPopup = new FrmConvertToLowerBpp(false, targetFontFile.BitsPerPixel, this.m_CurrentPalette);
                 convertPopup.StartPosition = FormStartPosition.CenterParent;
@@ -1596,131 +1584,22 @@ namespace WWFontEditor
 
         private void FrmFontEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
-            e.Cancel = !testUnsavedConfirm(QUESTION_EXITPROGRAM);
+            e.Cancel = AbortForUnsavedChanges(QUESTION_EXITPROGRAM);
         }
 
-        private Boolean testUnsavedConfirm(String question)
+        /// <summary>
+        /// Checks if there are unsaved changes, and returns whether the current action should be aborted because of that.
+        /// </summary>
+        /// <param name="question">Message to give as question in case there are unsaved changes.</param>
+        /// <returns>True if the action should be aborted.</returns>
+        private Boolean AbortForUnsavedChanges(String question)
         {
             if (this.m_LoadedFont == null || this.m_LoadedFontBackup == null)
-                return true;
+                return false;
             if (this.m_LoadedFont.Equals(m_LoadedFontBackup))
-                return true;
+                return false;
             DialogResult res = MessageBox.Show(this, question, m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            return res == System.Windows.Forms.DialogResult.Yes;
-        }
-
-    }
-
-    public class EncodingDropDownInfo
-    {
-        protected static readonly Regex regex_replacename = new Regex(@"^(.+)\s*\((.+)\)$");
-        public Encoding Encoding { get; private set; }
-
-        public EncodingDropDownInfo(Encoding enc)
-        {
-            this.Encoding = enc;
-        }
-
-        public override String ToString()
-        {
-            return regex_replacename.Replace(this.Encoding.EncodingName, "$2 - $1");
-        }
-    }
-    
-    public class PaletteDropDownInfo
-    {
-        public String Name { get; private set; }
-        public Color[] Colors { get; private set; }
-        public Color[] ColorBackup { get; private set; }
-        public Int32 BitsPerPixel { get; private set; }
-        public String SourceFile { get; private set; }
-        public Int32 Entry{ get; private set; }
-
-        public PaletteDropDownInfo(String name, Int32 bpp, Color[] colors, String sourceFile, Int32 entry)
-        {
-            this.Name = name;
-            this.BitsPerPixel = bpp;
-            Int32 expectedcolors = (Int32)Math.Pow(2, bpp);
-            Color[] palette = new Color[expectedcolors];
-            Int32 copiedColors = Math.Min(colors.Length, expectedcolors);
-            Array.Copy(colors, palette, copiedColors);
-            for (Int32 i = copiedColors; i < expectedcolors; i++)
-                palette[i] = Color.Black;
-            this.Colors = palette;
-            this.ColorBackup = palette.ToArray();
-            this.SourceFile = sourceFile;
-            this.Entry = entry;
-        }
-
-
-        public Boolean IsChanged()
-        {
-            return !this.ColorBackup.SequenceEqual(this.Colors);
-        }
-
-        public void Revert()
-        {
-            Array.Copy(this.ColorBackup, this.Colors, this.Colors.Length);
-        }
-
-        public void ClearRevert()
-        {
-            Array.Copy(this.Colors, this.ColorBackup, this.Colors.Length);
-        }
-
-        public override String ToString()
-        {
-            return Name;
-        }
-    }
-
-    public class FontFileDialogItem
-    {
-        public String Extension { get; private set; }
-        public String Filter { get { return "*." + Extension;} }
-        public String Description { get; private set; }
-        public String FullDescription
-        {
-            get { return String.Format("{0} (*.{1})", this.Description, this.Extension); }
-        }
-
-        public FontFile FontTypeObject { get { return (FontFile)Activator.CreateInstance(FontType); } }
-        public Type FontType { get; private set; }
-
-        public FontFileDialogItem(Type fonttype)
-        {
-            if (!fonttype.IsSubclassOf(typeof(FontFile)))
-                throw new ArgumentException("Entries in autoDetectTypes list must all be FontFile classes!", "fonttype");
-            FontType = fonttype;
-            // Will immediately throw an exception if the type cannot be instantiated.
-            Description = FontTypeObject.ShortTypeDescription;
-            this.Extension = FontTypeObject.FileExtension;
-        }
-
-        public override String ToString()
-        {
-            return FontTypeObject.ShortTypeDescription;
-        }
-
-        public static String GetFileFilter(FontFileDialogItem[] fontTypes, Boolean forOpen)
-        {
-            String[] types = new String[fontTypes.Length + (forOpen? 2 : 0)];
-            HashSet<String> allTypes = forOpen ? new HashSet<String>() : null;
-            for (Int32 i = 0; i < fontTypes.Length; i++)
-            {
-                FontFileDialogItem fontType = fontTypes[i];
-                types[i + (forOpen? 1 : 0)] = String.Format("{0} ({1})|{1}", fontType.Description, fontType.Filter);
-                if (forOpen)
-                    allTypes.Add(fontType.Filter);
-            }
-            if (forOpen)
-            {
-                allTypes.Add("*.fnt");
-                String allTypesStr = String.Join(";", allTypes.ToArray());
-                types[0] = "All supported fonts (" + allTypesStr + ")|" + allTypesStr;
-                types[fontTypes.Length + 1] = "All files (*.*)|*.*";
-            }
-            return String.Join("|", types);
+            return res != System.Windows.Forms.DialogResult.Yes;
         }
 
     }

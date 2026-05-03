@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using WWFontEditor.Domain;
+using WWFontEditor.UI.Wrappers;
 
 namespace WWFontEditor.UI
 {
@@ -43,21 +44,10 @@ namespace WWFontEditor.UI
             btnConvert.Enabled = selectedItem.FontType != SourceFontFile.GetType();
             lblTypeInfo.Text = TargetFontFile.LongTypeDescription;
             lblGamesList.Text = "Games list:\n- " + String.Join("\n- ", TargetFontFile.GamesListForType).Replace("&", "&&");
-            Boolean tooHigh = SourceFontFile.BitsPerPixel > TargetFontFile.BitsPerPixel;
-            Boolean tooHighCol = tooHigh;
-            if (tooHigh)
-            {
-                tooHigh = false;
-                Int32 colValLimit = (Int32)Math.Pow(2, TargetFontFile.BitsPerPixel);
-                foreach (FontFileSymbol ffs in SourceFontFile.GetAllSymbols())
-                {
-                    if (ffs.ByteData.Any(x => x >= colValLimit))
-                    {
-                        tooHigh = true;
-                        break;
-                    }
-                }
-            }
+            Boolean tooHighCol = SourceFontFile.BitsPerPixel > TargetFontFile.BitsPerPixel;
+            Boolean tooHigh = tooHighCol;
+            if (tooHighCol)
+                tooHigh = SourceFontFile.HasTooHighDataFor(TargetFontFile.BitsPerPixel);
             lblNeedsConversionVal.Text = (tooHigh ? "Yes" : "No") + (tooHighCol && !tooHigh ? " (no actual color overflow found)" : String.Empty);
             lblNote.Visible = tooHigh;
         }

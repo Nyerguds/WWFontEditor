@@ -24,14 +24,23 @@ namespace WWFontEditor.Domain.FontTypes
             "Lands of Lore III Installer"
         }; } }
 
-        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
+        public override void LoadFont(Byte[] fileData)
         {
-            LoadV3V4Font(fileData, FontFileVersion.WW_V4, true);
+            LoadV3V4Font(fileData, true);
         }
 
         public override Byte[] SaveFont()
         {
-            return this.SaveV3V4Font(FontFileVersion.WW_V4);
+            return this.SaveV3V4Font(true);
         }
+
+        // any actions to be taken after conversion to this type.
+        protected override void PostConvertCleanup()
+        {
+            // Y-optimization.
+            foreach (FontFileSymbol ffs in m_ImageDataList)
+                ffs.OptimizeYHeight();
+        }
+
     }
 }

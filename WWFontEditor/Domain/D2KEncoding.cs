@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace WWFontEditor.Domain
@@ -9,7 +11,7 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// The default Dune 2000 character remap table, copied from FONT.BIN
         /// </summary>
-        protected static Byte[] remapTable = new Byte[]
+        protected static Byte[] OriginalRemapTable = new Byte[]
         {
             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
@@ -32,26 +34,11 @@ namespace WWFontEditor.Domain
         protected Byte[] m_RemapTable;
         protected String m_EncodingName = "Dune 2000 text encoding";
         protected Encoding m_BaseEncoding = GetEncoding("Windows-1252");
-        
-        public D2KEncoding(Byte[] remapTable, String encName, Encoding baseEncoding)
-            : this(remapTable, encName)
-        {
-            if (baseEncoding == null)
-                throw new ArgumentNullException("baseEncoding");
-            if (!baseEncoding.IsSingleByte)
-                throw new ArgumentException("The base needs to be a single byte encoding!", "baseEncoding");
-            m_BaseEncoding = baseEncoding;
-        }
 
-        public D2KEncoding(Byte[] remapTable, String encName)
+        public D2KEncoding()
         {
-            if (remapTable == null)
-                throw new ArgumentNullException("remapTable");
-            if (remapTable.Length != 0x100)
-                throw new ArgumentException("Array size does not match! Needs to be exactly 256 bytes!", "remapTable");
-            m_RemapTable = remapTable;
-            if (encName != null)
-                m_EncodingName = encName;
+            m_RemapTable = new Byte[0x100];
+            Array.Copy(OriginalRemapTable, this.m_RemapTable, 0x100);
         }
 
         public D2KEncoding(String encName)
@@ -61,9 +48,26 @@ namespace WWFontEditor.Domain
                 m_EncodingName = encName;
         }
 
-        public D2KEncoding()
+        public D2KEncoding(Byte[] remapTable, String encName)
         {
-            m_RemapTable = remapTable;
+            if (remapTable == null)
+                throw new ArgumentNullException("remapTable");
+            if (remapTable.Length != 0x100)
+                throw new ArgumentException("Array size does not match! Needs to be exactly 256 bytes!", "remapTable");
+            m_RemapTable = new Byte[0x100];
+            Array.Copy(remapTable, this.m_RemapTable, 0x100);
+            if (encName != null)
+                m_EncodingName = encName;
+        }
+        
+        public D2KEncoding(Byte[] remapTable, String encName, Encoding baseEncoding)
+            : this(remapTable, encName)
+        {
+            if (baseEncoding == null)
+                throw new ArgumentNullException("baseEncoding");
+            if (!baseEncoding.IsSingleByte)
+                throw new ArgumentException("The base needs to be a single byte encoding!", "baseEncoding");
+            m_BaseEncoding = baseEncoding;
         }
 
         public override String EncodingName { get { return m_EncodingName; } }
@@ -77,7 +81,7 @@ namespace WWFontEditor.Domain
             // But, it gives the symbol index to use for a character, I guess. Could be useful if I implement previews.
             Int32 retval = m_BaseEncoding.GetBytes(chars, charIndex, charCount, bytes, byteIndex);
             for (Int32 i = byteIndex; i < byteIndex + charCount; i++)
-                bytes[i] = remapTable[bytes[i]];
+                bytes[i] = m_RemapTable[bytes[i]];
             return retval;
         }
 
@@ -98,8 +102,8 @@ namespace WWFontEditor.Domain
         {
             if (value == 0x20)
                 return 0x20;
-            for (Int32 i = 0; i < remapTable.Length; i++)
-                if (remapTable[i] == value)
+            for (Int32 i = 0; i < this.m_RemapTable.Length; i++)
+                if (this.m_RemapTable[i] == value)
                     return (Byte)i;
             return 0x20;
         }
