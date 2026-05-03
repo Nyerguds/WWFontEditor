@@ -543,7 +543,7 @@ namespace WWFontEditor.Domain
                 Byte imgHeight = (Byte)fc.Height;
                 // Small optimization; no need to go converting the TS stuff; it doesn't change.
                 if (bitsLength < 8)
-                    imageData[i] = ImageUtils.ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength, false);
+                    imageData[i] = ImageUtils.ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength);
                 else
                     imageData[i] = imgData8bit.ToArray();
                 widthsList[i] = imgWidth;
@@ -598,7 +598,7 @@ namespace WWFontEditor.Domain
         ///     After the procedure, fontOffset will have the address behind the last data to write.
         /// </summary>
         /// <param name="imageData">Image data. Duplicate arrays in this are set to 0-sized ones.</param>
-        /// <param name="fontOffset">Start offset of the addressing.</param>
+        /// <param name="fontOffset">Start offset of the addressing. Adjusted to the end offset.</param>
         /// <returns></returns>
         protected Byte[] OptimizeImagesList(Byte[][] imageData, ref Int32 fontOffset)
         {

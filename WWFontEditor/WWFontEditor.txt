@@ -194,6 +194,8 @@ Special thanks to
 -tomsons26 for the creation of the program icon, for digging through ancient
  Westwood games, and for his tireless nagging.
 -Moon Flower for the help with the design of the palettes manager.
+-The people of the oldgamesitalia.net forum for getting me interested in the
+ Dynamix fonts.
 
 
 --------------------
@@ -231,6 +233,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.9.3: (2017/07/13 19:07)
+-Fixed remaining bugs from the cleanup that made Dynamix fonts not work.
 
 v1.9.2: (2017/07/12 23:20)
 -Added option to disable optional compression when saving fonts.

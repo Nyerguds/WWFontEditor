@@ -84,13 +84,13 @@ namespace WWFontEditor.Domain.FontTypes
                     startSymbol = i;
                 }
                 Byte[] eightBitData = this.m_ImageDataList[i].ByteData;
-                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel);
             }
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
             Int32 symbolSize = ((m_FontWidth + 7) / 8) * m_FontHeight;
             Byte[] fullData = new Byte[0x0C + symbolSize * nrOfSymbols];
             Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fullData, 0, 4);
-            ArrayUtils.WriteIntToByteArray(fullData, 4, 4, false, (UInt32)(fullData.Length - 8));
+            ArrayUtils.WriteIntToByteArray(fullData, 4, 4, true, (UInt32)(fullData.Length - 8));
             fullData[0x08] = (Byte)this.m_FontWidth;
             fullData[0x09] = (Byte)this.m_FontHeight;
             fullData[0x0A] = (Byte)startSymbol;

@@ -63,7 +63,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] data8bit = this.m_ImageDataList[i].ByteData;
                 if (data8bit == null)
                     continue;
-                Byte[] curData1bit = ImageUtils.ConvertFrom8Bit(data8bit, m_FontWidth, m_FontHeight, this.BitsPerPixel, true);
+                Byte[] curData1bit = ImageUtils.ConvertFrom8Bit(data8bit, m_FontWidth, m_FontHeight, this.BitsPerPixel);
                 Array.Copy(curData1bit, 0, fileData, i*8, Math.Min(curData1bit.Length, 8));
             }
             return fileData;

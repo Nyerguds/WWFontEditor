@@ -69,7 +69,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x80; i++)
             {
                 FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
-                imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel);
             }
             Int32 fontDataOffset = 0x104;
             Int32 dataOffset = fontDataOffset;

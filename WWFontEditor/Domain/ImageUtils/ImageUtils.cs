@@ -516,10 +516,7 @@ namespace Nyerguds.ImageManipulation
                     // This will always get a new index
                     Int32 index8bit = y * newStride + x;
                     // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = (x % parts) * bitsLength;
-                    // Reversed for big-endian
-                    if (bigEndian)
-                        shift = 8 - shift - bitsLength;
+                    Int32 shift = 8 - ((x % parts) * bitsLength) - bitsLength;
                     // Get data and store it.
                     data8bit[index8bit] = (Byte)((fileData[indexXbit] >> shift) & bitmask);
                 }
@@ -538,10 +535,10 @@ namespace Nyerguds.ImageManipulation
         /// <param name="bitsLength">The new amount of bits per pixel</param>
         /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
         /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
-        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian)
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength)
         {
             Int32 stride = width;
-            return ConvertFrom8Bit(data8bit, width, height, bitsLength, bigEndian, ref stride);
+            return ConvertFrom8Bit(data8bit, width, height, bitsLength, ref stride);
         }
 
         /// <summary>
@@ -554,7 +551,7 @@ namespace Nyerguds.ImageManipulation
         /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
         /// <param name="stride">Stride used in the original image data. Will be adjusted to the new stride value.</param>
         /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
-        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian, ref Int32 stride)
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, ref Int32 stride)
         {
             Int32 parts = 8 / bitsLength;
             // Amount of bytes to write per width
@@ -573,10 +570,7 @@ namespace Nyerguds.ImageManipulation
                     // This will always get a new index
                     Int32 index8bit = y * stride + x;
                     // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = (x % parts) * bitsLength;
-                    // Reversed for big-endian
-                    if (bigEndian)
-                        shift = 8 - shift - bitsLength;
+                    Int32 shift = 8 - ((x % parts) * bitsLength) - bitsLength;
                     // Get data, reduce to bit rate, shift it and store it.
                     dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
                 }

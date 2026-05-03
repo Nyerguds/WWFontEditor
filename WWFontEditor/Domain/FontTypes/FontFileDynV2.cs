@@ -115,7 +115,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fullNrOfSymbols = m_ImageDataList.Count;
             Byte[][] imageData = new Byte[fullNrOfSymbols][];
             Byte[] imageWidths = new Byte[fullNrOfSymbols];
-            Int32 fontDataSize = 0;
+            //Int32 fontDataSize = 0;
             for (Int32 i = 0; i < fullNrOfSymbols; i++)
             {
                 FontFileSymbol ffs = m_ImageDataList[i];
@@ -127,26 +127,33 @@ namespace WWFontEditor.Domain.FontTypes
                     startSymbol = i;
                 }
                 Byte[] eightBitData = ffs.ByteData;
-                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, ffs.Width, ffs.Height, this.BitsPerPixel, true);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, ffs.Width, ffs.Height, this.BitsPerPixel);
                 imageWidths[i] = (Byte)ffs.Width;
-                fontDataSize += imageData[i].Length;
+                //fontDataSize += imageData[i].Length;
             }
+            Int32 fontOffset = 0;
+            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, ref fontOffset);
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
-            Int32 fullDataSize = fontDataSize + nrOfSymbols * 3;
+            //Int32 fullDataSize = fontDataSize + nrOfSymbols * 3;
+            Int32 fullDataSize = fontOffset + nrOfSymbols * 3;
             Byte[] fullData = new Byte[fullDataSize];
             // Reserve space for index, and skip it.
-            Int32 dataOffset = nrOfSymbols * 2;
-            Int32 indexOffset = 0;
+            //Int32 indexOffset = 0;
+            Int32 dataOffset = 0;
+            Array.Copy(fontDataOffsetsList, 0, fullData, dataOffset, fontDataOffsetsList.Length);
+            dataOffset += fontDataOffsetsList.Length;
             // Write image widths
             Array.Copy(imageWidths, startSymbol, fullData, dataOffset, nrOfSymbols);
-            dataOffset += nrOfSymbols;
+            dataOffset += imageWidths.Length;
             UInt32 offset = 0;
             for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
             {
                 Byte[] image = imageData[i];
+                if (image.Length == 0)
+                    continue;
                 Array.Copy(image, 0, fullData, dataOffset + offset, image.Length);
-                ArrayUtils.WriteIntToByteArray(fullData, indexOffset, 2, false, offset);
-                indexOffset += 2;
+                //ArrayUtils.WriteIntToByteArray(fullData, indexOffset, 2, false, offset);
+                //indexOffset += 2;
                 offset += (UInt32)image.Length;
             }
             Byte compression = 0;
@@ -173,7 +180,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 writeOffset = 0x15;
             Byte[] fileData = new Byte[writeOffset + writeData.Length];
             Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fileData, 0, 4);
-            ArrayUtils.WriteIntToByteArray(fileData, 4, 4, false, (UInt32)(fileData.Length - 8));
+            ArrayUtils.WriteIntToByteArray(fileData, 4, 4, true, (UInt32)(fileData.Length - 8));
             // Indicator for v2 format
             fileData[0x08] = 0xFF;
             fileData[0x09] = (Byte)this.m_FontWidth;
@@ -183,10 +190,10 @@ namespace WWFontEditor.Domain.FontTypes
             fileData[0x0C] = (Byte)startSymbol;
             fileData[0x0D] = (Byte)nrOfSymbols;
             // Full added size: font size + symbols index + symbol widths.
-            ArrayUtils.WriteIntToByteArray(fileData, 0x0E, 2, false, (UInt32)fullDataSize);
+            ArrayUtils.WriteIntToByteArray(fileData, 0x0E, 2, true, (UInt32)fullDataSize);
             // Compression method For now, let's leave that.
             fileData[0x10] = compression;
-            ArrayUtils.WriteIntToByteArray(fileData, 0x11, 4, false, (UInt32)fullDataSize);
+            ArrayUtils.WriteIntToByteArray(fileData, 0x11, 4, true, (UInt32)fullDataSize);
             Array.Copy(writeData, 0, fileData, writeOffset, writeData.Length);
             return fileData;
         }
