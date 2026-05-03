@@ -51,6 +51,7 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.chkPal8BppRainbow = new System.Windows.Forms.CheckBox();
             this.chkPal4BppWB = new System.Windows.Forms.CheckBox();
+            this.chkLimit8Bit = new System.Windows.Forms.CheckBox();
             this.chkPal8BppWB = new System.Windows.Forms.CheckBox();
             this.chkPal4BppBW = new System.Windows.Forms.CheckBox();
             this.chkPal1BppWB = new System.Windows.Forms.CheckBox();
@@ -67,12 +68,14 @@
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
-            this.chkLimit8Bit = new System.Windows.Forms.CheckBox();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.chkDisableCompression = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultZoom)).BeginInit();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -82,6 +85,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -393,6 +397,17 @@
             this.chkPal4BppWB.Text = "White-to-Black Fade";
             this.chkPal4BppWB.UseVisualStyleBackColor = true;
             // 
+            // chkLimit8Bit
+            // 
+            this.chkLimit8Bit.AutoSize = true;
+            this.chkLimit8Bit.Location = new System.Drawing.Point(209, 150);
+            this.chkLimit8Bit.Name = "chkLimit8Bit";
+            this.chkLimit8Bit.Size = new System.Drawing.Size(160, 17);
+            this.chkLimit8Bit.TabIndex = 124;
+            this.chkLimit8Bit.Text = "Limit 8-bit fonts to 16 colours";
+            this.chkLimit8Bit.UseVisualStyleBackColor = true;
+            this.chkLimit8Bit.CheckedChanged += new System.EventHandler(this.chkLimit8Bit_CheckedChanged);
+            // 
             // chkPal8BppWB
             // 
             this.chkPal8BppWB.AutoSize = true;
@@ -553,16 +568,26 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
-            // chkLimit8Bit
+            // tabPage3
             // 
-            this.chkLimit8Bit.AutoSize = true;
-            this.chkLimit8Bit.Location = new System.Drawing.Point(209, 150);
-            this.chkLimit8Bit.Name = "chkLimit8Bit";
-            this.chkLimit8Bit.Size = new System.Drawing.Size(160, 17);
-            this.chkLimit8Bit.TabIndex = 124;
-            this.chkLimit8Bit.Text = "Limit 8-bit fonts to 16 colours";
-            this.chkLimit8Bit.UseVisualStyleBackColor = true;
-            this.chkLimit8Bit.CheckedChanged += new System.EventHandler(this.chkLimit8Bit_CheckedChanged);
+            this.tabPage3.Controls.Add(this.chkDisableCompression);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(394, 264);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Files";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // chkDisableCompression
+            // 
+            this.chkDisableCompression.AutoSize = true;
+            this.chkDisableCompression.Location = new System.Drawing.Point(8, 10);
+            this.chkDisableCompression.Name = "chkDisableCompression";
+            this.chkDisableCompression.Size = new System.Drawing.Size(269, 17);
+            this.chkDisableCompression.TabIndex = 13;
+            this.chkDisableCompression.Text = "Disable optional compression methods when saving";
+            this.chkDisableCompression.UseVisualStyleBackColor = true;
             // 
             // FrmSettings
             // 
@@ -585,6 +610,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultZoom)).EndInit();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
+            this.tabPage3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -631,5 +658,7 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.CheckBox chkLimit8Bit;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.CheckBox chkDisableCompression;
     }
 }

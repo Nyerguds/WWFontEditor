@@ -34,7 +34,7 @@ namespace WWFontEditor.Domain.FontTypes
             // but it doesn't matter here since the string that is compared with doesn't contain those.
             if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => (Char)x).ToArray())))
                 throw new FileTypeLoadException(ERR_BADHEADER);
-            Int32 fileSize = ArrayUtils.GetBEIntFromByteArray(fileData, 0x04);
+            Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             Int32 dataOffset = 0x08;
@@ -68,7 +68,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             Boolean foundStart = false;
             Int32 startSymbol = 0;

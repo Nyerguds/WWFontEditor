@@ -42,9 +42,9 @@ namespace WWFontEditor.Domain.FontTypes
             // Wlll be increased to the max found in the file.
             this.m_FontWidth = spaceSize;
             for (Int32 i = 0; i < firstSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(this));
             if (firstSymbol > 0x20)
-                this.m_ImageDataList[0x20].Width = spaceSize;
+                this.m_ImageDataList[0x20].ChangeWidth(spaceSize);
             Int32 readOffset = 0x408;
             // Check on "readOffset + 8" because 8 is the byte size of a next symbol header.
             Int32 datalen = fileData.Length;
@@ -52,25 +52,21 @@ namespace WWFontEditor.Domain.FontTypes
             Byte currentSymbol = firstSymbol;
             while (readOffset + 8 < datalen && symbolCounter < 256)
             {
-                Int32 symbolWidth = ArrayUtils.GetLEIntFromByteArray(fileData, readOffset);
+                Int32 symbolWidth = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, readOffset, 4, true);
                 this.m_FontWidth = Math.Max(symbolWidth, this.m_FontWidth);
                 readOffset += 4;
-                Int32 symbolHeight = ArrayUtils.GetLEIntFromByteArray(fileData, readOffset);
+                Int32 symbolHeight = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, readOffset, 4, true);
                 readOffset += 4;
                 Byte[] symbolData = new Byte[symbolWidth*symbolHeight];
                 if (readOffset + symbolData.Length > datalen)
                     throw new Exception("File data too short for symbol data of symbol #" + firstSymbol + ".");
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolData.Length);
                 // should happen after the currentSymbol byte wraps around to 0
+                FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel);
                 if (m_ImageDataList.Count > currentSymbol)
-                {
-                    FontFileSymbol ch = this.m_ImageDataList[currentSymbol];
-                    ch.ByteData = symbolData;
-                    ch.Width = symbolWidth;
-                    ch.Height = symbolHeight;
-                }
+                    this.m_ImageDataList[currentSymbol] = ffs;
                 else
-                    this.m_ImageDataList.Add(new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel));
+                    this.m_ImageDataList.Add(ffs);
                 readOffset += symbolData.Length;
                 symbolCounter++;
                 currentSymbol++;
@@ -85,7 +81,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             FontFileSymbol[] baseList = new List<FontFileSymbol>(m_ImageDataList).ToArray();
             FontFileSymbol[] newList = new FontFileSymbol[255];
@@ -148,9 +144,9 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 writeOffset = 0x408;
             foreach (FontFileSymbol fs in newList)
             {
-                ArrayUtils.SetLEIntInByteArray(fileData, writeOffset, fs.Width);
+                ArrayUtils.WriteIntToByteArray(fileData, writeOffset, 4, true, (UInt32)fs.Width);
                 writeOffset += 4;
-                ArrayUtils.SetLEIntInByteArray(fileData, writeOffset, fs.Height);
+                ArrayUtils.WriteIntToByteArray(fileData, writeOffset, 4, true, (UInt32)fs.Height);
                 writeOffset += 4;
                 Byte[] bdata = fs.ByteData;
                 Array.Copy(bdata, 0, fileData, writeOffset, bdata.Length);

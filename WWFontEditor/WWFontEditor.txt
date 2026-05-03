@@ -232,6 +232,11 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.9.2: (2017/07/12 23:20)
+-Added option to disable optional compression when saving fonts.
+-Fixed bugs in the array toolsets for reading and writing bytes that
+ messed up all reading of the non-Dynamix types starting from v1.8.
+
 v1.9.1: (2017/07/12 14:16)
 -Added RLE compression to Dynamix v2 font saving.
 

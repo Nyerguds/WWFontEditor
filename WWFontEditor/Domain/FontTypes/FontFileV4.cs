@@ -29,7 +29,7 @@ namespace WWFontEditor.Domain.FontTypes
             LoadV3V4Font(fileData, true);
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             return this.SaveV3V4Font(true);
         }

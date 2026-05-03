@@ -58,7 +58,7 @@ namespace WWFontEditor.UI.Tools
             {
                 if (this.ScrollBars == ScrollBars.Both || this.ScrollBars == ScrollBars.Vertical && this.VerticalScrollBar.Visible && this.VerticalScrollBar.Enabled)
                 {
-                    Int32 scroll = Math.Max(0, value);
+                    Int32 scroll = Math.Min(this.VerticalScrollBar.Maximum, Math.Max(this.VerticalScrollBar.Minimum, value));
                     this.VerticalScrollBar.Value = scroll;
                     PropertyInfo verticalOffsetProp = this.GetType().GetProperty("VerticalOffset", BindingFlags.NonPublic | BindingFlags.Instance);
                     // Because fuck you, whoever thought making this readonly was clever.

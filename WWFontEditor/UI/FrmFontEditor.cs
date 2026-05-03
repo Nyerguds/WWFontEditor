@@ -512,7 +512,7 @@ namespace WWFontEditor
                 return;
             try
             {
-                Byte[] filedata = this.m_LoadedFont.SaveFont();
+                Byte[] filedata = this.m_LoadedFont.SaveFont(m_Settings.DisableCompression);
                 File.WriteAllBytes(fileName, filedata);
                 this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
                 this.m_FileName = fileName;

@@ -49,7 +49,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             throw new NotSupportedException();
         }

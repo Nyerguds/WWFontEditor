@@ -39,6 +39,10 @@ namespace WWFontEditor.Domain
         private const String INI_KEY_GENERATE8BITBW = "8BitBW";
         private const String INI_KEY_GENERATE8BITWB = "8BitWB";
 
+        private const String INI_SECTION_IO = "IO";
+        private const String INI_KEY_DISABLECOMPRESSION = "DisableCompression";
+
+
         public static readonly Color DefEditAreaGrid = Color.Blue;
         public static readonly Color DefEditAreaFrame = Color.Red;
         public static readonly Color DefBackgroundGrid = Color.White;
@@ -55,7 +59,7 @@ namespace WWFontEditor.Domain
         public const Boolean DefGenerate1BitBR = true;
         public const Boolean DefGenerate1BitBW = true;
         public const Boolean DefGenerate1BitWB = true;
-        
+
         public const Boolean DefGenerate4BitRainbow = true;
         public const Boolean DefGenerate4BitBW = true;
         public const Boolean DefGenerate4BitWB = true;
@@ -67,6 +71,9 @@ namespace WWFontEditor.Domain
         public const Boolean DefGenerate8BitBW = true;
         public const Boolean DefGenerate8BitWB = true;
 
+        public const Boolean DefDisableCompression = false;
+        
+        
         public Color EditAreaGrid { get; set; }
         public Color EditAreaFrame { get; set; }
         public Color BackgroundGrid { get; set; }
@@ -94,6 +101,8 @@ namespace WWFontEditor.Domain
         public Boolean Generate8BitWindows { get; set; }
         public Boolean Generate8BitBW { get; set; }
         public Boolean Generate8BitWB { get; set; }
+
+        public Boolean DisableCompression { get; set; }
         
         public FontEditSettings()
         {
@@ -147,6 +156,8 @@ namespace WWFontEditor.Domain
             // Don't allow no defaults at all.
             if (!this.Generate8BitRainbow && !this.Generate8BitBW && !this.Generate8BitWB && !this.Generate8BitWindows)
                 this.Generate8BitRainbow = true;
+            
+            this.DisableCompression = settings.GetBoolValue(INI_SECTION_IO, INI_KEY_DISABLECOMPRESSION, DefDisableCompression);
         }
         
         public Boolean SaveSettings()
@@ -185,6 +196,9 @@ namespace WWFontEditor.Domain
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, this.Generate8BitWindows);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, this.Generate8BitBW);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWB, this.Generate8BitWB);
+
+            settings.SetBoolValue(INI_SECTION_IO, INI_KEY_DISABLECOMPRESSION, this.DisableCompression);
+
             return settings.WriteIni();
         }
 
@@ -200,6 +214,5 @@ namespace WWFontEditor.Domain
             try { return ColorTranslator.FromHtml(colorString); }
             catch { return defaultCol; }
         }
-
     }
 }

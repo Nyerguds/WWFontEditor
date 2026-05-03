@@ -48,6 +48,7 @@ namespace WWFontEditor.UI
             this.chkPal8BppWin.Checked = this.m_Settings.Generate8BitWindows;
             this.chkPal8BppBW.Checked = this.m_Settings.Generate8BitBW;
             this.chkPal8BppWB.Checked = this.m_Settings.Generate8BitWB;
+            this.chkDisableCompression.Checked = this.m_Settings.DisableCompression;
         }
 
         private void SetLabelColor(Label label, Color color)
@@ -137,6 +138,7 @@ namespace WWFontEditor.UI
             this.m_Settings.Generate8BitWindows = this.chkPal8BppWin.Checked;
             this.m_Settings.Generate8BitBW = this.chkPal8BppBW.Checked;
             this.m_Settings.Generate8BitWB = this.chkPal8BppWB.Checked;
+            this.m_Settings.DisableCompression = this.chkDisableCompression.Checked;
             this.m_Settings.SaveSettings();
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -167,6 +169,8 @@ namespace WWFontEditor.UI
             this.chkPal8BppBW.Checked = FontEditSettings.DefGenerate8BitBW;
             this.chkPal8BppWB.Checked = FontEditSettings.DefGenerate8BitWB;
             this.chkLimit8Bit.Checked = FontEditSettings.DefLimit8BitPalettes;
+            this.chkDisableCompression.Checked = FontEditSettings.DefDisableCompression;
+
         }
     }
 }

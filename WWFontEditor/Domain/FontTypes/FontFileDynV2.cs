@@ -39,7 +39,7 @@ namespace WWFontEditor.Domain.FontTypes
             // but it doesn't matter here since the string that is compared with doesn't contain those.
             if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => (Char)x).ToArray())))
                 throw new FileTypeLoadException(ERR_BADHEADER);
-            Int32 fileSize = ArrayUtils.GetBEIntFromByteArray(fileData, 0x04);
+            Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             Int32 dataOffset = 0x08;
@@ -51,11 +51,11 @@ namespace WWFontEditor.Domain.FontTypes
             Byte startSymbol = fileData[dataOffset+4];
             Byte nrOfSymbols = fileData[dataOffset+5];
 
-            Int32 symbolDataSize = ArrayUtils.GetBEShortFromByteArray(fileData, dataOffset + 6);
+            Int32 symbolDataSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 6, 2, true);
             Int32 compressionMethod = fileData[dataOffset + 8];
-            Int32 uncompressedSize = ArrayUtils.GetBEIntFromByteArray(fileData, dataOffset + 9);
+            Int32 uncompressedSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 9, 2, true);
             if (uncompressedSize != symbolDataSize)
-                throw new FileTypeLoadException("Error in complex-type Dynamix font: compressed data size doesn't match!");
+                throw new FileTypeLoadException("Error in complex-type Dynamix font: font data size doesn't match uncompressed data size!");
 
             Int32 dataStart = dataOffset + 13;
             Byte[] compressedData = new Byte[fileData.Length - dataStart];
@@ -80,7 +80,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             Int16[] offsets = new Int16[nrOfSymbols];
             for (Int32 i = 0; i < nrOfSymbols; i++)
-                offsets[i] = ArrayUtils.GetBEShortFromByteArray(data, i * 2);
+                offsets[i] = (Int16)ArrayUtils.ReadIntFromByteArray(data, i * 2, 2, true);
             Int32 readStart = nrOfSymbols * 2;
 
             Byte[] widths = new Byte[nrOfSymbols];
@@ -105,7 +105,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             // Not sure about this value; there is no support in the editor for indicating anything like this.
             // But the most commonly used lowest point in the font seems like a logical value. It matches the existing fonts.
@@ -149,24 +149,26 @@ namespace WWFontEditor.Domain.FontTypes
                 indexOffset += 2;
                 offset += (UInt32)image.Length;
             }
-            // COMPRESSION ADDITION EXPERIMENT
             Byte compression = 0;
             Byte[] writeData = fullData;
-            Byte[] compressRle = DynamixCompression.RleEncode(fullData, 3);
-            if (compressRle != null && compressRle.Length < writeData.Length)
+            if (!disableCompression)
             {
-                compression = 1;
-                writeData = compressRle;
+                Byte[] compressRle = DynamixCompression.RleEncode(fullData, 3);
+                if (compressRle != null && compressRle.Length < writeData.Length)
+                {
+                    compression = 1;
+                    writeData = compressRle;
+                }
+                /*/
+                // Not implemented
+                Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
+                if (compressLzw != null && compressLzw.Length < writeData.Length)
+                {
+                    compression = 2;
+                    writeData = compressLzw;
+                }
+                //*/
             }
-            /*/
-            // Not implemented
-            Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
-            if (compressLzw != null && compressLzw.Length < writeData.Length)
-            {
-                compression = 2;
-                writeData = compressLzw;
-            }
-            //*/
             // offset to start writing data. Initialized on header length.
             Int32 writeOffset = 0x15;
             Byte[] fileData = new Byte[writeOffset + writeData.Length];

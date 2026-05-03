@@ -39,10 +39,10 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            LoadV3V4Font(fileData, false);
+            this.LoadV3V4Font(fileData, false);
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             return this.SaveV3V4Font(false);
         }

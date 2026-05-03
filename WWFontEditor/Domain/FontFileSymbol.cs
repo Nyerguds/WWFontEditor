@@ -13,23 +13,35 @@ namespace WWFontEditor.Domain
     public class FontFileSymbol : IEquatable<FontFileSymbol>
     {
         public Byte[] ByteData { get; set; }
-        /// <summary>Only use this for initialisation! Use ChangeWidth for editing the image!</summary>
-        public Int32 Width { get; set; }
-        /// <summary>Only use this for initialisation! Use ChangeHeight for editing the image!</summary>
-        public Int32 Height { get; set; }
+        /// <summary>Only used for initialisation. Use ChangeWidth for editing the image!</summary>
+        public Int32 Width { get; private set; }
+        /// <summary>Only uses for initialisation. Use ChangeHeight for editing the image!</summary>
+        public Int32 Height { get; private set; }
         public Int32 YOffset { get; set; }
         public Int32 BitsPerPixel { get; private set; }
         
-        public FontFileSymbol(Int32 bitsPerPixel)
+        public FontFileSymbol(FontFile source)
         {
             this.ByteData = new Byte[0];
-            this.BitsPerPixel = bitsPerPixel;
+            this.Width = source.FontWidthTypeMin;
+            this.Height = 0;
+            // only need to do this from 1 dimension since you start from (?)x0
+            this.ChangeHeight(source.FontHeightTypeMin);
+            this.BitsPerPixel = source.BitsPerPixel;
         }
+
+        /// <summary>
+        /// Creates a new font file symbol for a font file, starting from an external image.
+        /// This constructor is used for clipboard input.
+        /// </summary>
+        /// <param name="image">Source image</param>
+        /// <param name="palette">Colour palette</param>
+        /// <param name="source">Font file to create this symbol for.</param>
         public FontFileSymbol(Image image, Color[] palette, FontFile source)
         {
             this.BitsPerPixel = source.BitsPerPixel; 
-            this.Width = Math.Min(source.FontWidth, image.Width);
-            this.Height = Math.Min(source.FontHeight, image.Height);
+            this.Width = Math.Max(source.FontWidthTypeMin, Math.Min(source.FontWidth, image.Width));
+            this.Height = Math.Max(source.FontHeightTypeMin, Math.Min(source.FontHeight, image.Height));
             this.ByteData = new Byte[Width * Height];
             Bitmap srcImage = new Bitmap(image);
             for (Int32 y = 0; y < Height; y++)
@@ -189,6 +201,8 @@ namespace WWFontEditor.Domain
 
         public void ChangeHeight(Int32 newHeight)
         {
+            if (Height == newHeight)
+                return;
             Byte[] newData = new Byte[this.Width * newHeight];
             Array.Copy(this.ByteData, 0, newData, 0, Math.Min(this.ByteData.Length, newData.Length));
             this.ByteData = newData;
@@ -197,6 +211,8 @@ namespace WWFontEditor.Domain
 
         public void ChangeWidth(Int32 newWidth)
         {
+            if (Width == newWidth)
+                return;
             Byte[] newData = ChangeStride(this.ByteData, this.Width, this.Height, newWidth, false);
             this.ByteData = newData;
             this.Width = newWidth;

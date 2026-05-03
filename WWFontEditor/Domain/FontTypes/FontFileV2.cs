@@ -33,7 +33,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             if (fileData.Length < 0x104)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            Int16 fileSize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
+            Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileData.Length - 2)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             // the size of the file: already read. Skip this.
@@ -41,7 +41,7 @@ namespace WWFontEditor.Domain.FontTypes
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
             Int16[] fontDataOffsetsList = new Int16[0x80];
             for (Int32 i = 0; i < 0x80; i++)
-                fontDataOffsetsList[i] = ArrayUtils.GetLEShortFromByteArray(fileData, 2 + i * 2);
+                fontDataOffsetsList[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 2 + i * 2, 2, true);
             // the height of a symbol in pixel
             this.m_FontHeight = fileData[0x102];
             // the width of a symbol in pixel
@@ -63,12 +63,12 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont()
+        public override Byte[] SaveFont(Boolean disableCompression)
         {
             Byte[][] imageData = new Byte[0x80][];
             for (Int32 i = 0; i < 0x80; i++)
             {
-                FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this.BitsPerPixel);
+                FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
                 imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 fontDataOffset = 0x104;
