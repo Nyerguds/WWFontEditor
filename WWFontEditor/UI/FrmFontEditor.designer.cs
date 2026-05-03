@@ -50,8 +50,8 @@
             this.chkPicker = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkPaint = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkOutline = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.chkShiftWrap = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkGrid = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.btnRevert = new System.Windows.Forms.Button();
             this.cmbEncodings = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.numWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -64,12 +64,15 @@
             this.saveFontAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.revertFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.symbolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.revertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editorSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cmbPalettes = new System.Windows.Forms.ComboBox();
+            this.btnSavePalette = new System.Windows.Forms.Button();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numFontWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numSymbols = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -81,6 +84,7 @@
             this.pxbImage = new RedCell.UI.Controls.PixelBox();
             this.pxbEditGridBehind = new RedCell.UI.Controls.PixelBox();
             this.pxbFullSize = new RedCell.UI.Controls.PixelBox();
+            this.btnResetPalette = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).BeginInit();
@@ -102,7 +106,7 @@
             // 
             this.lblZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblZoom.AutoSize = true;
-            this.lblZoom.Location = new System.Drawing.Point(414, 393);
+            this.lblZoom.Location = new System.Drawing.Point(413, 444);
             this.lblZoom.Name = "lblZoom";
             this.lblZoom.Size = new System.Drawing.Size(37, 13);
             this.lblZoom.TabIndex = 23;
@@ -157,7 +161,7 @@
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(6, 43);
+            this.label4.Location = new System.Drawing.Point(6, 16);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(50, 20);
             this.label4.TabIndex = 27;
@@ -166,7 +170,7 @@
             // 
             // label5
             // 
-            this.label5.Location = new System.Drawing.Point(6, 69);
+            this.label5.Location = new System.Drawing.Point(6, 42);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(50, 20);
             this.label5.TabIndex = 27;
@@ -175,7 +179,7 @@
             // 
             // lblYOffset
             // 
-            this.lblYOffset.Location = new System.Drawing.Point(6, 95);
+            this.lblYOffset.Location = new System.Drawing.Point(6, 68);
             this.lblYOffset.Name = "lblYOffset";
             this.lblYOffset.Size = new System.Drawing.Size(50, 20);
             this.lblYOffset.TabIndex = 27;
@@ -187,7 +191,7 @@
             this.lblPaintColor1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblPaintColor1.BackColor = System.Drawing.Color.Black;
             this.lblPaintColor1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblPaintColor1.Location = new System.Drawing.Point(573, 376);
+            this.lblPaintColor1.Location = new System.Drawing.Point(620, 407);
             this.lblPaintColor1.Name = "lblPaintColor1";
             this.lblPaintColor1.Size = new System.Drawing.Size(20, 20);
             this.lblPaintColor1.TabIndex = 119;
@@ -197,7 +201,7 @@
             this.lblPaintColor2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblPaintColor2.BackColor = System.Drawing.Color.Black;
             this.lblPaintColor2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblPaintColor2.Location = new System.Drawing.Point(583, 387);
+            this.lblPaintColor2.Location = new System.Drawing.Point(630, 418);
             this.lblPaintColor2.Name = "lblPaintColor2";
             this.lblPaintColor2.Size = new System.Drawing.Size(20, 20);
             this.lblPaintColor2.TabIndex = 122;
@@ -213,32 +217,32 @@
             this.btnPaste.Enabled = false;
             this.btnPaste.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPaste.Image = global::WWFontEditor.Properties.Resources.icon_paste;
-            this.btnPaste.Location = new System.Drawing.Point(97, 165);
+            this.btnPaste.Location = new System.Drawing.Point(130, 137);
             this.btnPaste.Name = "btnPaste";
             this.btnPaste.Size = new System.Drawing.Size(26, 26);
-            this.btnPaste.TabIndex = 75;
+            this.btnPaste.TabIndex = 81;
             this.toolTip1.SetToolTip(this.btnPaste, "Paste symbol from clipboard");
             this.btnPaste.UseVisualStyleBackColor = true;
-            this.btnPaste.Click += new System.EventHandler(this.btnPaste_Click);
+            this.btnPaste.Click += new System.EventHandler(this.BtnPaste_Click);
             // 
             // btnCopy
             // 
             this.btnCopy.Enabled = false;
             this.btnCopy.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCopy.Image = global::WWFontEditor.Properties.Resources.icon_copy;
-            this.btnCopy.Location = new System.Drawing.Point(97, 133);
+            this.btnCopy.Location = new System.Drawing.Point(130, 105);
             this.btnCopy.Name = "btnCopy";
             this.btnCopy.Size = new System.Drawing.Size(26, 26);
-            this.btnCopy.TabIndex = 74;
+            this.btnCopy.TabIndex = 80;
             this.toolTip1.SetToolTip(this.btnCopy, "Copy symbol to clipboard");
             this.btnCopy.UseVisualStyleBackColor = true;
-            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            this.btnCopy.Click += new System.EventHandler(this.BtnCopy_Click);
             // 
             // btnShiftLeft
             // 
             this.btnShiftLeft.Enabled = false;
             this.btnShiftLeft.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnShiftLeft.Location = new System.Drawing.Point(6, 148);
+            this.btnShiftLeft.Location = new System.Drawing.Point(24, 121);
             this.btnShiftLeft.Name = "btnShiftLeft";
             this.btnShiftLeft.Size = new System.Drawing.Size(26, 26);
             this.btnShiftLeft.TabIndex = 71;
@@ -251,10 +255,10 @@
             // 
             this.btnShiftDown.Enabled = false;
             this.btnShiftDown.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnShiftDown.Location = new System.Drawing.Point(31, 173);
+            this.btnShiftDown.Location = new System.Drawing.Point(49, 146);
             this.btnShiftDown.Name = "btnShiftDown";
             this.btnShiftDown.Size = new System.Drawing.Size(26, 26);
-            this.btnShiftDown.TabIndex = 73;
+            this.btnShiftDown.TabIndex = 72;
             this.btnShiftDown.Text = "⇓";
             this.toolTip1.SetToolTip(this.btnShiftDown, "Shift down");
             this.btnShiftDown.UseVisualStyleBackColor = true;
@@ -264,10 +268,10 @@
             // 
             this.btnShiftRight.Enabled = false;
             this.btnShiftRight.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnShiftRight.Location = new System.Drawing.Point(56, 148);
+            this.btnShiftRight.Location = new System.Drawing.Point(74, 121);
             this.btnShiftRight.Name = "btnShiftRight";
             this.btnShiftRight.Size = new System.Drawing.Size(26, 26);
-            this.btnShiftRight.TabIndex = 72;
+            this.btnShiftRight.TabIndex = 73;
             this.btnShiftRight.Text = "⇒";
             this.toolTip1.SetToolTip(this.btnShiftRight, "Shift right");
             this.btnShiftRight.UseVisualStyleBackColor = true;
@@ -277,7 +281,7 @@
             // 
             this.btnShiftUp.Enabled = false;
             this.btnShiftUp.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnShiftUp.Location = new System.Drawing.Point(31, 123);
+            this.btnShiftUp.Location = new System.Drawing.Point(49, 96);
             this.btnShiftUp.Name = "btnShiftUp";
             this.btnShiftUp.Size = new System.Drawing.Size(26, 26);
             this.btnShiftUp.TabIndex = 70;
@@ -289,37 +293,34 @@
             // chkPicker
             // 
             this.chkPicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkPicker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.chkPicker.Image = global::WWFontEditor.Properties.Resources.icon_colpicker;
-            this.chkPicker.Location = new System.Drawing.Point(656, 385);
+            this.chkPicker.Location = new System.Drawing.Point(592, 440);
             this.chkPicker.Name = "chkPicker";
             this.chkPicker.Size = new System.Drawing.Size(21, 21);
-            this.chkPicker.TabIndex = 311;
+            this.chkPicker.TabIndex = 45;
             this.chkPicker.Toggle = false;
             this.toolTip1.SetToolTip(this.chkPicker, "Color picker");
-            this.chkPicker.CheckStateChanged += new System.EventHandler(this.chkPick_CheckStateChanged);
+            this.chkPicker.CheckStateChanged += new System.EventHandler(this.ChkPick_CheckStateChanged);
             // 
             // chkPaint
             // 
             this.chkPaint.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkPaint.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.chkPaint.Checked = true;
             this.chkPaint.Image = global::WWFontEditor.Properties.Resources.icon_pencil;
-            this.chkPaint.Location = new System.Drawing.Point(629, 385);
+            this.chkPaint.Location = new System.Drawing.Point(567, 441);
             this.chkPaint.Name = "chkPaint";
             this.chkPaint.Size = new System.Drawing.Size(21, 21);
-            this.chkPaint.TabIndex = 310;
+            this.chkPaint.TabIndex = 44;
             this.chkPaint.Toggle = false;
             this.toolTip1.SetToolTip(this.chkPaint, "Pencil");
-            this.chkPaint.CheckStateChanged += new System.EventHandler(this.chkPaint_CheckStateChanged);
+            this.chkPaint.CheckStateChanged += new System.EventHandler(this.ChkPaint_CheckStateChanged);
             // 
             // chkOutline
             // 
             this.chkOutline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkOutline.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.chkOutline.Checked = true;
             this.chkOutline.Image = global::WWFontEditor.Properties.Resources.icon_editarea;
-            this.chkOutline.Location = new System.Drawing.Point(540, 390);
+            this.chkOutline.Location = new System.Drawing.Point(539, 441);
             this.chkOutline.Margin = new System.Windows.Forms.Padding(2);
             this.chkOutline.Name = "chkOutline";
             this.chkOutline.Size = new System.Drawing.Size(21, 21);
@@ -327,37 +328,33 @@
             this.toolTip1.SetToolTip(this.chkOutline, "Toggle editable area");
             this.chkOutline.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
             // 
+            // chkShiftWrap
+            // 
+            this.chkShiftWrap.Image = global::WWFontEditor.Properties.Resources.icon_wraparound;
+            this.chkShiftWrap.Location = new System.Drawing.Point(51, 122);
+            this.chkShiftWrap.Name = "chkShiftWrap";
+            this.chkShiftWrap.Size = new System.Drawing.Size(24, 24);
+            this.chkShiftWrap.TabIndex = 74;
+            this.toolTip1.SetToolTip(this.chkShiftWrap, "Wrap around when shifting");
+            // 
             // chkGrid
             // 
             this.chkGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkGrid.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.chkGrid.Checked = true;
             this.chkGrid.Image = global::WWFontEditor.Properties.Resources.icon_grid;
-            this.chkGrid.Location = new System.Drawing.Point(514, 390);
+            this.chkGrid.Location = new System.Drawing.Point(513, 441);
             this.chkGrid.Name = "chkGrid";
             this.chkGrid.Size = new System.Drawing.Size(21, 21);
             this.chkGrid.TabIndex = 42;
             this.toolTip1.SetToolTip(this.chkGrid, "Toggle grid");
             this.chkGrid.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
             // 
-            // btnRevert
-            // 
-            this.btnRevert.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnRevert.Enabled = false;
-            this.btnRevert.Location = new System.Drawing.Point(6, 17);
-            this.btnRevert.Name = "btnRevert";
-            this.btnRevert.Size = new System.Drawing.Size(122, 23);
-            this.btnRevert.TabIndex = 60;
-            this.btnRevert.Text = "Revert image";
-            this.btnRevert.UseVisualStyleBackColor = true;
-            this.btnRevert.Click += new System.EventHandler(this.btnRevert_Click);
-            // 
             // cmbEncodings
             // 
             this.cmbEncodings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cmbEncodings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbEncodings.FormattingEnabled = true;
-            this.cmbEncodings.Location = new System.Drawing.Point(12, 388);
+            this.cmbEncodings.Location = new System.Drawing.Point(12, 440);
             this.cmbEncodings.Name = "cmbEncodings";
             this.cmbEncodings.Size = new System.Drawing.Size(196, 21);
             this.cmbEncodings.TabIndex = 21;
@@ -366,6 +363,7 @@
             // groupBox1
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.chkShiftWrap);
             this.groupBox1.Controls.Add(this.btnPaste);
             this.groupBox1.Controls.Add(this.btnCopy);
             this.groupBox1.Controls.Add(this.numWidth);
@@ -378,10 +376,9 @@
             this.groupBox1.Controls.Add(this.numYOffset);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.lblYOffset);
-            this.groupBox1.Controls.Add(this.btnRevert);
-            this.groupBox1.Location = new System.Drawing.Point(567, 34);
+            this.groupBox1.Location = new System.Drawing.Point(616, 34);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(134, 204);
+            this.groupBox1.Size = new System.Drawing.Size(162, 176);
             this.groupBox1.TabIndex = 60;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Symbol info";
@@ -394,16 +391,16 @@
             0,
             0,
             0});
-            this.numWidth.Location = new System.Drawing.Point(62, 45);
+            this.numWidth.Location = new System.Drawing.Point(62, 18);
             this.numWidth.Maximum = new decimal(new int[] {
             255,
             0,
             0,
             0});
             this.numWidth.Name = "numWidth";
-            this.numWidth.Size = new System.Drawing.Size(66, 20);
+            this.numWidth.Size = new System.Drawing.Size(94, 20);
             this.numWidth.TabIndex = 61;
-            this.numWidth.ValueChanged += new System.EventHandler(this.numWidth_ValueChanged);
+            this.numWidth.ValueChanged += new System.EventHandler(this.NumWidth_ValueChanged);
             // 
             // numHeight
             // 
@@ -413,16 +410,16 @@
             0,
             0,
             0});
-            this.numHeight.Location = new System.Drawing.Point(62, 71);
+            this.numHeight.Location = new System.Drawing.Point(62, 44);
             this.numHeight.Maximum = new decimal(new int[] {
             255,
             0,
             0,
             0});
             this.numHeight.Name = "numHeight";
-            this.numHeight.Size = new System.Drawing.Size(66, 20);
+            this.numHeight.Size = new System.Drawing.Size(94, 20);
             this.numHeight.TabIndex = 62;
-            this.numHeight.ValueChanged += new System.EventHandler(this.numHeight_ValueChanged);
+            this.numHeight.ValueChanged += new System.EventHandler(this.NumHeight_ValueChanged);
             // 
             // numYOffset
             // 
@@ -432,14 +429,14 @@
             0,
             0,
             0});
-            this.numYOffset.Location = new System.Drawing.Point(62, 97);
+            this.numYOffset.Location = new System.Drawing.Point(62, 70);
             this.numYOffset.Maximum = new decimal(new int[] {
             255,
             0,
             0,
             0});
             this.numYOffset.Name = "numYOffset";
-            this.numYOffset.Size = new System.Drawing.Size(66, 20);
+            this.numYOffset.Size = new System.Drawing.Size(94, 20);
             this.numYOffset.TabIndex = 63;
             this.numYOffset.ValueChanged += new System.EventHandler(this.NumYOffset_ValueChanged);
             // 
@@ -447,11 +444,11 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.symbolToolStripMenuItem,
+            this.editToolStripMenuItem,
             this.infoToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(707, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(784, 24);
             this.menuStrip1.TabIndex = 306;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -498,7 +495,7 @@
             this.revertFontToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
             this.revertFontToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
             this.revertFontToolStripMenuItem.Text = "Revert Font";
-            this.revertFontToolStripMenuItem.Click += new System.EventHandler(this.revertFontToolStripMenuItem_Click);
+            this.revertFontToolStripMenuItem.Click += new System.EventHandler(this.RevertFontToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
@@ -508,42 +505,51 @@
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
-            // symbolToolStripMenuItem
+            // editToolStripMenuItem
             // 
-            this.symbolToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.copyToolStripMenuItem,
             this.pasteToolStripMenuItem,
-            this.revertToolStripMenuItem});
-            this.symbolToolStripMenuItem.Name = "symbolToolStripMenuItem";
-            this.symbolToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
-            this.symbolToolStripMenuItem.Text = "Symbol";
+            this.revertToolStripMenuItem,
+            this.editorSettingsToolStripMenuItem});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "Edit";
             // 
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.Enabled = false;
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             this.copyToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
-            this.copyToolStripMenuItem.Text = "Copy";
-            this.copyToolStripMenuItem.Click += new System.EventHandler(this.btnCopy_Click);
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.copyToolStripMenuItem.Text = "Copy symbol";
+            this.copyToolStripMenuItem.Click += new System.EventHandler(this.BtnCopy_Click);
             // 
             // pasteToolStripMenuItem
             // 
             this.pasteToolStripMenuItem.Enabled = false;
             this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             this.pasteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
-            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
-            this.pasteToolStripMenuItem.Text = "Paste";
-            this.pasteToolStripMenuItem.Click += new System.EventHandler(this.btnPaste_Click);
+            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.pasteToolStripMenuItem.Text = "Paste symbol";
+            this.pasteToolStripMenuItem.Click += new System.EventHandler(this.BtnPaste_Click);
             // 
             // revertToolStripMenuItem
             // 
             this.revertToolStripMenuItem.Enabled = false;
             this.revertToolStripMenuItem.Name = "revertToolStripMenuItem";
             this.revertToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z)));
-            this.revertToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
-            this.revertToolStripMenuItem.Text = "Revert";
+            this.revertToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.revertToolStripMenuItem.Text = "Revert symbol";
             this.revertToolStripMenuItem.Click += new System.EventHandler(this.btnRevert_Click);
+            // 
+            // editorSettingsToolStripMenuItem
+            // 
+            this.editorSettingsToolStripMenuItem.Name = "editorSettingsToolStripMenuItem";
+            this.editorSettingsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.T)));
+            this.editorSettingsToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.editorSettingsToolStripMenuItem.Text = "Editor settings...";
+            this.editorSettingsToolStripMenuItem.Click += new System.EventHandler(this.editorSettingsToolStripMenuItem_Click);
             // 
             // infoToolStripMenuItem
             // 
@@ -556,9 +562,32 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.aboutToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
             this.aboutToolStripMenuItem.Text = "About...";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
+            // 
+            // cmbPalettes
+            // 
+            this.cmbPalettes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbPalettes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbPalettes.FormattingEnabled = true;
+            this.cmbPalettes.Location = new System.Drawing.Point(616, 212);
+            this.cmbPalettes.Name = "cmbPalettes";
+            this.cmbPalettes.Size = new System.Drawing.Size(162, 21);
+            this.cmbPalettes.TabIndex = 90;
+            this.cmbPalettes.SelectedIndexChanged += new System.EventHandler(this.CmbPalettes_SelectedIndexChanged);
+            // 
+            // btnSavePalette
+            // 
+            this.btnSavePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSavePalette.Location = new System.Drawing.Point(726, 411);
+            this.btnSavePalette.Name = "btnSavePalette";
+            this.btnSavePalette.Size = new System.Drawing.Size(49, 23);
+            this.btnSavePalette.TabIndex = 312;
+            this.btnSavePalette.Text = "Save";
+            this.btnSavePalette.UseVisualStyleBackColor = true;
+            this.btnSavePalette.Click += new System.EventHandler(this.BtnSavePalette_Click);
             // 
             // numFontHeight
             // 
@@ -577,8 +606,8 @@
             this.numFontHeight.MouseWheelIncrement = 0;
             this.numFontHeight.Name = "numFontHeight";
             this.numFontHeight.Size = new System.Drawing.Size(40, 20);
-            this.numFontHeight.TabIndex = 309;
-            this.numFontHeight.ValueChanged += new System.EventHandler(this.numFontHeight_ValueChanged);
+            this.numFontHeight.TabIndex = 12;
+            this.numFontHeight.ValueChanged += new System.EventHandler(this.NumFontHeight_ValueChanged);
             // 
             // numFontWidth
             // 
@@ -597,8 +626,8 @@
             this.numFontWidth.MouseWheelIncrement = 0;
             this.numFontWidth.Name = "numFontWidth";
             this.numFontWidth.Size = new System.Drawing.Size(40, 20);
-            this.numFontWidth.TabIndex = 308;
-            this.numFontWidth.ValueChanged += new System.EventHandler(this.numFontWidth_ValueChanged);
+            this.numFontWidth.TabIndex = 11;
+            this.numFontWidth.ValueChanged += new System.EventHandler(this.NumFontWidth_ValueChanged);
             // 
             // numSymbols
             // 
@@ -617,8 +646,8 @@
             this.numSymbols.MouseWheelIncrement = 0;
             this.numSymbols.Name = "numSymbols";
             this.numSymbols.Size = new System.Drawing.Size(128, 20);
-            this.numSymbols.TabIndex = 307;
-            this.numSymbols.ValueChanged += new System.EventHandler(this.numSymbols_ValueChanged);
+            this.numSymbols.TabIndex = 10;
+            this.numSymbols.ValueChanged += new System.EventHandler(this.NumSymbols_ValueChanged);
             // 
             // dgrvSymbolsList
             // 
@@ -639,7 +668,7 @@
             this.dgrvSymbolsList.RowHeadersVisible = false;
             this.dgrvSymbolsList.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.dgrvSymbolsList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgrvSymbolsList.Size = new System.Drawing.Size(195, 279);
+            this.dgrvSymbolsList.Size = new System.Drawing.Size(195, 331);
             this.dgrvSymbolsList.StandardTab = true;
             this.dgrvSymbolsList.TabIndex = 20;
             this.dgrvSymbolsList.VerticalScrollbarOffset = 0;
@@ -651,17 +680,19 @@
             this.palColorSelector.AutoSize = true;
             this.palColorSelector.ColorSelectMode = Nyerguds.Util.UI.ColorSelMode.None;
             this.palColorSelector.ColorTableWidth = 4;
-            this.palColorSelector.LabelSize = new System.Drawing.Size(30, 30);
-            this.palColorSelector.Location = new System.Drawing.Point(569, 240);
+            this.palColorSelector.LabelSize = new System.Drawing.Size(36, 36);
+            this.palColorSelector.Location = new System.Drawing.Point(616, 240);
             this.palColorSelector.MaxColors = 16;
             this.palColorSelector.Name = "palColorSelector";
+            this.palColorSelector.PadBetween = new System.Drawing.Point(5, 5);
             this.palColorSelector.Padding = new System.Windows.Forms.Padding(0);
             this.palColorSelector.Palette = null;
             this.palColorSelector.Remap = null;
             this.palColorSelector.SelectedIndices = new int[0];
             this.palColorSelector.ShowRemappedPalette = true;
-            this.palColorSelector.Size = new System.Drawing.Size(132, 132);
-            this.palColorSelector.TabIndex = 80;
+            this.palColorSelector.Size = new System.Drawing.Size(159, 159);
+            this.palColorSelector.TabIndex = 91;
+            this.palColorSelector.TabStop = false;
             this.palColorSelector.TransItemBackColor = System.Drawing.Color.Empty;
             this.palColorSelector.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.PalColorSelector_ColorLabelMouseDoubleClick);
             this.palColorSelector.ColorLabelMouseClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palColorSelector_ColorLabelMouseClick);
@@ -674,7 +705,7 @@
             0,
             0,
             0});
-            this.numZoom.Location = new System.Drawing.Point(457, 390);
+            this.numZoom.Location = new System.Drawing.Point(456, 441);
             this.numZoom.Minimum = new decimal(new int[] {
             1,
             0,
@@ -706,7 +737,7 @@
             this.pnlImageScroll.Margin = new System.Windows.Forms.Padding(0);
             this.pnlImageScroll.Name = "pnlImageScroll";
             this.pnlImageScroll.Padding = new System.Windows.Forms.Padding(3);
-            this.pnlImageScroll.Size = new System.Drawing.Size(348, 348);
+            this.pnlImageScroll.Size = new System.Drawing.Size(400, 400);
             this.pnlImageScroll.TabIndex = 40;
             this.pnlImageScroll.TabStop = true;
             // 
@@ -768,12 +799,27 @@
             this.pxbFullSize.Visible = false;
             this.pxbFullSize.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageBox_Click);
             // 
+            // btnResetPalette
+            // 
+            this.btnResetPalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnResetPalette.Enabled = false;
+            this.btnResetPalette.Location = new System.Drawing.Point(671, 411);
+            this.btnResetPalette.Name = "btnResetPalette";
+            this.btnResetPalette.Size = new System.Drawing.Size(49, 23);
+            this.btnResetPalette.TabIndex = 312;
+            this.btnResetPalette.Text = "Revert";
+            this.btnResetPalette.UseVisualStyleBackColor = true;
+            this.btnResetPalette.Click += new System.EventHandler(this.BtnResetPalette_Click);
+            // 
             // FrmFontEditor
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(707, 417);
+            this.ClientSize = new System.Drawing.Size(784, 469);
+            this.Controls.Add(this.btnResetPalette);
+            this.Controls.Add(this.btnSavePalette);
+            this.Controls.Add(this.cmbPalettes);
             this.Controls.Add(this.chkPicker);
             this.Controls.Add(this.chkPaint);
             this.Controls.Add(this.numFontHeight);
@@ -798,7 +844,7 @@
             this.Controls.Add(this.menuStrip1);
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.MainMenuStrip = this.menuStrip1;
-            this.MinimumSize = new System.Drawing.Size(700, 455);
+            this.MinimumSize = new System.Drawing.Size(725, 457);
             this.Name = "FrmFontEditor";
             this.Text = "Westwood Font Editor v#.#.# - Created by Nyerguds";
             this.Shown += new System.EventHandler(this.FrmFontEditor_Shown);
@@ -849,7 +895,6 @@
         private System.Windows.Forms.ToolTip toolTip1;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkGrid;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkOutline;
-        private System.Windows.Forms.Button btnRevert;
         private Nyerguds.Util.UI.EnhNumericUpDown numYOffset;
         private WWFontEditor.UI.Tools.DataGridViewScrollSupport dgrvSymbolsList;
         private System.Windows.Forms.ComboBox cmbEncodings;
@@ -868,7 +913,7 @@
         private Nyerguds.Util.UI.EnhNumericUpDown numHeight;
         private System.Windows.Forms.Button btnCopy;
         private System.Windows.Forms.Button btnPaste;
-        private System.Windows.Forms.ToolStripMenuItem symbolToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem revertToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
@@ -880,6 +925,11 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkPaint;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkPicker;
+        private Nyerguds.Util.UI.ImageButtonCheckBox chkShiftWrap;
+        private System.Windows.Forms.ComboBox cmbPalettes;
+        private System.Windows.Forms.Button btnSavePalette;
+        private System.Windows.Forms.Button btnResetPalette;
+        private System.Windows.Forms.ToolStripMenuItem editorSettingsToolStripMenuItem;
     }
 }
 

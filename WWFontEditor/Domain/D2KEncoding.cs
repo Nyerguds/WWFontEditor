@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace WWFontEditor.Domain
 {
-    public class D2KEncoding : Encoding // SBCSCodePageEncoding
+    public class D2KEncoding : Encoding
     {
+
+        /// <summary>
+        /// The default Dune 2000 character remap table, copied from FONT.BIN
+        /// </summary>
         protected static Byte[] remapTable = new Byte[]
         {
             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
@@ -29,26 +31,39 @@ namespace WWFontEditor.Domain
 
         protected Byte[] m_RemapTable;
         protected String m_EncodingName = "Dune 2000 text encoding";
-        protected Encoding m_BaseEncoding = Encoding.GetEncoding("Windows-1252");
-
-        public D2KEncoding()
-        {
-            m_RemapTable = remapTable;
-        }
-
+        protected Encoding m_BaseEncoding = GetEncoding("Windows-1252");
+        
         public D2KEncoding(Byte[] remapTable, String encName, Encoding baseEncoding)
             : this(remapTable, encName)
         {
+            if (baseEncoding == null)
+                throw new ArgumentNullException("baseEncoding");
+            if (!baseEncoding.IsSingleByte)
+                throw new ArgumentException("The base needs to be a single byte encoding!", "baseEncoding");
             m_BaseEncoding = baseEncoding;
         }
 
         public D2KEncoding(Byte[] remapTable, String encName)
-            : base()
         {
+            if (remapTable == null)
+                throw new ArgumentNullException("remapTable");
             if (remapTable.Length != 0x100)
-                throw new ArgumentException("Array size does not match! Needs to be exactly 256 bytes!");
+                throw new ArgumentException("Array size does not match! Needs to be exactly 256 bytes!", "remapTable");
             m_RemapTable = remapTable;
-            m_EncodingName = encName;
+            if (encName != null)
+                m_EncodingName = encName;
+        }
+
+        public D2KEncoding(String encName)
+            :this()
+        {
+            if (encName != null)
+                m_EncodingName = encName;
+        }
+
+        public D2KEncoding()
+        {
+            m_RemapTable = remapTable;
         }
 
         public override String EncodingName { get { return m_EncodingName; } }
@@ -58,6 +73,8 @@ namespace WWFontEditor.Domain
 
         public override Int32 GetBytes(Char[] chars, Int32 charIndex, Int32 charCount, Byte[] bytes, Int32 byteIndex)
         {
+            // Not really necessary; input for d2k is Windows-1252.
+            // But, it gives the symbol index to use for a character, I guess. Could be useful if I implement previews.
             Int32 retval = m_BaseEncoding.GetBytes(chars, charIndex, charCount, bytes, byteIndex);
             for (Int32 i = byteIndex; i < byteIndex + charCount; i++)
                 bytes[i] = remapTable[bytes[i]];

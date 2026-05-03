@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
+using System.Linq;
 
 namespace ColorManipulation
 {
@@ -139,7 +140,7 @@ namespace ColorManipulation
             return pal;
         }
 
-        public static ColorPalette GeneratePalette(PixelFormat pixelFormat, Boolean addTransparentZero, Boolean reverseGenerated)
+        public static ColorPalette GenerateGrayPalette(PixelFormat pixelFormat, Boolean addTransparentZero, Boolean reverseGenerated)
         {
             ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
             Int32 palSize = (Int32)Math.Pow(2, Image.GetPixelFormatSize(pixelFormat));
@@ -151,6 +152,72 @@ namespace ColorManipulation
                 Byte grayval = (Byte)Math.Min(255, Math.Round(curval * steps, MidpointRounding.AwayFromZero));
                 pal.Entries[i] = Color.FromArgb(255, grayval, grayval, grayval);
             }
+            // make color 0 transparent
+            if (addTransparentZero)
+                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
+            return pal;
+        }
+
+        public static ColorPalette GenerateDefFourBitPalette(Boolean addTransparentZero, Boolean reverseGenerated)
+        {
+            ColorPalette pal = new Bitmap(10, 10, PixelFormat.Format4bppIndexed).Palette;
+            if (reverseGenerated)
+            {
+                Color[] entries = pal.Entries.Reverse().ToArray();
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                    pal.Entries[i] = entries[i];
+            }
+            // remove transparency
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+                pal.Entries[i] = Color.FromArgb(0xFF, pal.Entries[i]);
+            // make color 0 transparent
+            if (addTransparentZero)
+                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
+            return pal;
+        }
+
+        public static ColorPalette GenerateDoubleRainbow(Boolean blackOnZero, Boolean addTransparentZero, Boolean reverseGenerated)
+        {
+            Color[] col = GenerateRainbowPalette(4, false, true, addTransparentZero, false).Entries;
+            ColorPalette pal = GenerateRainbowPalette(8, true, blackOnZero, addTransparentZero, false);
+            Array.Copy(col,0, pal.Entries, 0, col.Length);
+            if (reverseGenerated)
+            {
+                Color[] entries = pal.Entries.Reverse().ToArray();
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                    pal.Entries[i] = entries[i];
+            }
+            return pal;
+        }
+
+        public static ColorPalette GenerateRainbowPalette(Int32 bpp, Boolean keepWin16Pal, Boolean blackOnZero, Boolean addTransparentZero, Boolean reverseGenerated)
+        {
+            ColorPalette pal = new Bitmap(10, 10, GetPalettedFormat(bpp)).Palette;
+            Int32 colors = (Int32)Math.Pow(2, bpp);
+            if (keepWin16Pal)
+                colors -= 16;
+            if (blackOnZero && !keepWin16Pal)
+            {
+                colors--;
+                pal.Entries[0] = Color.Black;
+            }
+            Double step = 1.0 / colors * ColorHSL.SCALE;
+            Double satValue = ColorHSL.SCALE;
+            Double lumValue = 0.5 * ColorHSL.SCALE;
+            for (Int32 i = 0; i < colors; i++)
+            {
+                Double curStep = step * i;
+                pal.Entries[keepWin16Pal ? 16 + i : blackOnZero ? 1 + i : i] = new ColorHSL(curStep, satValue, lumValue);
+            }
+            if (reverseGenerated)
+            {
+                Color[] entries = pal.Entries.Reverse().ToArray();
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                    pal.Entries[i] = entries[i];
+            }
+            // remove transparency
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+                pal.Entries[i] = Color.FromArgb(0xFF, pal.Entries[i]);
             // make color 0 transparent
             if (addTransparentZero)
                 pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
@@ -314,12 +381,7 @@ namespace ColorManipulation
             }
             return false;
         }
-
-        public static Color ColorFromUInt(UInt32 argb)
-        {
-            return Color.FromArgb((Byte)((argb & 0xff000000) >> 0x18), (Byte)((argb & 0xff0000) >> 0x10), (Byte)((argb & 0xff00) >> 0x08), (Byte)(argb & 0xff));
-        }
-
+        
         private static ColorPalette GeneratePalette(Color[] colors, Color def)
         {
             Bitmap bm = new Bitmap(1, 1, PixelFormat.Format8bppIndexed);

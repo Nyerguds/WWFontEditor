@@ -17,8 +17,8 @@ namespace WWFontEditor.Domain.FontTypes
         // Not needed here: the automatic parent takes care of it
         //public override Boolean IndividualSizesAllowed { get { return false; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override String ShortTypeCode { get { return "WW V1"; } }
-        public override String LongTypeCode { get { return "Westwood Font Version 1"; } }
+        public override String ShortTypeName { get { return "WW V1"; } }
+        public override String ShortTypeDescription { get { return "WWFont v1 (WarConst, ElmStr, DrStr, CirEdg)"; } }
         public override String LongTypeDescription { get { return "A simple 1 BPP font without header data; it's always a 128-item list of 8x8 symbols."; } }
         public override String[] GamesListForType { get { return new String[]
         {
@@ -30,7 +30,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         protected const Int32 m_FontSize = 0x400;
 
-        public override void LoadFont(Byte[] fileData)
+        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
         {
             if (fileData.Length != m_FontSize)
                 throw new LoadFailedException("File size is not " + m_FontSize + " bytes.");

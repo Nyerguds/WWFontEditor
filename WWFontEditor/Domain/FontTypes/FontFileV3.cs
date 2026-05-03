@@ -13,8 +13,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
         public override Int32 BitsPerPixel { get { return 4; } }
-        public override String ShortTypeCode { get { return "WW V3"; } }
-        public override String LongTypeCode { get { return "Westwood Font Version 3"; } }
+        public override String ShortTypeName { get { return "WW v3"; } }
+        public override String ShortTypeDescription { get { return "WWFont v3 (D2/C&C1/RA1/LoL/Kyr)"; } }
         public override String LongTypeDescription { get { return "A 4 BPP font which allows separate symbols to specify their width, height and Y-offset."; } }
         public override String[] GamesListForType
         {
@@ -38,14 +38,14 @@ namespace WWFontEditor.Domain.FontTypes
             "Lands of Lore III",
         }; } }
 
-        public override void LoadFont(Byte[] fileData)
+        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
         {
-            LoadFromFileData(fileData, FontFileVersion.WW_V3);
+            LoadV3V4Font(fileData, FontFileVersion.WW_V3, fromAutoDetect);
         }
 
         public override Byte[] SaveFont()
         {
-            return this.WriteFntFileV3V4(FontFileVersion.WW_V3);
+            return this.SaveV3V4Font(FontFileVersion.WW_V3);
         }
 
     }

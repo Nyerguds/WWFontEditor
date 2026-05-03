@@ -117,32 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="wwfont" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\wwfont.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_editarea" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_editarea.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_grid" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_grid.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_copy" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_copy.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_paste" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_paste.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_colpicker" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_colpicker.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="icon_pencil" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_pencil.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="IniHandler" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\inihandler.dll;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="icon_wraparound" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\resources\icon_wraparound.png;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
 </root>

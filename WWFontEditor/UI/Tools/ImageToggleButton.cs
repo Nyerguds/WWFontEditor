@@ -15,6 +15,21 @@ namespace Nyerguds.Util.UI
         public Boolean m_TabStop = true;
         public event EventHandler CheckStateChanged;
 
+
+        [EditorBrowsable(EditorBrowsableState.Always)]
+        [Browsable(true)]
+        public new event KeyPressEventHandler KeyPress
+        {
+            add
+            {
+                base.KeyPress += value;
+            }
+            remove
+            {
+                base.KeyPress -= value;
+            }
+        }
+
         [Bindable(true)]
         [DefaultValue(false)]
         [RefreshProperties(RefreshProperties.Repaint)]
@@ -53,9 +68,22 @@ namespace Nyerguds.Util.UI
             }
         }
 
+        [Browsable(true)]
+        [DefaultValue(true)]
+        public new Boolean Enabled
+        {
+            get { return base.Enabled; }
+            set
+            {
+                base.Enabled= value;
+                this.BorderStyle = value ? BorderStyle.None : BorderStyle.FixedSingle;
+            }
+        }
+
         public ImageButtonCheckBox()
         {
             this.SetStyle(ControlStyles.Selectable, true);
+            base.BorderStyle = BorderStyle.None;
             base.TabStop = m_TabStop;
             this.ImageAlign = ContentAlignment.MiddleCenter;
         }
@@ -114,7 +142,10 @@ namespace Nyerguds.Util.UI
         {
             if (!e.Alt && !e.Control && (e.KeyValue == (Int32)System.Windows.Forms.Keys.Space || e.KeyValue == (Int32)System.Windows.Forms.Keys.Enter))
             {
-                this.Checked = !this.Checked;
+                if (this.Toggle)
+                    this.Checked = !this.Checked;
+                else
+                    this.Checked = true;
                 this.m_Clicking = false;
                 this.Invalidate();
             }
@@ -125,7 +156,15 @@ namespace Nyerguds.Util.UI
         protected override void OnPaint(PaintEventArgs pe)
         {
             base.OnPaint(pe);
-            ButtonBorderStyle bs = this.m_Checked ? ButtonBorderStyle.Inset : ButtonBorderStyle.Outset;
+            ButtonBorderStyle bs;
+            if (!this.Enabled)
+                bs = ButtonBorderStyle.None;
+            else if (this.m_Clicking)
+                bs = ButtonBorderStyle.Inset;
+            else if (this.m_Checked)
+                bs = ButtonBorderStyle.Inset;
+            else
+                bs = ButtonBorderStyle.Outset;
             Boolean hasImage = this.Image != null;
             Int32 centerOffsetX = hasImage ? (this.ClientRectangle.Width - this.Image.Width) / 2 : 0;
             Int32 centerOffsetY = hasImage? (this.ClientRectangle.Height - this.Image.Height) / 2 : 0;

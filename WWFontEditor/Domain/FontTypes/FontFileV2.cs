@@ -15,8 +15,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
         public override Boolean CustomSymbSizesForType { get { return false; } }
-        public override String ShortTypeCode { get { return "WW V2"; } }
-        public override String LongTypeCode { get { return "Westwood Font Version 2"; } }
+        public override String ShortTypeName { get { return "WW V2"; } }
+        public override String ShortTypeDescription { get { return "WWFont V2 (BattleTech, EoB)"; } }
         public override String LongTypeDescription { get { return "A 1 BPP font with a maximum width of 8 pixels, with the file header specifying the global width and height."; } }
         public override String[] GamesListForType { get { return new String[]
         {
@@ -26,9 +26,9 @@ namespace WWFontEditor.Domain.FontTypes
             "Eye of the Beholder III Character Generator"
         }; } }
 
-        public override void LoadFont(Byte[] fileData)
+        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
         {
-            if (fileData.Length < 104)
+            if (fileData.Length < 0x104)
                 throw new LoadFailedException(ERR_NOHEADER);
             Int16 fileSize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             if (fileSize != fileData.Length - 2)

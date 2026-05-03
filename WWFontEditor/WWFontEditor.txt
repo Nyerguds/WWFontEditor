@@ -1,72 +1,106 @@
-﻿Westwood Font Editor v1.2
-------------------------- Created by Nyerguds
+﻿=========================
+Westwood Font Editor v1.3
+========================= Created by Nyerguds
 
-This editor can read and write fonts of Westwood games.
+This editor can read and write paletted fonts of pretty much every Westwood
+game ever released, plus Dune 2000, which is technically not made by Westwood.
+
+It does not have support for RA2 fonts because paletted editing is very
+different in nature than high colour editing, and all internal data in the
+editor uses 8-bit images. And there's already an editor for that, anyway ;)
 
 Have fun with it!
 
 
----------------------------------------
+=================
+Table of Contents
+=================
+> Features list
+> Adding palettes
+> Full list of supported types / games
+> Note on Dune 2000 support
+> Special thanks to
+> Version history
 
 
-Note on Dune 2000 support:
+-------------
+Features list
+-------------
 
-Dune 2000 has a text encoding translation table called "FONT.BIN", meant to
-compress the used special characters into all available space. For example,
-if you need the character "ä", then, in Windows 1252 text encoding, that's
-byte 0xE4. If you look on address 0xE4 in FONT.BIN, you'll see the value
-there is 0x80. This means that character "ä" is at index 80 in the fonts.
-
-So, in short: ä = E4 ==> table index E4 ==> value 80 => font index 80
-
-Doing the reverse (going from font table index to character) is slightly
-harder, involving looking for values in the table, but you don't need to
-do that, since the Dune 2000 text files are in Windows-1252 encoding.
-
-If you want to add fonts with a different text encoding to the game,
-I advise you to get rid of this whole nonsense by simply replacing FONT.BIN
-with a 256-byte file containing a simple sequence of bytes from 00 to FF,
-so each character simply gets mapped onto itself.
+* Can edit fonts from pretty much all pre-RA2 Westwood games (see full list).
+* Character sizes can be adjusted (if the font format supports it).
+* New characters can be added (if the font format supports it).
+* Character data can be shifted up/down/left/right.
+* Clipboard: Characters can be copied, even to other WWFontEditor instances.
+* Has a text encoding dropdown to view character mappings for other encodings.
+* Contains a Dune 2000 encoding for the game's reordered special characters.
+* Has a multitude of inbuilt palettes to show the font symbols.
+* Color palettes can be edited on-the-fly by double-clicking the colours.
+* Has support for adding and editing custom added palettes (see next section).
+* The editor's colors and defaults can be customized in the settings.
 
 
----------------------------------------
+---------------
+Adding palettes
+---------------
+
+The editor has a bunch of automatically-generated color palettes that allow
+quick visualisation of the fonts. However, if you would wish to add custom
+palettes this is entirely possible too. The two types of palettes that can be
+added are 16-color palettes and 32-color palettes.
+
+For both of these, the editor uses the classic 256-color palette format used
+by all Westwood C&C games.
+
+To add a 256-color palette to the editor, simply copy the palette file into
+the editor folder and restart the application.
+
+To add a 16-color palette, the process is slightly more complex; the editor
+uses a C&C 256-color palette for that too, but divides it up into 16 entries.
+To add such a palette, add the file itself, then create a .ini file with the
+same name and a [Palette] header inside it. The editor will read the entries
+below that header from 0 to 15 and add them to the editor. Palettes used as
+16-colour palettes will not show up in the 256-colour palette listing.
+
+See the included 16col.ini / 16col.pal for an example. To use more entries of
+16col.pal, simply edit the ini file and add names on the empty entries you
+want to use.
 
 
-Special thanks to:
--tomsons26, Omniblade and CCHyper for their research assistance.
--tomsons26 for the creation of the program icon, for digging through ancient
- Westwood games, and for his tireless nagging.
+Note that while all palettes in the editor can be edited by double-clicking
+the colours on the palette, only externally loaded palettes can be saved. The
+generated palettes can be modified to customize viewing of your fonts, but they
+can't be saved. To edit and save fonts, add a new palette as described above.
 
 
----------------------------------------
+------------------------------------
+Full list of supported types / games
+------------------------------------
 
-
-Full list of supported types / games:
-
-WWFont v1:
+WWFont v1
 -Wargame Construction Set
 -A Nightmare On Elm Street
 -DragonStrike
 -Circuit's Edge
 
-WWFont v2 (Note: saving optimizes them; not sure if the games support this)
--BattleTech The Crescent Hawk's Revenge
+WWFont v2
+-BattleTech: The Crescent Hawk's Revenge
 -Eye of the Beholder
--Eye of the Beholder II The Legend of Darkmoon
+-Eye of the Beholder 2: The Legend of Darkmoon
 
 WWFont v3
 -The Legend of Kyrandia
 -Dune II
--Lands of Lore The Throne of Chaos
--The Legend of Kyrandia Hand of Fate
--The Legend of Kyrandia Malcolm's Revenge
--The Legend of Kyrandia Malcolm's Revenge Installer
+-Lands of Lore: The Throne of Chaos
+-The Legend of Kyrandia 2: Hand of Fate
+-The Legend of Kyrandia 3: Malcolm's Revenge
+-The Legend of Kyrandia 3: Malcolm's Revenge Installer
 -Command & Conquer
 -Command & Conquer Installer
 -Command & Conquer Red Alert
 -Command & Conquer Red Alert Installer
--Lands of Lore Guardians of Destiny
--Lands of Lore Guardians of Destiny Installer
+-Lands of Lore 2: Guardians of Destiny
+-Lands of Lore 2: Guardians of Destiny Installer
 -Command & Conquer Sole Survivor
 -Lands of Lore III
 
@@ -81,10 +115,56 @@ IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
 
 
----------------------------------------
+-------------------------
+Note on Dune 2000 support
+-------------------------
+
+The text encoding dropdown list has an extra "Dune 2000 text encoding" item
+at the bottom. The reason for this is that the font is strangely reordered.
+
+Dune 2000 has a text encoding translation table called "FONT.BIN", apparently
+meant to line up the used special characters in the font without leaving gaps.
+(Though, strangely, this isn't used to optimize the font in any way.)
 
 
-Version history:
+For example, if you need the character "ä", that's byte 0xE4 in the text
+encoding used by the game (Windows-1252; standard US / Western European).
+If you look on address 0xE4 in FONT.BIN, you'll see the value there is 0x80.
+This means that character "ä" is at index 0x80 (128) in the fonts.
+
+So, in short: ä = 0xE4 ==> table index 0xE4 ==> value 0x80 => font index 0x80
+
+(The editor actually does the reverse; going from font table index to character
+by looking up in which spot in the table each index value is, but you don't
+need to do that, since Dune 2000 text files are just in Windows-1252 encoding)
+
+
+If you want to add fonts for a different text encoding to the game, I advise
+you to get rid of this whole nonsense by replacing FONT.BIN with a 256-byte
+file containing a simple sequence of bytes from 00 to FF, so each character
+simply gets mapped onto itself.
+
+
+-----------------
+Special thanks to
+-----------------
+
+-tomsons26, Omniblade and CCHyper for their research assistance.
+-tomsons26 for the creation of the program icon, for digging through ancient
+ Westwood games, and for his tireless nagging.
+
+
+---------------
+Version history
+---------------
+
+v1.3:
+-True clipboard implemented: symbols can now be copied across different
+ instances of the program.
+-Palette support implemented: the program will now read any C&C type palettes
+ in the program folder. If an ini file of the same name is added, the palette
+ is divided into 16-colour palettes according to keys 0 to 15 under [Palette].
+-Application settings added: all UI colors and defaults can now be customized.
 
 v1.2.2:
 -Implemented correct conversion of symbols pasted in from a different font type.

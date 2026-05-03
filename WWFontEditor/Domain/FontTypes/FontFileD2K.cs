@@ -16,12 +16,12 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0x0; } }
         public override Int32 BitsPerPixel { get { return 8; } }
-        public override String ShortTypeCode { get { return "IG D2K"; } }
-        public override String LongTypeCode { get { return "IG Font (Dune 2000)"; } }
+        public override String ShortTypeName { get { return "IG D2K"; } }
+        public override String ShortTypeDescription { get { return "IG Font (Dune 2000)"; } }
         public override String LongTypeDescription { get { return "This font was made by IG, not Westwood. It has individual sizes for symbols, but no Y optimization."; } }
         public override String[] GamesListForType { get { return new String[] { "Dune 2000" }; } }
 
-        public override void LoadFont(Byte[] fileData)
+        public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
         {
             // Technically header + first symbol header, but whatev :p
             if (fileData.Length < 0x410)
@@ -36,7 +36,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte empty07 = fileData[07];
             //No clue if this is ok as test...
             if (fontLoadedFlag != 1 || empty05 != 0 || empty06 != 0 || empty07 != 0)
-                throw new LoadFailedException("Identifying bytes do not match!");
+                throw new LoadFailedException("Identifying bytes in header do not match.");
             this.m_FontHeight = maxHeight;
             // Wlll be increased to the max found in the file.
             this.m_FontWidth = spaceSize;
@@ -97,11 +97,11 @@ namespace WWFontEditor.Domain.FontTypes
 
             // Code to detect how much space at the right edge is added padding to create space between pixels.
             // This space is trimmed off and added in the header instead.
-            // space width needs to be taken into account, but it's not in the new list, so use it as starting value.
-            Int32 globalOpenSpace = this.FontWidth;
+            // Start from max that can be trimmed off the space, since it's not in the list.
+            Int32 globalOpenSpace = spaceWidth;
             foreach (FontFileSymbol fs in m_ImageDataList)
             {
-                // ignore completely empty characters
+                // ignore completely empty characters; they'd reduce it to 0 for no reason.
                 if (fs.Width == 0 && fs.Height == 0)
                     continue;
                 Byte[] byteData = fs.ByteData;
@@ -112,11 +112,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     Byte[] line = new Byte[width];
                     Array.Copy(byteData, y*width, line, 0, width);
-                    IEnumerable<Byte> rev = line.Reverse();
-                    rev = rev.TakeWhile(x => x == 0);
-                    Int32 open = rev.Count();
-                    minOpenSpace = Math.Min(minOpenSpace, open);
-                    //minOpenSpace = Math.Min(minOpenSpace, byteData.Reverse().TakeWhile(x => x == 0).Count());
+                    minOpenSpace = Math.Min(minOpenSpace, line.Reverse().TakeWhile(x => x == 0).Count());
                 }
                 globalOpenSpace = Math.Min(globalOpenSpace, minOpenSpace);
                 if (globalOpenSpace == 0)

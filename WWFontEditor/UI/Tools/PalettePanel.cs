@@ -189,7 +189,7 @@ namespace Nyerguds.Util.UI
             set { this.m_EmptyItemBackColor = value; Invalidate(); }
         }
 
-        [Description("Character put on entries not filled in on the palette."), Category("Palette panel")]
+        [Description("Character put on entries not filled in on the palette. Not drawn if EmptyItemCharColor is set to Color.Empty."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         [DefaultValue('X')]
         public Char EmptyItemChar
@@ -198,7 +198,7 @@ namespace Nyerguds.Util.UI
             set { this.m_EmptyItemChar = value; Invalidate(); }
         }
 
-        [Description("Color of the character put on entries not filled in on the palette."), Category("Palette panel")]
+        [Description("Color of the character put on entries not filled in on the palette. Setting this to Color.Empty causes the character not to be drawn."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         [DefaultValue(typeof(Color), "0xFF0000")]
         public Color EmptyItemCharColor
@@ -207,7 +207,7 @@ namespace Nyerguds.Util.UI
             set { this.m_EmptyItemCharColor = value; Invalidate(); }
         }
 
-        [Description("Color used to indicate entries that are transparent on the palette. Set to Color.Empty to use the value of the actual color itself. This will automatically generate a visible color for the indicator character."), Category("Palette panel")]
+        [Description("Color used to indicate entries that are transparent on the palette. Setting this to Color.Empty will use the value of the actual color itself, and will automatically generate a visible color for the indicator character instead of using TransItemCharColor."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         public Color TransItemBackColor
         {
@@ -215,7 +215,7 @@ namespace Nyerguds.Util.UI
             set { this.m_TransItemBackColor = value; Invalidate(); }
         }
 
-        [Description("Character put on labels to indicate entries that are transparent on the palette."), Category("Palette panel")]
+        [Description("Character put on labels to indicate entries that are transparent on the palette. Not drawn if TransItemCharColor is set to Color.Empty."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         [DefaultValue('T')]
         public Char TransItemChar
@@ -224,7 +224,7 @@ namespace Nyerguds.Util.UI
             set { this.m_TransItemChar = value; Invalidate(); }
         }
 
-        [Description("Color of the character put on labels to indicate entries that are transparent on the palette. Not used if TransItemBackColor is set to Color.Empty"), Category("Palette panel")]
+        [Description("Color of the character put on labels to indicate entries that are transparent on the palette. Not used if TransItemBackColor is set to Color.Empty. Setting this to Color.Empty causes the character not to be drawn, regardless of the TransItemBackColor overriding its value."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         [DefaultValue(typeof(Color), "0x0000FF")]
         public Color TransItemCharColor
@@ -438,22 +438,17 @@ namespace Nyerguds.Util.UI
 
         protected Color GetColor(Int32 index)
         {
-            Color col;
             if (m_Remap != null && m_ShowRemappedPalette)
             {
                 Int32 filterIndex;
                 if (index < m_Remap.Length && (filterIndex = m_Remap[index]) >= 0 && filterIndex < m_Palette.Length)
-                    col = m_Palette[filterIndex];
+                    return m_Palette[filterIndex];
                 else
-                    col = Color.Empty;
+                    return Color.Empty;
             }
             else if (index < m_Palette.Length)
-            {
-                col = m_Palette[index];
-            }
-            else
-                col = Color.Empty;
-            return col;
+                return m_Palette[index];
+            return Color.Empty;
         }
 
         protected virtual void SetColorToolTip(Int32 index, Boolean isEmpty, Boolean isTransparent)
@@ -470,7 +465,7 @@ namespace Nyerguds.Util.UI
                 tooltipString = "#" + index;
                 if (m_Remap != null && m_ShowRemappedPalette && m_Remap[index] >= 0)
                     tooltipString += " -> #" + m_Remap[index];
-                tooltipString += " (" + c.R + "," + c.G + "," + c.B + ")";
+                tooltipString += String.Format(" ({0},{1},{2})", c.R, c.G, c.B);
                 if (isTransparent)
                     tooltipString += " (Transparent)";
             }
@@ -494,15 +489,17 @@ namespace Nyerguds.Util.UI
             if (isEmpty)
             {
                 lbl.BackColor = this.m_EmptyItemBackColor;
-                lbl.Text = this.m_EmptyItemChar.ToString();
-                lbl.ForeColor = this.m_EmptyItemCharColor;
+                Boolean fgisEmpty = this.m_EmptyItemCharColor == Color.Empty;
+                lbl.Text = fgisEmpty ? String.Empty : this.m_EmptyItemChar.ToString();
+                lbl.ForeColor = fgisEmpty ? Color.Transparent : this.m_EmptyItemCharColor;
             }
             else if (isTransparent)
             {
                 Boolean bgisEmpty = this.m_TransItemBackColor == Color.Empty;
                 lbl.BackColor = bgisEmpty ? Color.FromArgb(255, color.R, color.G, color.B) : this.m_TransItemBackColor;
-                lbl.Text = this.m_TransItemChar.ToString();
-                lbl.ForeColor = bgisEmpty ? GetVisibleBorderColor(lbl.BackColor) : this.m_TransItemCharColor;
+                Boolean fgisEmpty = this.m_TransItemCharColor == Color.Empty;
+                lbl.Text = fgisEmpty ? String.Empty : this.m_TransItemChar.ToString();
+                lbl.ForeColor = fgisEmpty ? Color.Transparent : bgisEmpty ? GetVisibleBorderColor(lbl.BackColor) : this.m_TransItemCharColor;
             }
             else
             {
@@ -541,7 +538,7 @@ namespace Nyerguds.Util.UI
             Label lbl = (Label)sender;
             if (lbl.BorderStyle == BorderStyle.FixedSingle)
             {
-                ButtonBorderStyle bs = ButtonBorderStyle.Inset;
+                ButtonBorderStyle bs = ButtonBorderStyle.Solid;
                 if (m_ColorSelectMode == ColorSelMode.TwoMouseButtons)
                 {
                     Int32 index = (Int32)lbl.Tag;
@@ -615,10 +612,10 @@ namespace Nyerguds.Util.UI
                 // force refresh
                 lbl.Invalidate();
                 if (this.ColorSelectionChanged != null)
-                    this.ColorSelectionChanged(this, new PaletteClickEventArgs(e, index, Palette[index]));
+                    this.ColorSelectionChanged(this, new PaletteClickEventArgs(e, index, GetColor(index)));
             }
             if (this.ColorLabelMouseClick != null)
-                this.ColorLabelMouseClick(this, new PaletteClickEventArgs(e, index, Palette[index]));
+                this.ColorLabelMouseClick(this, new PaletteClickEventArgs(e, index, GetColor(index)));
             
         }
 
@@ -628,7 +625,7 @@ namespace Nyerguds.Util.UI
             {
                 Label lbl = (Label)sender;
                 Int32 index = lbl != null ? (Int32)lbl.Tag : -1;
-                ColorLabelMouseDoubleClick(this, new PaletteClickEventArgs(e, index, Palette[index]));
+                ColorLabelMouseDoubleClick(this, new PaletteClickEventArgs(e, index, GetColor(index)));
             }
         }
 

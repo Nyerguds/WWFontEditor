@@ -193,10 +193,10 @@ namespace WWFontEditor.Domain
             Int32 tarStart = left ? 0 : 1;
             for (Int32 i = 0; i < source.Length; i += stride)
             {
-                Byte fill = (Byte)(wrap ? newSource[(left ? 0 : length)] : 0);
+                Byte fill = (Byte)(wrap ? newSource[i + (left ? 0 : length)] : 0);
                 Array.Copy(newSource, i + srcStart, source, i + tarStart, length);
                 // clear shifted pixel
-                source[i + (stride - 1) * srcStart] = fill;
+                source[i + length * srcStart] = fill;
             }
         }
 

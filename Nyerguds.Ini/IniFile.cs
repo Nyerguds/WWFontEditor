@@ -301,6 +301,7 @@ namespace Nyerguds.Ini
         /// and removes keys to adjust the file to the edits made in the stored data. Unknown sections and comments in the file are left untouched.
         /// Note that unknown keys in known sections are only removed if WriteBackMode is WRITE_ALL. The other modes only remove explicitly removed keys.
         /// </summary>
+        /// <returns>True if the save operation succeeded</returns>
         public Boolean WriteIni()
         {
             return WriteIni(this.m_FilePath, this.m_Encoding);
@@ -311,7 +312,8 @@ namespace Nyerguds.Ini
         /// </summary>
         /// <param name="iniFilePath">Filename to write to</param>
         /// <param name="charEncoding">Character encoding to use</param>
-        protected Boolean WriteIni(String iniFilePath, Encoding charEncoding)
+        /// <returns>True if the save operation succeeded</returns>
+        public Boolean WriteIni(String iniFilePath, Encoding charEncoding)
         {
             List<String> initext;
             if (iniFilePath == null && !String.IsNullOrEmpty(this.m_FileContents))
