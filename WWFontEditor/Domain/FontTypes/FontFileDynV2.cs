@@ -94,7 +94,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(data, widths[i], this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel);
+                    curData8bit = ImageUtils.ConvertTo8Bit(data, widths[i], this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -122,23 +122,20 @@ namespace WWFontEditor.Domain.FontTypes
                 if (!foundStart)
                 {
                     if (i < 0x20 && ffs.Width == 0)
-                    {
-                        imageData[i] = new Byte[0];
                         continue;
-                    }
                     foundStart = true;
                     startSymbol = i;
                 }
                 Byte[] eightBitData = ffs.ByteData;
-                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, ffs.Width, ffs.Height, this.BitsPerPixel);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, ffs.Width, ffs.Height, this.BitsPerPixel, true);
                 imageWidths[i] = (Byte)ffs.Width;
                 //fontDataSize += imageData[i].Length;
             }
             Int32 fontOffset = 0;
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, ref fontOffset);
+            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, startSymbol, ref fontOffset);
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
             //Int32 fullDataSize = fontDataSize + nrOfSymbols * 3;
-            Int32 fullDataSize = fontOffset + nrOfSymbols * 3;
+            Int32 fullDataSize = fontOffset + fontDataOffsetsList.Length * 3;
             Byte[] fullData = new Byte[fullDataSize];
             // Reserve space for index, and skip it.
             //Int32 indexOffset = 0;
@@ -147,7 +144,7 @@ namespace WWFontEditor.Domain.FontTypes
             dataOffset += fontDataOffsetsList.Length;
             // Write image widths
             Array.Copy(imageWidths, startSymbol, fullData, dataOffset, nrOfSymbols);
-            dataOffset += imageWidths.Length;
+            dataOffset += nrOfSymbols;
             UInt32 offset = 0;
             for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
             {

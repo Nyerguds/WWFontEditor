@@ -64,32 +64,45 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Clones an image object.
+        /// Clones an image object to free it from any backing resources.
         /// Code taken from http://stackoverflow.com/a/3661892/ with some extra fixes.
         /// </summary>
         /// <param name="sourceImage">The image to clone</param>
         /// <returns>The cloned image</returns>
         public static Bitmap CloneImage(Bitmap sourceImage)
         {
-            Bitmap targetImage = new Bitmap(sourceImage.Width, sourceImage.Height, sourceImage.PixelFormat);
-            BitmapData sourceData = sourceImage.LockBits(
-                new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
-                ImageLockMode.ReadOnly, sourceImage.PixelFormat);
-            BitmapData targetData = targetImage.LockBits(
-                new Rectangle(0, 0, sourceImage.Width, sourceImage.Height),
-                ImageLockMode.WriteOnly, targetImage.PixelFormat);
+            return CloneImage(sourceImage, null);
+        }
 
+        /// <summary>
+        /// Clones an image object to free it from any backing resources.
+        /// This function can also cut a specific piece out of the original image.
+        /// Code taken from http://stackoverflow.com/a/3661892/ with some extra fixes.
+        /// </summary>
+        /// <param name="sourceImage">The image to clone</param>
+        /// <param name="sourceRect">Piece to cut out of the original image.</param>
+        /// <returns>The cloned image</returns>
+        public static Bitmap CloneImage(Bitmap sourceImage, Rectangle? sourceRect)
+        {
+            Rectangle rect;
+            if (sourceRect.HasValue)
+                rect = sourceRect.Value;
+            else
+                rect = new Rectangle(0, 0, sourceImage.Width, sourceImage.Height);
+            if (rect.X + rect.Width > rect.Width || rect.Y + rect.Height > sourceImage.Height)
+                throw new InvalidOperationException("Cutout size for image is larger than image!");
+            Bitmap targetImage = new Bitmap(rect.Width, rect.Height, sourceImage.PixelFormat);
+            BitmapData sourceData = sourceImage.LockBits(rect, ImageLockMode.ReadOnly, sourceImage.PixelFormat);
+            BitmapData targetData = targetImage.LockBits(new Rectangle(0, 0, targetImage.Width, targetImage.Height), ImageLockMode.WriteOnly, targetImage.PixelFormat);
             CopyMemory(targetData.Scan0, sourceData.Scan0, sourceData.Stride * sourceData.Height, 1024, 1024);
-
-            sourceImage.UnlockBits(sourceData);
             targetImage.UnlockBits(targetData);
-            // For 8-bit images, restore the palette. This is not linking to a referenced
+            sourceImage.UnlockBits(sourceData);
+            // For indexed images, restore the palette. This is not linking to a referenced
             // object in the original image; the getter creates a new object when called.
-            if (sourceImage.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed)
+            if ((sourceImage.PixelFormat & System.Drawing.Imaging.PixelFormat.Indexed) != 0)
                 targetImage.Palette = sourceImage.Palette;
             return targetImage;
         }
-
 
         /// <summary>
         /// Creates a bitmap based on data, width, height, stride and pixel format.
@@ -463,6 +476,8 @@ namespace Nyerguds.ImageManipulation
             }
             return finalFileData;
         }
+
+
         /// <summary>
         /// Converts given raw image data for a paletted image to 8-bit, so we have a simple one-byte-per-pixel format to work with.
         /// Stride is assumed to be the minimum needed to contain the data. Output stride will be the same as the width.
@@ -471,39 +486,38 @@ namespace Nyerguds.ImageManipulation
         /// <param name="width">Width of the image.</param>
         /// <param name="height">Height of the image.</param>
         /// <param name="start">Start offset of the image data in the fileData parameter.</param>
-        /// <param name="oldBpp">Amount of bits used by one pixel.</param>
+        /// <param name="bitsLength">Amount of bits used by one pixel.</param>
+        /// <param name="bigEndian">True if the bits in the original image data are stored as big-endian.</param>
         /// <returns>The image data in a 1-byte-per-pixel format, with a stride exactly the same as the width.</returns>
-        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 oldBpp)
+        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 bitsLength, Boolean bigEndian)
         {
-            Int32 stride = GetMinimumStride(width, oldBpp);
-            return ConvertTo8Bit(fileData, width, height, start, oldBpp, ref stride);
+            Int32 stride = GetMinimumStride(width, bitsLength);
+            return ConvertTo8Bit(fileData, width, height, start, bitsLength, bigEndian, ref stride);
         }
 
         /// <summary>
         /// Converts given raw image data for a paletted image to 8-bit, so we have a simple one-byte-per-pixel format to work with.
-        /// The stride of the output will be exactly the same as the width. Can be used to cut the stride off 8-bit images.
         /// </summary>
         /// <param name="fileData">The file data.</param>
         /// <param name="width">Width of the image.</param>
         /// <param name="height">Height of the image.</param>
         /// <param name="start">Start offset of the image data in the fileData parameter.</param>
-        /// <param name="oldBpp">Amount of bits used by one pixel.</param>
+        /// <param name="bitsLength">Amount of bits used by one pixel.</param>
+        /// <param name="bigEndian">True if the bits in the original image data are stored as big-endian.</param>
         /// <param name="stride">Stride used in the original image data. Will be adjusted to the new stride value.</param>
         /// <returns>The image data in a 1-byte-per-pixel format, with a stride exactly the same as the width.</returns>
-        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 oldBpp, ref Int32 stride)
+        public static Byte[] ConvertTo8Bit(Byte[] fileData, Int32 width, Int32 height, Int32 start, Int32 bitsLength, Boolean bigEndian, ref Int32 stride)
         {
-            if (oldBpp != 1 && oldBpp != 2 && oldBpp != 4 && oldBpp != 8)
-                throw new ArgumentOutOfRangeException("oldBpp", "Cannot handle image data with " + oldBpp + "bits per pixel.");
-            if (stride < GetMinimumStride(width, oldBpp))
-                throw new ArgumentException("Stride is too small for the given width!", "stride");
+            if (bitsLength != 1 && bitsLength != 2 && bitsLength != 4 && bitsLength != 8)
+                throw new ArgumentOutOfRangeException("Cannot handle image data with " + bitsLength + "bits per pixel.");
             // Full array
             Byte[] data8bit = new Byte[width * height];
             // Amount of runs that end up on the same pixel
-            Int32 parts = 8 / oldBpp;
+            Int32 parts = 8 / bitsLength;
             // Amount of bytes to read per width
             Int32 newStride = width;
             // Bit mask for reducing read and shifted data to actual bits length
-            Int32 bitmask = (1 << oldBpp) - 1;
+            Int32 bitmask = (1 << bitsLength) - 1;
             Int32 size = stride * height;
             // File check, and getting actual data.
             if (start + size > fileData.Length)
@@ -518,7 +532,10 @@ namespace Nyerguds.ImageManipulation
                     // This will always get a new index
                     Int32 index8bit = y * newStride + x;
                     // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = 8 - ((x % parts) * oldBpp) - oldBpp;
+                    Int32 shift = (x % parts) * bitsLength;
+                    // Reversed for big-endian
+                    if (bigEndian)
+                        shift = 8 - shift - bitsLength;
                     // Get data and store it.
                     data8bit[index8bit] = (Byte)((fileData[indexXbit] >> shift) & bitmask);
                 }
@@ -529,17 +546,18 @@ namespace Nyerguds.ImageManipulation
 
         /// <summary>
         /// Converts given raw image data for a paletted 8-bit image to lower amount of bits per pixel.
-        /// Input stride is assumed to be the same as the width. Output stride is the minimum needed to contain the data.
+        /// Stride is assumed to be the same as the width. Output stride is the minimum needed to contain the data.
         /// </summary>
         /// <param name="data8bit">The eight bit per pixel image data</param>
         /// <param name="width">The width of the image</param>
         /// <param name="height">The height of the image</param>
-        /// <param name="newBpp">The new amount of bits per pixel</param>
+        /// <param name="bitsLength">The new amount of bits per pixel</param>
+        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
         /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
-        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 newBpp)
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian)
         {
             Int32 stride = width;
-            return ConvertFrom8Bit(data8bit, width, height, newBpp, ref stride);
+            return ConvertFrom8Bit(data8bit, width, height, bitsLength, bigEndian, ref stride);
         }
 
         /// <summary>
@@ -548,36 +566,34 @@ namespace Nyerguds.ImageManipulation
         /// <param name="data8bit">The eight bit per pixel image data</param>
         /// <param name="width">The width of the image</param>
         /// <param name="height">The height of the image</param>
-        /// <param name="newBpp">The new amount of bits per pixel</param>
+        /// <param name="bitsLength">The new amount of bits per pixel</param>
+        /// <param name="bigEndian">True if the bits in the new image data are to be stored as big-endian.</param>
         /// <param name="stride">Stride used in the original image data. Will be adjusted to the new stride value.</param>
         /// <returns>The image data converted to the requested amount of bits per pixel.</returns>
-        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 newBpp, ref Int32 stride)
+        public static Byte[] ConvertFrom8Bit(Byte[] data8bit, Int32 width, Int32 height, Int32 bitsLength, Boolean bigEndian, ref Int32 stride)
         {
-            if (newBpp > 8)
-                throw new ArgumentException("Cannot convert to bit format greater than 8!", "newBpp");
-            if (stride < width)
-                throw new ArgumentException("Stride is too small for the given width!", "stride");
-            if (data8bit.Length < stride * height)
-                throw new ArgumentException("Data given data is too small to contain an 8-bit image of the given dimensions", "data8bit");
-            Int32 parts = 8 / newBpp;
-            // Minimum amount of bytes needed to write one line
-            Int32 newStride = GetMinimumStride(width, newBpp);
+            Int32 parts = 8 / bitsLength;
+            // Amount of bytes to write per width
+            Int32 newStride = GetMinimumStride(width, bitsLength);
             // Bit mask for reducing original data to actual bits maximum.
             // Should not be needed if data is correct, but eh.
-            Int32 bitmask = (1 << newBpp) - 1;
+            Int32 bitmask = (1 << bitsLength) - 1;
             Byte[] dataXbit = new Byte[newStride * height];
             // Actual conversion porcess.
             for (Int32 y = 0; y < height; y++)
             {
                 for (Int32 x = 0; x < width; x++)
                 {
-                    // Source. This will always get a new index
-                    Int32 index8bit = y * stride + x;
-                    // Target. This will hit the same byte multiple times
+                    // This will hit the same byte multiple times
                     Int32 indexXbit = y * newStride + x / parts;
+                    // This will always get a new index
+                    Int32 index8bit = y * stride + x;
                     // Amount of bits to shift the data to get to the current pixel data
-                    Int32 shift = 8 - ((x % parts) * newBpp) - newBpp;
-                    // Get data, reduce to max amount of bits, shift it and store it.
+                    Int32 shift = (x % parts) * bitsLength;
+                    // Reversed for big-endian
+                    if (bigEndian)
+                        shift = 8 - shift - bitsLength;
+                    // Get data, reduce to bit rate, shift it and store it.
                     dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
                 }
             }

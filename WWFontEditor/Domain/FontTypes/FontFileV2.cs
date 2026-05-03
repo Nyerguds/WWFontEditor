@@ -52,7 +52,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -69,12 +69,12 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x80; i++)
             {
                 FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
-                imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 fontDataOffset = 0x104;
             Int32 dataOffset = fontDataOffset;
             // Not sure if this is legal; the original fonts seem unoptimised.
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, ref dataOffset);
+            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, 0, ref dataOffset);
             Byte[] fullData = new Byte[dataOffset];
             Int32 headerFileSize = dataOffset - 2;
             fullData[0x00] = (Byte)(headerFileSize & 0xFF);         //Int16 FileSize, low byte;

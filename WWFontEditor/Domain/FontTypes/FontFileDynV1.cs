@@ -56,7 +56,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start + (symbolSize * i), this.BitsPerPixel);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start + (symbolSize * i), this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -83,7 +83,7 @@ namespace WWFontEditor.Domain.FontTypes
                     startSymbol = i;
                 }
                 Byte[] eightBitData = this.m_ImageDataList[i].ByteData;
-                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
             Int32 symbolSize = ((m_FontWidth + 7) / 8) * m_FontHeight;

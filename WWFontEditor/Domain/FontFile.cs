@@ -506,7 +506,7 @@ namespace WWFontEditor.Domain
                 Byte[] data8Bit;
                 try
                 {
-                    data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength);
+                    data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength, false);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -543,7 +543,7 @@ namespace WWFontEditor.Domain
                 Byte imgHeight = (Byte)fc.Height;
                 // Small optimization; no need to go converting the TS stuff; it doesn't change.
                 if (bitsLength < 8)
-                    imageData[i] = ImageUtils.ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength);
+                    imageData[i] = ImageUtils.ConvertFrom8Bit(imgData8bit, imgWidth, imgHeight, bitsLength, false);
                 else
                     imageData[i] = imgData8bit.ToArray();
                 widthsList[i] = imgWidth;
@@ -551,7 +551,7 @@ namespace WWFontEditor.Domain
                 heightsList[i * 2 + 1] = imgHeight;
             }
             Int32 fontOffset = forV4 ? 0 : fontOffsetStart;
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, ref fontOffset);
+            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, 0, ref fontOffset);
             // V2 (C&C) has its Y/height list before the image data.
             if (!forV4)
                 heightsListOffset = fontOffset;
@@ -598,20 +598,19 @@ namespace WWFontEditor.Domain
         ///     After the procedure, fontOffset will have the address behind the last data to write.
         /// </summary>
         /// <param name="imageData">Image data. Duplicate arrays in this are set to 0-sized ones.</param>
+        /// <param name="startIndex">Start index in the imageData array.</param>
         /// <param name="fontOffset">Start offset of the addressing. Adjusted to the end offset.</param>
         /// <returns></returns>
-        protected Byte[] OptimizeImagesList(Byte[][] imageData, ref Int32 fontOffset)
+        protected Byte[] OptimizeImagesList(Byte[][] imageData, Int32 startIndex, ref Int32 fontOffset)
         {
-            // This needs to be done before the process can start!
-            for (Int32 i = 0; i < imageData.Length; i++)
-                if (imageData[i] == null)
-                    imageData[i] = new Byte[0];
-            Int32[] refslist = CreateRefsList(imageData);
-            Byte[] fontDataOffsetsList = new Byte[imageData.Length * 2];
-            for (Int32 i = 0; i < imageData.Length; i++)
+            Int32[] refslist = CreateRefsList(imageData, startIndex);
+            Int32 symbols = imageData.Length - startIndex;
+            Byte[] fontDataOffsetsList = new Byte[symbols * 2];
+
+            for (Int32 i = 0; i < symbols; i++)
             {
                 Int32 replacei = refslist[i];
-                if (imageData[i].Length == 0)
+                if (imageData[i + startIndex].Length == 0)
                 {
                     // Data is null: just write 0
                     fontDataOffsetsList[i * 2] = 0;
@@ -621,7 +620,7 @@ namespace WWFontEditor.Domain
                 {
                     // Data is not null and not a duplicate: write offset and advance offset ptr.
                     ArrayUtils.WriteIntToByteArray(fontDataOffsetsList, i * 2, 2, true, (UInt32)fontOffset);
-                    fontOffset += imageData[i].Length;
+                    fontOffset += imageData[i + startIndex].Length;
                 }
                 else
                 {
@@ -637,21 +636,23 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// File size optimization. This function makes a map to re-map duplicate entries to the first found occurrence.
         /// In the final images array, any index not referencing itself is deemed a copy and should be removed in favour of the reference.
+        /// If startindex is greater than 0, the returned references list will be smaller too, and references will be to the decreased array.
         /// </summary>
         /// <param name="imageData">Image data array</param>
+        /// <param name="startIndex">Start index in the array.</param>
         /// <returns></returns>
-        protected Int32[] CreateRefsList(Byte[][] imageData)
+        protected Int32[] CreateRefsList(Byte[][] imageData, Int32 startIndex)
         {
             Int32 imagesCount = imageData.Length;
-            Int32[] refsList = new Int32[imagesCount];
-            for (Int32 checkedEntry = 0; checkedEntry < imagesCount; checkedEntry++)
+            Int32[] refsList = new Int32[imagesCount - startIndex];
+            for (Int32 checkedEntry = startIndex; checkedEntry < imagesCount; checkedEntry++)
             {
-                for (Int32 dupetest = 0; dupetest < imagesCount; dupetest++)
+                for (Int32 dupetest = startIndex; dupetest < imagesCount; dupetest++)
                 {
                     if (dupetest == checkedEntry || imageData[checkedEntry].SequenceEqual(imageData[dupetest]))
                     {
                         // reached the own index, or the data matches. Either way, set ref and continue with next one.
-                        refsList[checkedEntry] = dupetest;
+                        refsList[checkedEntry - startIndex] = dupetest - startIndex;
                         break;
                     }
                 }
