@@ -31,7 +31,7 @@ namespace WWFontEditor.UI
             this.SetLabelColor(lblValEditorOutlineColor, m_Settings.BackgroundFrame);
             this.SetLabelColor(lblValEditAreaOutlineColor, m_Settings.EditAreaFrame);
             this.SetLabelColor(lblValEditAreaGridColor, m_Settings.EditAreaGrid);
-            this.chkWrapPreviewText.Checked = this.m_Settings.WrapPreview;
+            this.chkEnablePreviewWrap.Checked = this.m_Settings.EnablePreviewWrap;
             this.numDefaultZoom.Value = this.m_Settings.Zoom;
             this.numDefaultSelectedSymbol.Value = this.m_Settings.SelectedSymbol;
             this.chkEnableGrid.Checked = this.m_Settings.EnableGrid;
@@ -121,7 +121,7 @@ namespace WWFontEditor.UI
             this.m_Settings.BackgroundFrame = lblValEditorOutlineColor.ForeColor;
             this.m_Settings.EditAreaFrame = lblValEditAreaOutlineColor.ForeColor;
             this.m_Settings.EditAreaGrid = lblValEditAreaGridColor.ForeColor;
-            this.m_Settings.WrapPreview = this.chkWrapPreviewText.Checked;
+            this.m_Settings.EnablePreviewWrap = this.chkEnablePreviewWrap.Checked;
             this.m_Settings.Zoom = (Int32)this.numDefaultZoom.Value;
             this.m_Settings.SelectedSymbol = (Int32)this.numDefaultSelectedSymbol.Value;
             this.m_Settings.EnableGrid = this.chkEnableGrid.Checked;
@@ -154,12 +154,12 @@ namespace WWFontEditor.UI
             this.SetLabelColor(lblValEditorOutlineColor, FontEditSettings.DefBackgroundFrame);
             this.SetLabelColor(lblValEditAreaOutlineColor, FontEditSettings.DefEditAreaFrame);
             this.SetLabelColor(lblValEditAreaGridColor, FontEditSettings.DefEditAreaGrid);
-            this.chkWrapPreviewText.Checked = FontEditSettings.DefWrapPreview;
             this.numDefaultZoom.Value = FontEditSettings.DefZoom;
             this.numDefaultSelectedSymbol.Value = FontEditSettings.DefSelectedSymbol;
             this.chkEnableGrid.Checked = FontEditSettings.DefEnableGrid;
             this.chkEnableEditArea.Checked = FontEditSettings.DefEnableArea;
             this.chkEnablePixelWrap.Checked = FontEditSettings.DefEnablePixelWrap;
+            this.chkEnablePreviewWrap.Checked = FontEditSettings.DefEnablePreviewWrap;
             this.chkPal1BppBR.Checked = FontEditSettings.DefGenerate1BitBR;
             this.chkPal1BppBW.Checked = FontEditSettings.DefGenerate1BitBW;
             this.chkPal1BppWB.Checked = FontEditSettings.DefGenerate1BitWB;

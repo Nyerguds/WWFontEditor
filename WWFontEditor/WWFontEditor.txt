@@ -239,6 +239,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.9.9: (2017/07/24 15:11)
+-Added zoom controls to preview pane.
+
 v1.9.8: (2017/07/24 13:34)
 -Fixed a number of bugs in the symbol paste / revert logic.
 -Added scrollbars to preview pane.

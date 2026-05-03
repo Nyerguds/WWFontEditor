@@ -427,7 +427,6 @@ namespace WWFontEditor.Domain
                         curWidth += ffs.Width;
                     }
                     curWidth += this.FontTypePaddingRight;
-                    
                 }                
             }
             return fullBm;

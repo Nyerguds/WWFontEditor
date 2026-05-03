@@ -74,6 +74,7 @@ namespace WWFontEditor
             this.chkGrid.Checked = this.m_Settings.EnableGrid;
             this.chkOutline.Checked = this.m_Settings.EnableArea;
             this.chkShiftWrap.Checked = this.m_Settings.EnablePixelWrap;
+            this.chkWrapPreview.Checked = this.m_Settings.EnablePreviewWrap;
 
             // encodings init
             List<EncodingDropDownInfo> encodings = Encoding.GetEncodings() // Get all known .Net encodings
@@ -1468,10 +1469,10 @@ namespace WWFontEditor
 
         private void ReloadUIWithSelection()
         {
-            ReloadUIWithSelection(0);
+            ReloadUIWithSelection(null);
         }
 
-        private void ReloadUIWithSelection(Int32 oldFontSymbolLimit)
+        private void ReloadUIWithSelection(Int32? oldFontSymbolLimit)
         {
             Boolean wasLoading = m_Loading;
             m_Loading = true;
@@ -1486,9 +1487,9 @@ namespace WWFontEditor
                 }
                 m_Loading = false;
                 ReloadUi();
-                if (m_LoadedFont != null)
+                if (m_LoadedFont != null && oldFontSymbolLimit.HasValue)
                 {
-                    Int32 diff = oldFontSymbolLimit - this.m_LoadedFont.SymbolsTypeFirst;
+                    Int32 diff = oldFontSymbolLimit.Value - this.m_LoadedFont.SymbolsTypeFirst;
                     selectedIndex += diff;
                     scrollOffset += diff * this.dgrvSymbolsList.RowTemplate.Height;
                 }
@@ -1657,22 +1658,28 @@ namespace WWFontEditor
                 this.pnlImagePreview.BackColor = System.Drawing.Color.Silver;
                 return;
             }
+            Int32 zoom = (Int32)numZoomPreview.Value;
             this.pnlImagePreview.Enabled = true;
             this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
             this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
-            if (this.m_Settings.WrapPreview)
+            Image image;
+            if (chkWrapPreview.Checked)
             {
                 // Done three times to prevent scrollbar problems.
                 if (pnlImagePreview.VerticalScroll.Visible)
                 {
-                    pxbPreview.Image = GeneratePreview(String.Empty, 0, true);
-                    pxbPreview.Size = pxbPreview.Image.Size;
+                    image = GeneratePreview(String.Empty, 0, true);
+                    pxbPreview.Image = image;
+                    pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
                 }
-                pxbPreview.Image = GeneratePreview(0, true);
-                pxbPreview.Size = pxbPreview.Image.Size;
+                image = GeneratePreview(0, true);
+                pxbPreview.Image = image;
+                pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
             }
-            pxbPreview.Image = GeneratePreview(this.m_Settings.WrapPreview ? 0 : -1, true);
-            pxbPreview.Size = pxbPreview.Image.Size;
+            image = GeneratePreview(chkWrapPreview.Checked ? 0 : -1, true);
+            pxbPreview.Image = image;
+            pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
+
         }
 
         private Bitmap GeneratePreview(Int32 width, Boolean transparentBg)
@@ -1685,7 +1692,7 @@ namespace WWFontEditor
             if (m_LoadedFont == null)
                 return null;
             if (width == 0)
-                width = pnlImagePreview.ClientRectangle.Width - pnlImagePreview.Padding.Left - pnlImagePreview.Padding.Right;
+                width = (pnlImagePreview.ClientRectangle.Width - pnlImagePreview.Padding.Left - pnlImagePreview.Padding.Right) / (Int32)numZoomPreview.Value;
             Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
             return m_LoadedFont.PrintText(text, this.m_CurrentPalette, transparentBg, enc, width);
         }
@@ -1708,6 +1715,21 @@ namespace WWFontEditor
             {
                 this.ReloadUIWithSelection();
             }
+        }
+
+        private void PreviewImageBox_Click(object sender, EventArgs e)
+        {
+            this.pnlImagePreview.Focus();
+        }
+
+        private void numZoomPreview_ValueChanged(object sender, EventArgs e)
+        {
+            RepaintPreview();
+        }
+
+        private void chkWrapPreview_CheckedChanged(object sender, EventArgs e)
+        {
+            RepaintPreview();
         }
 
         private void txtPreview_TextChanged(object sender, EventArgs e)

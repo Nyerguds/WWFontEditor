@@ -30,6 +30,7 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.chkEnablePreviewWrap = new System.Windows.Forms.CheckBox();
             this.chkEnablePixelWrap = new System.Windows.Forms.CheckBox();
             this.chkEnableEditArea = new System.Windows.Forms.CheckBox();
             this.chkEnableGrid = new System.Windows.Forms.CheckBox();
@@ -70,7 +71,6 @@
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
-            this.chkWrapPreviewText = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
@@ -95,7 +95,7 @@
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.chkWrapPreviewText);
+            this.tabPage1.Controls.Add(this.chkEnablePreviewWrap);
             this.tabPage1.Controls.Add(this.chkEnablePixelWrap);
             this.tabPage1.Controls.Add(this.chkEnableEditArea);
             this.tabPage1.Controls.Add(this.chkEnableGrid);
@@ -122,10 +122,20 @@
             this.tabPage1.Text = "Editor";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // chkEnablePreviewWrap
+            // 
+            this.chkEnablePreviewWrap.AutoSize = true;
+            this.chkEnablePreviewWrap.Location = new System.Drawing.Point(11, 259);
+            this.chkEnablePreviewWrap.Name = "chkEnablePreviewWrap";
+            this.chkEnablePreviewWrap.Size = new System.Drawing.Size(198, 17);
+            this.chkEnablePreviewWrap.TabIndex = 29;
+            this.chkEnablePreviewWrap.Text = "Enable preview auto-wrap by default";
+            this.chkEnablePreviewWrap.UseVisualStyleBackColor = true;
+            // 
             // chkEnablePixelWrap
             // 
             this.chkEnablePixelWrap.AutoSize = true;
-            this.chkEnablePixelWrap.Location = new System.Drawing.Point(11, 261);
+            this.chkEnablePixelWrap.Location = new System.Drawing.Point(11, 236);
             this.chkEnablePixelWrap.Name = "chkEnablePixelWrap";
             this.chkEnablePixelWrap.Size = new System.Drawing.Size(215, 17);
             this.chkEnablePixelWrap.TabIndex = 27;
@@ -135,7 +145,7 @@
             // chkEnableEditArea
             // 
             this.chkEnableEditArea.AutoSize = true;
-            this.chkEnableEditArea.Location = new System.Drawing.Point(11, 238);
+            this.chkEnableEditArea.Location = new System.Drawing.Point(11, 213);
             this.chkEnableEditArea.Name = "chkEnableEditArea";
             this.chkEnableEditArea.Size = new System.Drawing.Size(172, 17);
             this.chkEnableEditArea.TabIndex = 26;
@@ -145,7 +155,7 @@
             // chkEnableGrid
             // 
             this.chkEnableGrid.AutoSize = true;
-            this.chkEnableGrid.Location = new System.Drawing.Point(11, 215);
+            this.chkEnableGrid.Location = new System.Drawing.Point(11, 190);
             this.chkEnableGrid.Name = "chkEnableGrid";
             this.chkEnableGrid.Size = new System.Drawing.Size(128, 17);
             this.chkEnableGrid.TabIndex = 25;
@@ -155,7 +165,7 @@
             // lblDefaultSelectedSymbol
             // 
             this.lblDefaultSelectedSymbol.AutoSize = true;
-            this.lblDefaultSelectedSymbol.Location = new System.Drawing.Point(8, 192);
+            this.lblDefaultSelectedSymbol.Location = new System.Drawing.Point(8, 167);
             this.lblDefaultSelectedSymbol.Name = "lblDefaultSelectedSymbol";
             this.lblDefaultSelectedSymbol.Size = new System.Drawing.Size(119, 13);
             this.lblDefaultSelectedSymbol.TabIndex = 23;
@@ -169,7 +179,7 @@
             0,
             0,
             0});
-            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 190);
+            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 165);
             this.numDefaultSelectedSymbol.Maximum = new decimal(new int[] {
             255,
             0,
@@ -187,7 +197,7 @@
             // lblDefaultZoom
             // 
             this.lblDefaultZoom.AutoSize = true;
-            this.lblDefaultZoom.Location = new System.Drawing.Point(8, 169);
+            this.lblDefaultZoom.Location = new System.Drawing.Point(8, 144);
             this.lblDefaultZoom.Name = "lblDefaultZoom";
             this.lblDefaultZoom.Size = new System.Drawing.Size(69, 13);
             this.lblDefaultZoom.TabIndex = 21;
@@ -201,7 +211,7 @@
             0,
             0,
             0});
-            this.numDefaultZoom.Location = new System.Drawing.Point(331, 167);
+            this.numDefaultZoom.Location = new System.Drawing.Point(331, 142);
             this.numDefaultZoom.Minimum = new decimal(new int[] {
             1,
             0,
@@ -374,7 +384,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(394, 264);
+            this.tabPage2.Size = new System.Drawing.Size(394, 289);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Palettes";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -546,7 +556,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(394, 264);
+            this.tabPage3.Size = new System.Drawing.Size(394, 289);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Files";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -593,16 +603,6 @@
             this.btnOk.Text = "OK";
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
-            // 
-            // chkWrapPreviewText
-            // 
-            this.chkWrapPreviewText.AutoSize = true;
-            this.chkWrapPreviewText.Location = new System.Drawing.Point(11, 142);
-            this.chkWrapPreviewText.Name = "chkWrapPreviewText";
-            this.chkWrapPreviewText.Size = new System.Drawing.Size(134, 17);
-            this.chkWrapPreviewText.TabIndex = 29;
-            this.chkWrapPreviewText.Text = "Auto-wrap preview text";
-            this.chkWrapPreviewText.UseVisualStyleBackColor = true;
             // 
             // FrmSettings
             // 
@@ -675,6 +675,6 @@
         private System.Windows.Forms.CheckBox chkLimit8Bit;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.CheckBox chkDisableCompression;
-        private System.Windows.Forms.CheckBox chkWrapPreviewText;
+        private System.Windows.Forms.CheckBox chkEnablePreviewWrap;
     }
 }
