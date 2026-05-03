@@ -63,9 +63,9 @@ The following shortcuts can be used in the editor:
 
 [Ctrl] : Holding down [Ctrl] enables the Colour Picker.
 
-[Ctrl] + [Up]    : Shift image up
-[Ctrl] + [Down]  : Shift image down
-[Ctrl] + [Left]  : Shift image left
+[Ctrl] + [Up]    : Shift image up   
+[Ctrl] + [Down]  : Shift image down	
+[Ctrl] + [Left]  : Shift image left	
 [Ctrl] + [Right] : Shift image right
  Hold the [Shift] key to apply this operation to all symbols.
  Hold the [Alt] key to expand the frame when shifting, to avoid losing data.
@@ -187,6 +187,7 @@ Special thanks to
 -tomsons26, Omniblade and CCHyper for their research assistance.
 -tomsons26 for the creation of the program icon, for digging through ancient
  Westwood games, and for his tireless nagging.
+-Moon Flower for the help with the design of the palette manager.
 
 
 --------------------
@@ -211,6 +212,10 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+
+v1.7: (2017/04/21 17:02)
+-Edited 16-colour palettes can now be saved using a new palette manager.
+
 v1.6.1: (2017/04/17 11:06)
 -Shifting shortcuts no longer work from text fields or the characters list.
 -Added better close confirmations, with prompt to save.

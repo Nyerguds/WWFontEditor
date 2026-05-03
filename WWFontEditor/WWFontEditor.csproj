@@ -81,6 +81,12 @@
     <Compile Include="Domain\ImageUtils.cs" />
     <Compile Include="Domain\FontEditSettings.cs" />
     <Compile Include="Domain\TextUtils.cs" />
+    <Compile Include="UI\FrmManagePalettes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmManagePalettes.Designer.cs">
+      <DependentUpon>FrmManagePalettes.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\FrmReplaceColor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -131,6 +137,12 @@
     <Compile Include="UI\Tools\ComboBoxSmartWidth.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="UI\Tools\InputBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Tools\InputBox.designer.cs">
+      <DependentUpon>InputBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\Tools\PalettePanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -146,6 +158,9 @@
     <Compile Include="UI\Wrappers\EncodingDropDownInfo.cs" />
     <Compile Include="UI\Tools\FileDialogGenerator.cs" />
     <Compile Include="UI\Wrappers\PaletteDropDownInfo.cs" />
+    <EmbeddedResource Include="UI\FrmManagePalettes.resx">
+      <DependentUpon>FrmManagePalettes.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\FrmReplaceColor.resx">
       <DependentUpon>FrmReplaceColor.cs</DependentUpon>
     </EmbeddedResource>
@@ -174,13 +189,16 @@
     <EmbeddedResource Include="UI\Tools\FrmPalette.resx">
       <DependentUpon>FrmPalette.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\Tools\InputBox.resx">
+      <DependentUpon>InputBox.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\Tools\PalettePanel.resx">
       <DependentUpon>PalettePanel.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="16col.ini">
+    <None Include="td.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="16col.pal">
+    <None Include="td.pal">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">

@@ -166,7 +166,7 @@ namespace WWFontEditor.UI
             this.chkPal8BppWin.Checked = FontEditSettings.DefGenerate8BitWindows;
             this.chkPal8BppBW.Checked = FontEditSettings.DefGenerate8BitBW;
             this.chkPal8BppWB.Checked = FontEditSettings.DefGenerate8BitWB;
-            this.chkPal8BppWB.Checked = FontEditSettings.DefLimit8BitPalettes;
+            this.chkLimit8Bit.Checked = FontEditSettings.DefLimit8BitPalettes;
         }
     }
 }

@@ -21,15 +21,14 @@ namespace WWFontEditor
 {
     public partial class FrmFontEditor : Form
     {
-        private const Int32 PALETTE_MAX_DIM = 162;//134;
-        private const String INI_SECTION = "Palette";
+        private const Int32 PALETTE_MAX_DIM = 162;
         private const String PROG_NAME = "Westwood Font Editor";
         private const String PROG_AUTHOR = "Created by Nyerguds";
         private const String QUESTION_RESETFONT = "This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?";
         private const String QUESTION_REVERTSYMBOL = "This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?";
         private const String QUESTION_SAVEFILE_OPENNEW = "The font has unsaved changes!\n\nDo you want to save the changes to the current font?";
         private const String QUESTION_SAVEFILE_CLOSE = "The font has unsaved changes!\n\nDo you want to save the changes to the font?";
-        private const String ABOUTTEXT = "Program icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26";
+        private const String ABOUTTEXT = "Program icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26\n\nPalette manager design assisted by Moon Flower";
 
 
         private Boolean m_Loading;
@@ -94,11 +93,10 @@ namespace WWFontEditor
 
             // Colors init.
             this.m_DefaultPalettes = LoadDefaultPalettes();
-            this.m_ReadPalettes = LoadExtraPalettes();
             // Default to show on UI at startup: 4bpp palettes
-            List<PaletteDropDownInfo> allPalettesForBpp = GetPalettes(4);
+            List<PaletteDropDownInfo> allPalettesForBpp = GetPalettes(4, true);
             if (allPalettesForBpp.Count == 0)
-                allPalettesForBpp.Add(new PaletteDropDownInfo("Rainbow", 4, GetDummyPalette(4), null, -1));
+                allPalettesForBpp.Add(new PaletteDropDownInfo("Rainbow", 4, GetDummyPalette(), null, -1, false, false));
             this.cmbPalettes.DataSource = allPalettesForBpp;
 
             // PixelBox hierarchy init            
@@ -138,7 +136,7 @@ namespace WWFontEditor
             this.m_Loading = false;
         }
 
-        private String GetTitle(Boolean withAuthor)
+        public static String GetTitle(Boolean withAuthor)
         {
             String title = PROG_NAME + " " + GeneralUtils.ProgramVersion();
             if (withAuthor)
@@ -284,7 +282,7 @@ namespace WWFontEditor
             this.pxbFullSize.Visible = loadOk;
             if (loadOk)
             {
-                ReloadPalettes(false);
+                this.RefreshPalettes(false, false);
                 this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.btnValType.Text = m_LoadedFont.ShortTypeName.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.btnValType, m_LoadedFont.ShortTypeDescription);
@@ -340,7 +338,7 @@ namespace WWFontEditor
             return loadOk;
         }
 
-        private void ReloadPalettes(Boolean forced)
+        private void RefreshPalettes(Boolean forced, Boolean reloadFiles)
         {
             Int32 oldBpp = -1;
             PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
@@ -353,11 +351,11 @@ namespace WWFontEditor
                 Int32 index = -1;
                 this.m_CurrentPaintColor1 = 1;
                 this.m_CurrentPaintColor2 = 0;
-                List<PaletteDropDownInfo> bppPalettes = GetPalettes(bpp);
+                List<PaletteDropDownInfo> bppPalettes = GetPalettes(bpp, reloadFiles);
                 if (forced && oldBpp != -1 && oldBpp == bpp)
                     index = bppPalettes.FindIndex(x => x.Name == currentPal.Name);
                 if (bppPalettes.Count == 0)
-                    bppPalettes.Add(new PaletteDropDownInfo("Rainbow", bpp, GetDummyPalette(4), null, -1));
+                    bppPalettes.Add(new PaletteDropDownInfo("Rainbow", bpp, GetDummyPalette(), null, -1, false, false));
                 this.cmbPalettes.DataSource = bppPalettes;
                 if (index >= 0)
                     this.cmbPalettes.SelectedIndex = index;
@@ -383,9 +381,9 @@ namespace WWFontEditor
                 symbol.ConvertToBpp(0, GetEditBpp(fontFile));
         }
 
-        public static Color[] GetDummyPalette(Int32 bitsPerPixel)
+        public static Color[] GetDummyPalette()
         {
-            return ImageUtils.GenerateDoubleRainbow(true, true, false).Entries;
+            return ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries;
         }
 
         public List<PaletteDropDownInfo> LoadDefaultPalettes()
@@ -394,29 +392,29 @@ namespace WWFontEditor
             // 1-bit:
             // Not gonna make those customizable. These three ought to do. People can always change the palette to view them in different colours.
             if (this.m_Settings.Generate1BitBR)
-                palettes.Add(new PaletteDropDownInfo("Black-Red", 1, new Color[] { Color.FromArgb(0x00, Color.Black), Color.Red }, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Black-Red", 1, new Color[] { Color.FromArgb(0x00, Color.Black), Color.Red }, null, -1, false, false));
             if (this.m_Settings.Generate1BitBW)
-                palettes.Add(new PaletteDropDownInfo("Black-White", 1, new Color[] { Color.FromArgb(0x00, Color.Black), Color.White }, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Black-White", 1, new Color[] { Color.FromArgb(0x00, Color.Black), Color.White }, null, -1, false, false));
             if (this.m_Settings.Generate1BitWB)
-                palettes.Add(new PaletteDropDownInfo("White-Black", 1, new Color[] { Color.FromArgb(0x00, Color.White), Color.Black }, null, -1));
+                palettes.Add(new PaletteDropDownInfo("White-Black", 1, new Color[] { Color.FromArgb(0x00, Color.White), Color.Black }, null, -1, false, false));
             // 4-bit and 8-bit
             if (this.m_Settings.Generate4BitRainbow)
                 //palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteRainbow, null, -1));
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate4BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, ImageUtils.GenerateDefFourBitPalette(true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, ImageUtils.GenerateDefFourBitPalette(true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate4BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate4BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, true).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, ImageUtils.GenerateGrayPalette(PixelFormat.Format4bppIndexed, true, true).Entries, null, -1, false, false));
             if (this.m_Settings.Generate8BitRainbow)
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, ImageUtils.GenerateDoubleRainbow(true, true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, ImageUtils.GenerateDoubleRainbow(true, true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate8BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, ImageUtils.GenerateRainbowPalette(8, true, false, true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, ImageUtils.GenerateRainbowPalette(8, true, false, true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate8BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, false).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, false).Entries, null, -1, false, false));
             if (this.m_Settings.Generate8BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, true).Entries, null, -1));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, ImageUtils.GenerateGrayPalette(PixelFormat.Format8bppIndexed, true, true).Entries, null, -1, false, false));
             return palettes;
         }
 
@@ -426,70 +424,19 @@ namespace WWFontEditor
             String appFolder = Path.GetDirectoryName(Application.ExecutablePath);
             FileInfo[] files = new DirectoryInfo(appFolder).GetFiles("*.pal");
             foreach (FileInfo file in files)
-                palettes.AddRange(LoadInfoFromPalette(file));
+                palettes.AddRange(PaletteDropDownInfo.LoadSubPalettesInfoFromPalette(file, false, false, true));
             return palettes;
         }
 
-        private List<PaletteDropDownInfo> LoadInfoFromPalette(FileInfo file)
-        {
-            List<PaletteDropDownInfo> palettes = new List<PaletteDropDownInfo>();
-            try
-            {
-                if (file.Length == 0x300)
-                {
-                    // Treat as C&C 6-bit colour palette
-                    SixBitColor[] pal = ColorUtils.ReadSixBitPaletteFile(file.FullName);
-                    Color[] fullPal = ColorUtils.GetEightBitColorPalette(pal);
-
-                    String path = file.FullName.Substring(0, file.FullName.LastIndexOf(".", StringComparison.Ordinal) + 1);
-                    String bareName = file.Name;//.Substring(0, file.Name.LastIndexOf(".", StringComparison.Ordinal));
-                    String inipath = path + "ini";
-                    if (File.Exists(inipath))
-                    {
-                        IniFile paletteConfig = new IniFile(inipath);
-                        Boolean generateDefault = !paletteConfig.GetSectionNames().Contains(INI_SECTION);
-                        for (Int32 i = 0; i < 16; i++)
-                        {
-                            String name = paletteConfig.GetStringValue("Palette", i.ToString(), null);
-                            Boolean hasName = !String.IsNullOrEmpty(name);
-                            if (generateDefault || hasName)
-                            {
-                                String defName = bareName + " #" + i;
-                                if (hasName)
-                                    name += " [" + defName + "]";
-                                else
-                                    name = defName;
-                            }
-                            if (!String.IsNullOrEmpty(name))
-                            {
-                                Color[] subPalette = new Color[16];
-                                Array.Copy(fullPal, i * 16, subPalette, 0, 16);
-                                if (subPalette.All(x => x.R == 0 && x.G == 0 && x.B == 0))
-                                    subPalette = GetDummyPalette(4).ToArray();
-                                subPalette[0] = Color.FromArgb(0x00, subPalette[0]);
-                                palettes.Add(new PaletteDropDownInfo(name, 4, subPalette, file.Name, i));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        fullPal[0] = Color.FromArgb(0x00, fullPal[0]);
-                        palettes.Add(new PaletteDropDownInfo(file.Name, 8, fullPal, file.Name, 0));
-                        // add as one 256 colour palette
-                    }
-                }
-            }
-            catch { /* ignore and continue */ }
-            return palettes;
-        }
-
-        public List<PaletteDropDownInfo> GetPalettes(Int32 bpp)
+        public List<PaletteDropDownInfo> GetPalettes(Int32 bpp, Boolean reloadFiles)
         {
             List<PaletteDropDownInfo> allPalettes = m_DefaultPalettes.Where(p => p.BitsPerPixel == bpp).ToList();
+            if (reloadFiles)
+                m_ReadPalettes = LoadExtraPalettes();
             allPalettes.AddRange(this.m_ReadPalettes.Where(p => p.BitsPerPixel == bpp));
             return allPalettes;
         }
-
+        
         private void ReloadDataGrid()
         {
             Boolean wasLoading = this.m_Loading;
@@ -1383,11 +1330,6 @@ namespace WWFontEditor
                     fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex, GetEditBpp(m_LoadedFont));
                 }
             }
-            // CloneFor already handles resizing
-            //if (fc.Height > this.m_LoadedFont.FontHeight)
-            //    fc.ChangeHeight(this.m_LoadedFont.FontHeight);
-            //if (fc.Width > this.m_LoadedFont.FontWidth)
-            //    fc.ChangeWidth(this.m_LoadedFont.FontWidth);
             try
             {
                 this.m_LoadedFont.RestorePicFromBackup(curIndex, fc, GetEditBpp(m_LoadedFont));
@@ -1461,6 +1403,16 @@ namespace WWFontEditor
             ReloadUIWithSelection();
         }
 
+        private void ManagePalettesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FrmManagePalettes palSave = new FrmManagePalettes(4);
+            palSave.StartPosition = FormStartPosition.CenterParent;
+            DialogResult dr = palSave.ShowDialog(this);
+            // Get source position, reload all, then loop through to check which one to reselect.
+            if (dr == DialogResult.OK)
+                this.RefreshPalettes(true, true);
+        }
+
         private void ReloadUIWithSelection()
         {
             Boolean wasLoading = m_Loading;
@@ -1527,16 +1479,19 @@ namespace WWFontEditor
             Int32 bpp;
             if (currentPal == null)
             {
-                btnSavePalette.Enabled = false;
-                m_CurrentPalette = GetDummyPalette(4);
+                if (!btnSavePalette.Enabled)
+                    btnSavePalette.Enabled = true;
+                m_CurrentPalette = GetDummyPalette();
                 bpp = 4;
             }
             else
             {
-                Int32 nrcols = 1 << currentPal.BitsPerPixel;
-                btnSavePalette.Enabled = currentPal.SourceFile != null && currentPal.Entry >= 0 && currentPal.Entry < 256 / nrcols;
                 m_CurrentPalette = currentPal.Colors;
                 bpp = currentPal.BitsPerPixel;
+                if (btnSavePalette.Enabled && bpp == 1)
+                    btnSavePalette.Enabled = false;
+                else if (!btnSavePalette.Enabled && bpp != 1)
+                    btnSavePalette.Enabled = true;
                 this.btnResetPalette.Enabled = currentPal.IsChanged();
             }
             ReloadColors(bpp);
@@ -1579,30 +1534,35 @@ namespace WWFontEditor
             PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
             if (currentPal == null)
                 return;
-            Int32 nrcols = 1 << currentPal.BitsPerPixel;
-            if (currentPal.SourceFile == null || currentPal.Entry < 0 || currentPal.Entry >= 256 / nrcols)
-                return;
-            FileInfo palfile = new FileInfo(GeneralUtils.GetAbsolutePath(currentPal.SourceFile, Path.GetDirectoryName(Application.ExecutablePath)));
-            Color[] fullPal;
-            if (palfile.Exists && palfile.Length == 0x300)
+            FrmManagePalettes palSave = new FrmManagePalettes(currentPal.BitsPerPixel);
+            palSave.PaletteToSave = currentPal;
+            palSave.StartPosition = FormStartPosition.CenterParent;
+            DialogResult dr = palSave.ShowDialog(this);
+            if (dr == DialogResult.OK)
             {
-                DialogResult dr = MessageBox.Show("This will overwrite the palette data on your hard disk!\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                if (dr != DialogResult.Yes)
+                // If null, it was a simple immediate overwrite, without the management box ever popping up, so
+                // just consider the current entry "saved".
+                if (palSave.PaletteToSave == null)
+                    currentPal.ClearRevert();
+                else
+                {
+                    // Get source position, reload all, then loop through to check which one to reselect.
+                    this.RefreshPalettes(true, true);
+                    String source = palSave.PaletteToSave.SourceFile;
+                    Int32 index = palSave.PaletteToSave.Entry;
+                    foreach (PaletteDropDownInfo pdd in cmbPalettes.Items)
+                    {
+                        if (pdd.SourceFile != source || pdd.Entry != index)
+                            continue;
+                        this.cmbPalettes.SelectedItem = pdd;
+                        break;
+                    }
+                }
+                currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
+                if (currentPal == null)
                     return;
-                // Treat as C&C 6-bit colour palette
-                SixBitColor[] pal = ColorUtils.ReadSixBitPaletteFile(palfile.FullName);
-                fullPal = ColorUtils.GetEightBitColorPalette(pal);
+                this.btnResetPalette.Enabled = currentPal.IsChanged();
             }
-            else
-            {
-                fullPal = new Color[256];
-                for (Int32 i = 0; i < fullPal.Length; i++)
-                    fullPal[i] = Color.Black;
-            }
-            Array.Copy(currentPal.Colors, 0, fullPal, currentPal.Entry * nrcols, nrcols);
-            ColorUtils.WriteSixBitPaletteFile(fullPal, palfile.FullName);
-            currentPal.ClearRevert();
-            this.btnResetPalette.Enabled = currentPal.IsChanged();
         }
 
         private void BtnRemap_Click(object sender, EventArgs e)
@@ -1663,7 +1623,7 @@ namespace WWFontEditor
             }
             this.m_CustomColors = settingsFrm.CustomColors;
             this.m_DefaultPalettes = LoadDefaultPalettes();
-            ReloadPalettes(true);
+            this.RefreshPalettes(true, false);
             if (refreshSymbols)
             {
                 this.ReloadUIWithSelection();

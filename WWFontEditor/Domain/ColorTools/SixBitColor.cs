@@ -42,23 +42,23 @@ namespace ColorManipulation
             {
                 if (value > 63)
                     throw new ArgumentException(argError, "value");
-                else
-                    this.m_Blue = value;
+                
+                this.m_Blue = value;
             }
         }
 
         public SixBitColor(Byte red, Byte green, Byte blue)
         {
-            R = red;
-            G = green;
-            B = blue;
+            this.R = red;
+            this.G = green;
+            this.B = blue;
         }
 
         public SixBitColor(Color color)
         {
-            R = (Byte)(color.R / 4);
-            G = (Byte)(color.G / 4);
-            B = (Byte)(color.B / 4);
+            this.R = (Byte)(color.R / 4);
+            this.G = (Byte)(color.G / 4);
+            this.B = (Byte)(color.B / 4);
         }
 
         public Color GetAsColor()

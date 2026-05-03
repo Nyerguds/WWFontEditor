@@ -124,66 +124,67 @@ namespace WWFontEditor.Domain
             this.EnableGrid = settings.GetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEGRID, DefEnableGrid);
             this.EnableArea = settings.GetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEAREA, DefEnableArea);
             this.EnablePixelWrap = settings.GetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEPIXELWRAP, DefEnablePixelWrap);
-            
-            this.Generate1BitBR = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE1BITBR, DefGenerate1BitBR);
-            this.Generate1BitBW = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE1BITBW, DefGenerate1BitBW);
-            this.Generate1BitWB = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE1BITWB, DefGenerate1BitWB);
-            // Don't allow no defaults at all.
-            if (!Generate1BitBR && !Generate1BitBW && !Generate1BitWB)
-                Generate1BitBR = true;
-            this.Generate4BitRainbow = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE4BITRAINBOW, DefGenerate4BitRainbow);
-            this.Generate4BitWindows = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE4BITWINDOWS, DefGenerate4BitWindows);
-            this.Generate4BitBW = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE4BITBW, DefGenerate4BitBW);
-            this.Generate4BitWB = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE4BITWB, DefGenerate4BitWB);
-            // Don't allow no defaults at all.
-            if (!Generate4BitRainbow && !Generate4BitBW && !Generate4BitWB && !Generate4BitWindows)
-                Generate4BitRainbow = true;
 
-            this.Limit8BitPalettes = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_LIMIT8BITPALETTES, DefLimit8BitPalettes);
-            this.Generate8BitRainbow = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE8BITRAINBOW, DefGenerate8BitRainbow);
-            this.Generate8BitWindows = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE8BITWINDOWS, DefGenerate8BitWindows);
-            this.Generate8BitBW = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE8BITBW, DefGenerate8BitBW);
-            this.Generate8BitWB = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_GENERATE8BITWB, DefGenerate8BitWB);
+            this.Generate1BitBR = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBR, DefGenerate1BitBR);
+            this.Generate1BitBW = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBW, DefGenerate1BitBW);
+            this.Generate1BitWB = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITWB, DefGenerate1BitWB);
             // Don't allow no defaults at all.
-            if (!Generate8BitRainbow && !Generate8BitBW && !Generate8BitWB && !Generate8BitWindows)
-                Generate8BitRainbow = true;
+            if (!this.Generate1BitBR && !this.Generate1BitBW && !this.Generate1BitWB)
+                this.Generate1BitBR = true;
+            this.Generate4BitRainbow = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITRAINBOW, DefGenerate4BitRainbow);
+            this.Generate4BitWindows = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWINDOWS, DefGenerate4BitWindows);
+            this.Generate4BitBW = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITBW, DefGenerate4BitBW);
+            this.Generate4BitWB = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWB, DefGenerate4BitWB);
+            // Don't allow no defaults at all.
+            if (!this.Generate4BitRainbow && !this.Generate4BitBW && !this.Generate4BitWB && !this.Generate4BitWindows)
+                this.Generate4BitRainbow = true;
+
+            this.Limit8BitPalettes = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_LIMIT8BITPALETTES, DefLimit8BitPalettes);
+            this.Generate8BitRainbow = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITRAINBOW, DefGenerate8BitRainbow);
+            this.Generate8BitWindows = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, DefGenerate8BitWindows);
+            this.Generate8BitBW = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, DefGenerate8BitBW);
+            this.Generate8BitWB = settings.GetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWB, DefGenerate8BitWB);
+            // Don't allow no defaults at all.
+            if (!this.Generate8BitRainbow && !this.Generate8BitBW && !this.Generate8BitWB && !this.Generate8BitWindows)
+                this.Generate8BitRainbow = true;
         }
         
         public Boolean SaveSettings()
         {
             IniFile settings = GetSettingsFile();
-            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_EDITAREAGRID, ColorToString(EditAreaGrid));
-            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_EDITAREAFRAME, ColorToString(EditAreaFrame));
-            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDGRID, ColorToString(BackgroundGrid));
-            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDFRAME, ColorToString(BackgroundFrame));
-            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUND, ColorToString(Background));
-            settings.SetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_USEPALETTEBG, UsePaletteBG);
+            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_EDITAREAGRID, ColorToString(this.EditAreaGrid));
+            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_EDITAREAFRAME, ColorToString(this.EditAreaFrame));
+            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDGRID, ColorToString(this.BackgroundGrid));
+            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDFRAME, ColorToString(this.BackgroundFrame));
+            settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUND, ColorToString(this.Background));
+            settings.SetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_USEPALETTEBG, this.UsePaletteBG);
 
-            settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_ZOOM, Zoom);
-            settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_SELECTEDSYMBOL, SelectedSymbol);
-            settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEGRID, EnableGrid);
-            settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEAREA, EnableArea);
+            settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_ZOOM, this.Zoom);
+            settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_SELECTEDSYMBOL, this.SelectedSymbol);
+            settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEGRID, this.EnableGrid);
+            settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEAREA, this.EnableArea);
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEPIXELWRAP, this.EnablePixelWrap);
 
             if (!this.Generate1BitBR && !this.Generate1BitBW && !this.Generate1BitWB)
                 this.Generate1BitBR = true;
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBR, Generate1BitBR);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBW, Generate1BitBW);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITWB, Generate1BitWB);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBR, this.Generate1BitBR);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBW, this.Generate1BitBW);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITWB, this.Generate1BitWB);
 
             if (!this.Generate4BitRainbow && !this.Generate4BitWindows && !this.Generate4BitBW && !this.Generate4BitWB)
                 this.Generate4BitRainbow = true;
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITRAINBOW, Generate4BitRainbow);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWINDOWS, Generate4BitWindows);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITBW, Generate4BitBW);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWB, Generate4BitWB);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITRAINBOW, this.Generate4BitRainbow);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWINDOWS, this.Generate4BitWindows);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITBW, this.Generate4BitBW);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWB, this.Generate4BitWB);
 
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_LIMIT8BITPALETTES, this.Limit8BitPalettes);
             if (!this.Generate8BitRainbow && !this.Generate8BitWindows && !this.Generate8BitBW && !this.Generate8BitWB)
                 this.Generate8BitRainbow = true;
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITRAINBOW, Generate8BitRainbow);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, Generate8BitWindows);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, Generate8BitBW);
-            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWB, Generate8BitWB);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITRAINBOW, this.Generate8BitRainbow);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, this.Generate8BitWindows);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, this.Generate8BitBW);
+            settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWB, this.Generate8BitWB);
             return settings.WriteIni();
         }
 

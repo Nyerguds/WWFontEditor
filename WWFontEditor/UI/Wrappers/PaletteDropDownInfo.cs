@@ -1,21 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
+using ColorManipulation;
+using Nyerguds.Ini;
 
 namespace WWFontEditor.UI.Wrappers
 {
     public class PaletteDropDownInfo
     {
-        public String Name { get; private set; }
-        public Color[] Colors { get; private set; }
+        private const String INI_SECTION = "Palette";
+
+        public String Name { get; set; }
+        public Color[] Colors { get; set; }
         public Color[] ColorBackup { get; private set; }
         public Int32 BitsPerPixel { get; private set; }
         public String SourceFile { get; private set; }
-        public Int32 Entry { get; private set; }
-
-        public PaletteDropDownInfo(String name, Int32 bpp, Color[] colors, String sourceFile, Int32 entry)
+        public Int32 Entry { get; set; }
+        public Boolean PrefixIndex { get; set; }
+        public Boolean SuffixSource { get; set; }
+        
+        public PaletteDropDownInfo(String name, Int32 bpp, Color[] colors, String sourceFile, Int32 entry, Boolean prefixIndex, Boolean suffixSource)
         {
             this.Name = name;
             this.BitsPerPixel = bpp;
@@ -29,6 +36,8 @@ namespace WWFontEditor.UI.Wrappers
             this.ColorBackup = palette.ToArray();
             this.SourceFile = sourceFile;
             this.Entry = entry;
+            this.PrefixIndex = prefixIndex;
+            this.SuffixSource = suffixSource;
         }
 
 
@@ -49,7 +58,58 @@ namespace WWFontEditor.UI.Wrappers
 
         public override String ToString()
         {
-            return Name;
+            String name = String.Empty;
+            if (this.PrefixIndex)
+                name += this.Entry.ToString("D2") + " ";
+            name += this.Name;
+            if (this.SuffixSource)
+                name += " (" + this.SourceFile + " #" + this.Entry + ")";
+            return name;
+        }
+
+        public static List<PaletteDropDownInfo> LoadSubPalettesInfoFromPalette(FileInfo file, Boolean listAll, Boolean prefixIndex, Boolean suffixSource)
+        {
+            List<PaletteDropDownInfo> palettes = new List<PaletteDropDownInfo>();
+            try
+            {
+                if (file.Length != 0x300)
+                    return palettes;
+                // Treat as C&C 6-bit colour palette
+                SixBitColor[] pal = ColorUtils.ReadSixBitPaletteFile(file.FullName);
+                Color[] fullPal = ColorUtils.GetEightBitColorPalette(pal);
+
+                String bareName = file.Name;
+                String inipath = Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(file.Name)) + ".ini";
+                if (File.Exists(inipath))
+                {
+                    IniFile paletteConfig = new IniFile(inipath);
+                    for (Int32 i = 0; i < 16; i++)
+                    {
+                        String name = paletteConfig.GetStringValue(INI_SECTION, i.ToString(), null);
+                        Boolean hasName = !String.IsNullOrEmpty(name);
+                        if (!hasName)
+                            name = null;
+                        if (listAll && !hasName)
+                            name = String.Empty;
+                        if (name == null)
+                            continue;
+                        Color[] subPalette = new Color[16];
+                        Array.Copy(fullPal, i * 16, subPalette, 0, 16);
+                        //if (subPalette.All(x => x.R == 0 && x.G == 0 && x.B == 0))
+                        //    subPalette = ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries;
+                        subPalette[0] = Color.FromArgb(0x00, subPalette[0]);
+                        palettes.Add(new PaletteDropDownInfo(name, 4, subPalette, file.Name, i, prefixIndex, suffixSource));
+                    }
+                }
+                else
+                {
+                    // add as one 256 colour palette
+                    fullPal[0] = Color.FromArgb(0x00, fullPal[0]);
+                    palettes.Add(new PaletteDropDownInfo(file.Name, 8, fullPal, file.Name, 0, false, false));
+                }
+            }
+            catch { /* ignore and continue */ }
+            return palettes;
         }
     }
 }

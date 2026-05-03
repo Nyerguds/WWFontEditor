@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace ColorManipulation
 {
@@ -13,7 +10,7 @@ namespace ColorManipulation
 
         public static Color ColorFromUInt(UInt32 argb)
         {
-            return Color.FromArgb((Byte)((argb & 0xff000000) >> 0x18), (Byte)((argb & 0xff0000) >> 0x10), (Byte)((argb & 0xff00) >> 0x08), (Byte)(argb & 0xff));
+            return Color.FromArgb((Byte)((argb >> 0x18) & 0xFF), (Byte)((argb >> 0x10) & 0xFF), (Byte)((argb >> 0x08) & 0xFF), (Byte)(argb & 0xFF));
         }
                 
         public static Color[] GetEightBitColorPalette(SixBitColor[] sixbitpalette)
@@ -48,10 +45,7 @@ namespace ColorManipulation
                 pal[index + 1] = palette[i].G;
                 pal[index + 2] = palette[i].B;
             }
-            FileStream fs = new FileStream(palfilename, FileMode.Create, FileAccess.Write);
-            BinaryWriter Writer = new BinaryWriter(fs);
-            Writer.Write(pal);
-            Writer.Close();
+            File.WriteAllBytes(palfilename, pal);
         }
 
         public static SixBitColor[] ReadSixBitPaletteFile(String palfilename)
