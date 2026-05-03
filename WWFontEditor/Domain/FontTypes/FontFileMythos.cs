@@ -11,7 +11,7 @@ namespace WWFontEditor.Domain.FontTypes
     public class FontFileMythos : FontFile
     {
         public override Int32 SymbolsTypeMin { get { return 0x21; } }
-        public override Int32 SymbolsTypeMax { get { return 0xFF; } }
+        public override Int32 SymbolsTypeMax { get { return 0x100; } }
         /// <summary>The first symbol that is saved. This hides all symbols before this index from the editor.</summary>
         public override Int32 SymbolsTypeFirst { get { return 0x21; } }
         public override Int32 FontWidthTypeMin { get { return 0x1; } }
@@ -52,7 +52,6 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x20; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[] { 0xFF }, 0, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Add space
-
             this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Read data
             while (offset + 4 < fileData.Length)
@@ -80,9 +79,9 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     if (comprByte != 1)
                         throw new FileTypeLoadException("Unknown compression type: " + comprByte);
-                    skipLen = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset, 2, true) - 8;
-                    if (skipLen < 0)
-                        throw new FileTypeLoadException("Bad compressed size in header.");
+                    skipLen = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, offset, 2, true) - 8;
+                    //if (skipLen < 0)
+                    //    throw new FileTypeLoadException("Bad compressed size in header.");
                 }
                 else
                 {

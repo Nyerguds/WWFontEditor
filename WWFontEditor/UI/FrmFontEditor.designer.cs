@@ -80,6 +80,7 @@
             this.btnValType = new System.Windows.Forms.Button();
             this.chkWrapPreview = new System.Windows.Forms.CheckBox();
             this.lblZoomPreview = new System.Windows.Forms.Label();
+            this.btnSetShadow = new System.Windows.Forms.Button();
             this.pnlImagePreview = new Nyerguds.Util.UI.SelectablePanel();
             this.pxbPreview = new Nyerguds.Util.UI.PixelBox();
             this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
@@ -664,7 +665,7 @@
             this.txtPreview.Multiline = true;
             this.txtPreview.Name = "txtPreview";
             this.txtPreview.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtPreview.Size = new System.Drawing.Size(381, 106);
+            this.txtPreview.Size = new System.Drawing.Size(424, 106);
             this.txtPreview.TabIndex = 120;
             this.txtPreview.Text = "Hello, world!";
             this.txtPreview.TextChanged += new System.EventHandler(this.txtPreview_TextChanged);
@@ -687,9 +688,9 @@
             this.chkWrapPreview.AutoSize = true;
             this.chkWrapPreview.Location = new System.Drawing.Point(15, 580);
             this.chkWrapPreview.Name = "chkWrapPreview";
-            this.chkWrapPreview.Size = new System.Drawing.Size(172, 17);
+            this.chkWrapPreview.Size = new System.Drawing.Size(152, 17);
             this.chkWrapPreview.TabIndex = 121;
-            this.chkWrapPreview.Text = "Wrap preview text to box width";
+            this.chkWrapPreview.Text = "Wrap preview to box width";
             this.chkWrapPreview.UseVisualStyleBackColor = true;
             this.chkWrapPreview.CheckedChanged += new System.EventHandler(this.chkWrapPreview_CheckedChanged);
             // 
@@ -697,12 +698,23 @@
             // 
             this.lblZoomPreview.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblZoomPreview.AutoSize = true;
-            this.lblZoomPreview.Location = new System.Drawing.Point(260, 581);
+            this.lblZoomPreview.Location = new System.Drawing.Point(303, 581);
             this.lblZoomPreview.Name = "lblZoomPreview";
             this.lblZoomPreview.Size = new System.Drawing.Size(76, 13);
             this.lblZoomPreview.TabIndex = 122;
             this.lblZoomPreview.Text = "Preview zoom:";
             this.lblZoomPreview.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // btnSetShadow
+            // 
+            this.btnSetShadow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnSetShadow.Location = new System.Drawing.Point(179, 576);
+            this.btnSetShadow.Name = "btnSetShadow";
+            this.btnSetShadow.Size = new System.Drawing.Size(118, 23);
+            this.btnSetShadow.TabIndex = 307;
+            this.btnSetShadow.Text = "Set drop shadow...";
+            this.btnSetShadow.UseVisualStyleBackColor = true;
+            this.btnSetShadow.Click += new System.EventHandler(this.btnSetShadow_Click);
             // 
             // pnlImagePreview
             // 
@@ -714,11 +726,11 @@
             this.pnlImagePreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlImagePreview.Controls.Add(this.pxbPreview);
             this.pnlImagePreview.Enabled = false;
-            this.pnlImagePreview.Location = new System.Drawing.Point(399, 467);
+            this.pnlImagePreview.Location = new System.Drawing.Point(439, 467);
             this.pnlImagePreview.Margin = new System.Windows.Forms.Padding(0);
             this.pnlImagePreview.Name = "pnlImagePreview";
             this.pnlImagePreview.Padding = new System.Windows.Forms.Padding(1);
-            this.pnlImagePreview.Size = new System.Drawing.Size(373, 132);
+            this.pnlImagePreview.Size = new System.Drawing.Size(333, 132);
             this.pnlImagePreview.TabIndex = 124;
             this.pnlImagePreview.TabStop = true;
             this.pnlImagePreview.MouseScroll += new System.Windows.Forms.MouseEventHandler(this.PnlImagePreview_MouseScroll);
@@ -883,7 +895,7 @@
             0,
             0,
             0});
-            this.numZoomPreview.Location = new System.Drawing.Point(342, 579);
+            this.numZoomPreview.Location = new System.Drawing.Point(385, 579);
             this.numZoomPreview.Maximum = new decimal(new int[] {
             20,
             0,
@@ -1015,6 +1027,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 612);
+            this.Controls.Add(this.btnSetShadow);
             this.Controls.Add(this.chkWrapPreview);
             this.Controls.Add(this.pnlImagePreview);
             this.Controls.Add(this.btnValType);
@@ -1151,6 +1164,7 @@
         private System.Windows.Forms.Label lblZoomPreview;
         private System.Windows.Forms.ToolStripMenuItem tsmiNewFont;
         private System.Windows.Forms.ToolStripMenuItem tsmiOptimizeWidths;
+        private System.Windows.Forms.Button btnSetShadow;
     }
 }
 

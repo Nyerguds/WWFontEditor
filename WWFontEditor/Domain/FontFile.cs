@@ -483,13 +483,15 @@ namespace WWFontEditor.Domain
                     }
                     if (ffs.Width != 0)
                     {
-                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this, true);
-                        if (symbol != null)
-                            g.DrawImage(symbol, new Point(curWidth, curHeight));
-                        curWidth += ffs.Width;
+                        using (Bitmap symbol = ffs.GetBitmapFullSize(palette, this, true))
+                        {
+                            if (symbol != null)
+                                g.DrawImage(symbol, new Point(curWidth, curHeight));
+                            curWidth += ffs.Width;
+                        }
                     }
                     curWidth += this.FontTypePaddingRight;
-                }                
+                }
             }
             return fullBm;
         }

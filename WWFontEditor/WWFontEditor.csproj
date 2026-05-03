@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\Compression\DynamixLzHuffDecoder.cs" />
     <Compile Include="Domain\Compression\RleCompression.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
@@ -86,6 +87,12 @@
     <Compile Include="Domain\Utils\ImageUtils\PixelFormatter.cs" />
     <Compile Include="Domain\Utils\SaveOption.cs" />
     <Compile Include="Domain\Utils\TextUtils.cs" />
+    <Compile Include="UI\FrmImportFromImage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmImportFromImage.Designer.cs">
+      <DependentUpon>FrmImportFromImage.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\FrmManagePalettes.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -118,6 +125,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UI\FrmSetshadow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmSetshadow.Designer.cs">
+      <DependentUpon>FrmSetshadow.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\FrmSettings.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -211,6 +224,9 @@
     <Compile Include="UI\Wrappers\EncodingDropDownInfo.cs" />
     <Compile Include="UI\Tools\FileDialogGenerator.cs" />
     <Compile Include="UI\Wrappers\PaletteDropDownInfo.cs" />
+    <EmbeddedResource Include="UI\FrmImportFromImage.resx">
+      <DependentUpon>FrmImportFromImage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\FrmManagePalettes.resx">
       <DependentUpon>FrmManagePalettes.cs</DependentUpon>
     </EmbeddedResource>
@@ -236,6 +252,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="UI\FrmSetshadow.resx">
+      <DependentUpon>FrmSetshadow.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\FrmSettings.resx">
       <DependentUpon>FrmSettings.cs</DependentUpon>
     </EmbeddedResource>

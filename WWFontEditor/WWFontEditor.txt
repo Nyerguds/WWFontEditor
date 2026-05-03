@@ -307,6 +307,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.12.3: (2018/07/30 21:00)
+-Added an option that allows enhancing the preview with a dropped shadow.
+
 v1.12.2: (2018/06/04 13:25)
 -Restricted the amount of symbols in Dynamix fonts v2/3/4/5/6 to 255 so fonts
  don't save their amount of symbols as "0".

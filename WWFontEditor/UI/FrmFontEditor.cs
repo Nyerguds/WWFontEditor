@@ -14,6 +14,7 @@ using Nyerguds.Util.Ui.SaveOptions;
 using WWFontEditor.Domain;
 using WWFontEditor.Domain.FontTypes;
 using Nyerguds.Util.UI.Wrappers;
+using System.Drawing.Drawing2D;
 
 namespace WWFontEditor.UI
 {
@@ -45,6 +46,9 @@ namespace WWFontEditor.UI
         private Int32 m_LastHoverPixelX = -1;
         private Int32 m_LastHoverPixelY = -1;
         private ContextMenuStrip m_tsmiCopyGridChar;
+
+        private Point[] m_ShadowCoords;// = new List<Point> { new Point(-1, -1), new Point(0, -1), new Point(1, -1), new Point(-2, 0), new Point(-1, 0), new Point(1, 0), new Point(-3, 1), new Point(-2, 1), new Point(-1, 1), new Point(0, 1), new Point(1, 1), new Point(-4, 2), new Point(-3, 2), new Point(-2, 2), new Point(-1, 2), new Point(0, 2), new Point(-4, 3), new Point(-3, 3), new Point(-2, 3), new Point(-1, 3) };
+        private Color m_ShadowColor = Color.Black;
 
         private Byte m_CurrentPaintColor1 = 1;
         private Byte m_CurrentPaintColor2 = 0;
@@ -1968,9 +1972,69 @@ namespace WWFontEditor.UI
             if (this.m_LoadedFont == null)
                 return null;
             if (width == 0)
-                width = (this.pnlImagePreview.ClientRectangle.Width - this.pnlImagePreview.Padding.Left - this.pnlImagePreview.Padding.Right) / (Int32) this.numZoomPreview.Value;
-            Encoding enc = ((EncodingDropDownInfo) this.cmbEncodings.SelectedItem).Encoding;
-            return this.m_LoadedFont.PrintText(text, this.m_CurrentPalette, transparentBg, enc, width);
+                width = (this.pnlImagePreview.ClientRectangle.Width - this.pnlImagePreview.Padding.Left - this.pnlImagePreview.Padding.Right) / (Int32)this.numZoomPreview.Value;
+            Boolean generateShadow = this.m_ShadowCoords != null && this.m_ShadowCoords.Length < 0;
+
+            Encoding enc = ((EncodingDropDownInfo)this.cmbEncodings.SelectedItem).Encoding;
+            Bitmap mainText = this.m_LoadedFont.PrintText(text, this.m_CurrentPalette, transparentBg || generateShadow, enc, width);
+
+            if (this.m_ShadowCoords == null || this.m_ShadowCoords.Length == 0)
+                return mainText;
+
+            Int32 minX = 0;
+            Int32 minY = 0;
+            Int32 maxX = 0;
+            Int32 maxY = 0;
+            foreach (Point p in m_ShadowCoords)
+            {
+                if (p.X < minX) minX = p.X;
+                if (p.Y < minY) minY = p.Y;
+                if (p.X > maxX) maxX = p.X;
+                if (p.Y > maxY) maxY = p.Y;
+            }
+            Int32 newWidth = mainText.Width;
+            Int32 newHeight = mainText.Height;
+            Int32 originX = 0;
+            Int32 originY = 0;
+            if (minX < 0)
+            {
+                newWidth -= minX;
+                originX -= minX;
+            }
+            if (minY < 0)
+            {
+                newHeight -= minY;
+                originY -= minY;
+            }
+            if (maxX > 0)
+                newWidth += maxX;
+            if (maxY > 0)
+                newHeight += maxY;
+            Point[] adjustedShadow = new Point[this.m_ShadowCoords.Length];
+            for (Int32 i = 0; i < adjustedShadow.Length; i++)
+                adjustedShadow[i] = new Point(this.m_ShadowCoords[i].X + originX, this.m_ShadowCoords[i].Y + originY);
+
+            Bitmap finalImage = new Bitmap(newWidth, newHeight);
+            Int32 transCol = m_LoadedFont.TransparencyColor;
+            Color[] shadowPalette = new Color[this.m_CurrentPalette.Length];
+            shadowPalette[transCol] = Color.Empty;
+            // always opaque.
+            Color shadowColor = Color.FromArgb(0xFF, m_ShadowColor);
+            for (Int32 i = 0; i < shadowPalette.Length; i++)
+                if (i != transCol)
+                    shadowPalette[i] = shadowColor;
+            using (Bitmap shadowText = this.m_LoadedFont.PrintText(text, shadowPalette, true, enc, width))
+            using (Graphics g = Graphics.FromImage(finalImage))
+            {
+                g.CompositingMode = CompositingMode.SourceOver;
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg ? 0x00 : 0xFF, m_CurrentPalette[transCol])))
+                    g.FillRectangle(brush, 0, 0, newWidth, newHeight);
+                foreach (Point p in adjustedShadow)
+                    g.DrawImage(shadowText, p);
+                g.DrawImage(mainText, originX, originY);
+            }
+            mainText.Dispose();
+            return finalImage;
         }
 
         private void TsmiEditorSettings_Click(Object sender, EventArgs e)
@@ -2184,6 +2248,22 @@ namespace WWFontEditor.UI
         private void LblPaintColor_MouseLeave(Object sender, EventArgs e)
         {
             this.WipeColorPickHighlight();
+        }
+
+        private void btnSetShadow_Click(object sender, EventArgs e)
+        {
+            FrmSetshadow shadowDialog = new FrmSetshadow();
+            shadowDialog.ShadowColor = m_ShadowColor;
+            shadowDialog.ShadowCoords = m_ShadowCoords;
+            shadowDialog.CustomColors = this.m_CustomColors;
+            DialogResult dlr = shadowDialog.ShowDialog();
+            this.m_CustomColors = shadowDialog.CustomColors;
+            if (dlr == DialogResult.OK)
+            {
+                m_ShadowColor = shadowDialog.ShadowColor;
+                m_ShadowCoords = shadowDialog.ShadowCoords;
+                RepaintPreview();
+            }            
         }
     }
 }

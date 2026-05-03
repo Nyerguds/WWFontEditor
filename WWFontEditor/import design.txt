@@ -1,0 +1,15 @@
+Requested data:
+-start char
+-width
+-height
+-chars per line? Calc automatically
+-Type of font to convert to. Default to WWv3/wwv4 depending on detected amount of colours.
+-Palette. Size derived from selected type. If indexed or < type's amount of colours, add "palette from image" to list.
+
+Procedure:
+-make font file
+-resize to given dimensions
+-cut font image into pieces
+-paste pieces into font using palette (expand if necc. See if funtions already have this)
+-Load into editor. If selected, add font from image as 'generated' font.
+

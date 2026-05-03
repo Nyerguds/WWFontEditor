@@ -102,10 +102,10 @@ namespace WWFontEditor.Domain.FontTypes
                     data = compressedData;
                     break;
                 case 1:
-                    data = DynamixCompression.RleDecode(compressedData, null, null, uncompressedSize, true);
+                    data = DynamixCompression.RleDecode(compressedData, null, null, (Int32)uncompressedSize, true);
                     break;
                 case 2:
-                    data = DynamixCompression.LzwDecode(compressedData, null, null, uncompressedSize);
+                    data = DynamixCompression.LzwDecode(compressedData, null, null, (Int32)uncompressedSize);
                     break;
                 default:
                     throw new FileTypeLoadException(String.Format("Unknown compression type \"{0}\"", compressionMethod));
