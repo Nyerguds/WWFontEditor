@@ -6,7 +6,7 @@ namespace WWFontEditor.Domain.FontTypes
     class FontDummy : FontFile
     {
         public override Int32 SymbolsTypeMin { get { return 0x00; } }
-        public override Int32 SymbolsTypeMax { get { return 0xFF; } }
+        public override Int32 SymbolsTypeMax { get { return 0x100; } }
         /// <summary>The first symbol that is saved. This hides all symbols before this index from the editor.</summary>
         public override Int32 SymbolsTypeFirst { get { return 0x00; } }
         public override Int32 FontWidthTypeMin { get { return 0x01; } }

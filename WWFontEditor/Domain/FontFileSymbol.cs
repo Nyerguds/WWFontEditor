@@ -373,7 +373,7 @@ namespace WWFontEditor.Domain
             this.Height= height;
         }
 
-        internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Color[] transparencyGuide)
+        internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Boolean[] transparencyGuide)
         {
             Int32 trueFcHeight = firstLayer.Height + firstLayer.YOffset;
             Int32 trueClHeight = secondLayer.Height+ secondLayer.YOffset;

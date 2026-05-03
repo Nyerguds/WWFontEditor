@@ -151,11 +151,14 @@ WWFont v3
 -Lands of Lore III
 
 WWFont v4
--Tiberian Sun
--Tiberian Sun Installer
--Tiberian Sun Firestorm
--Tiberian Sun Firestorm Installer
+-Command & Conquer Tiberian Sun
+-Command & Conquer Tiberian Sun Installer
+-Command & Conquer Tiberian Sun Firestorm
+-Command & Conquer Tiberian Sun Firestorm Installer
 -Lands of Lore III Installer
+
+WWFont v5
+-Command & Conquer Red Alert 2
 
 IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
@@ -312,8 +315,12 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.13.0: (2019/03/17 15:25)
+-Added support for the Red Alert 2 "game.fnt" format. Note: it takes a long
+ time (more than 20 sec) to save, and the UI will freeze during that time.
+
 v1.12.7: (2019/03/14 11:26)
--Fixed pasting of DIB images from clipboard.
+-Fixed pasting of 24-bit DIB images from clipboard.
 
 v1.12.6: (2019/01/25 11:15)
 -Fixed Mythos font support: fixed saving bugs, added compression support.

@@ -97,6 +97,7 @@
             this.pxbImage = new Nyerguds.Util.UI.PixelBox();
             this.pxbEditGridBehind = new Nyerguds.Util.UI.PixelBox();
             this.pxbFullSize = new Nyerguds.Util.UI.PixelBox();
+            this.cmbRange = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             ((System.ComponentModel.ISupportInitialize)(this.numYOffset)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
@@ -863,6 +864,8 @@
             this.dgrvSymbolsList.VerticalScrollbarOffset = 0;
             this.dgrvSymbolsList.CellContextMenuStripNeeded += new System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler(this.dgrvSymbolsList_CellContextMenuStripNeeded);
             this.dgrvSymbolsList.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgrvSymbolsList_CellMouseDown);
+            this.dgrvSymbolsList.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrvSymbolsList_CellMouseEnter);
+            this.dgrvSymbolsList.CellMouseLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrvSymbolsList_CellMouseLeave);
             this.dgrvSymbolsList.SelectionChanged += new System.EventHandler(this.DgrvSymbolsList_SelectionChanged);
             // 
             // palColorSelector
@@ -1022,12 +1025,25 @@
             this.pxbFullSize.Visible = false;
             this.pxbFullSize.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageBox_Click);
             // 
+            // cmbRange
+            // 
+            this.cmbRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.cmbRange.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRange.FormattingEnabled = true;
+            this.cmbRange.Location = new System.Drawing.Point(213, 440);
+            this.cmbRange.Name = "cmbRange";
+            this.cmbRange.Size = new System.Drawing.Size(196, 21);
+            this.cmbRange.TabIndex = 308;
+            this.cmbRange.Visible = false;
+            this.cmbRange.SelectedIndexChanged += new System.EventHandler(this.CmbRange_SelectedIndexChanged);
+            // 
             // FrmFontEditor
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 612);
+            this.Controls.Add(this.cmbRange);
             this.Controls.Add(this.btnSetShadow);
             this.Controls.Add(this.chkWrapPreview);
             this.Controls.Add(this.pnlImagePreview);
@@ -1166,6 +1182,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiNewFont;
         private System.Windows.Forms.ToolStripMenuItem tsmiOptimizeWidths;
         private System.Windows.Forms.Button btnSetShadow;
+        private Nyerguds.Util.UI.ComboBoxSmartWidth cmbRange;
     }
 }
 

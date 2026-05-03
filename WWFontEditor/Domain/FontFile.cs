@@ -76,6 +76,8 @@ namespace WWFontEditor.Domain
         public abstract String[] GamesListForType { get; }
         /// <summary>Supported types can always be loaded, but this indicates if save functionality to this type is also available.</summary>
         public virtual Boolean CanSave { get { return true; } }
+        /// <summary>Indicates that the font file is unicode, and is thus not limited to 256 characters.</summary>
+        public virtual Boolean IsUnicode { get { return false; } }
 
         /// <summary>
         /// Loads the font from file data. Throws a FileTypeLoadException if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
@@ -154,6 +156,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileWsV2),
             typeof(FontFileWsV3),
             typeof(FontFileWsV4),
+            typeof(FontFileWsV5),
             typeof(FontFileD2K),
             typeof(FontFileTran),
             typeof(FontFileDynV1a),
@@ -183,6 +186,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileDynV4),
             typeof(FontFileDynV5),
             typeof(FontFileDynV6),
+            typeof(FontFileWsV5),
             typeof(FontFileWsV4),
             typeof(FontFileWsV3),
             typeof(FontFileWsV2),
@@ -437,13 +441,21 @@ namespace WWFontEditor.Domain
                     isStart = false;
                 else
                     curWidth += this.FontTypePaddingRight;
-                Byte[] val = enc.GetBytes(new Char[] {c});
-                Char[] newc = enc.GetChars(val);
-                // Can only handle one byte per character fonts.
-                if (val.Length != 1 || newc.Length != 1 || newc[0] != c)
-                    continue;
-                Byte code = val[0];
-                // Font symbol is not implemented!
+                Int32 code;
+                if (IsUnicode || enc == null)
+                {
+                    code = (Int32)c;
+                }
+                else
+                {
+                    Byte[] val = enc.GetBytes(new Char[] {c});
+                    Char[] newc = enc.GetChars(val);
+                    // Can only handle one byte per character fonts.
+                    if (val.Length != 1 || newc.Length != 1 || newc[0] != c)
+                        continue;
+                    code = val[0];
+                    // Font symbol is not implemented!
+                }
                 if (code >= this.Length)
                 {
                     symbols.Add(new FontFileSymbol(this));

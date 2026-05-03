@@ -22,7 +22,11 @@ namespace Nyerguds.ImageManipulation
                 return null;
             // Order: try PNG, move on to try 32-bit ARGB DIB, then technically-RGB DIB abused as ARGB, and finally the normal Bitmap and Image types.
             Boolean built = false;
-            if (formats.Contains("PNG"))
+            if (formats.Contains("System.Drawing.Bitmap"))
+            {
+                clipboardimage = retrievedData.GetData(typeof(Bitmap)) as Bitmap;
+            }
+            if (clipboardimage == null && formats.Contains("PNG"))
             {
                 Byte[] pngData = TryGetStreamDataFromClipboard(retrievedData, "PNG");
                 if (pngData != null)
@@ -53,8 +57,12 @@ namespace Nyerguds.ImageManipulation
             if (clipboardimage == null && formats.Contains(typeof(Image).FullName))
             {
                 Image clipImage = retrievedData.GetData(typeof(Image)) as Image;
-                if (clipImage != null)
+                clipboardimage = clipImage as Bitmap;
+                if (clipboardimage == null && clipImage != null)
+                {
                     clipboardimage = new Bitmap(clipImage);
+                    built = true;
+                }
             }
             // If the image wasn't specifically built using BuildImage already, clone it to separate it from any backing sources.
             if (clipboardimage == null || built)
@@ -99,7 +107,7 @@ namespace Nyerguds.ImageManipulation
                 Clipboard.SetDataObject(data, true);
             }
         }
-
+        
         public static Byte[] TryGetStreamDataFromClipboard(DataObject retrievedData, String identifier)
         {
             if (!retrievedData.GetDataPresent(identifier))

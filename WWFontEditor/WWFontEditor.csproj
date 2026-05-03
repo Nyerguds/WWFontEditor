@@ -20,6 +20,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -34,6 +35,7 @@
     <ApplicationIcon>wwfont.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -48,8 +50,15 @@
     <Compile Include="Domain\Compression\DynamixLzHuffDecoder.cs" />
     <Compile Include="Domain\Compression\MythosCompression.cs" />
     <Compile Include="Domain\Compression\RleCompression.cs" />
+    <Compile Include="Domain\Csv\CsvColumnAttribute .cs" />
+    <Compile Include="Domain\Csv\CsvConverter.cs" />
+    <Compile Include="Domain\Csv\CsvParser.cs" />
+    <Compile Include="Domain\Utils\EncodingSupport.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV5.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV6.cs" />
+    <Compile Include="Domain\UnicodeInfo.cs" />
     <Compile Include="Domain\Utils\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
     <None Include="Domain\Compression\WestwoodCompression.cs" />
@@ -315,6 +324,7 @@
     <Content Include="Resources\icon_pencil.png" />
     <Content Include="Resources\icon_wraparound.png" />
     <Content Include="Resources\IniHandler.dll" />
+    <None Include="Resources\UnicodeDescriptions.csv" />
     <Content Include="wwfont.ico" />
     <Content Include="WWFontEditor.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -151,6 +151,24 @@ namespace WWFontEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Id;Name;Category;Combining;Bidi;Decomposition;DecDig;NumDig;Num;Mirrored;OldName;ISOComment;Uppercase;Lowercase;Titlecase
+        ///0000;&lt;control&gt;;Cc;0;BN;;;;;N;NULL;;;;
+        ///0001;&lt;control&gt;;Cc;0;BN;;;;;N;START OF HEADING;;;;
+        ///0002;&lt;control&gt;;Cc;0;BN;;;;;N;START OF TEXT;;;;
+        ///0003;&lt;control&gt;;Cc;0;BN;;;;;N;END OF TEXT;;;;
+        ///0004;&lt;control&gt;;Cc;0;BN;;;;;N;END OF TRANSMISSION;;;;
+        ///0005;&lt;control&gt;;Cc;0;BN;;;;;N;ENQUIRY;;;;
+        ///0006;&lt;control&gt;;Cc;0;BN;;;;;N;ACKNOWLEDGE;;;;
+        ///0007;&lt;control&gt;;Cc;0;BN;;;;;N;BELL;;;;
+        ///0008;&lt;control&gt;;Cc;0;BN;; [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string UnicodeDescriptions {
+            get {
+                return ResourceManager.GetString("UnicodeDescriptions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon wwfont {
