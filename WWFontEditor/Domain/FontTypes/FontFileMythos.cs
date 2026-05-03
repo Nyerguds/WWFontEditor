@@ -72,7 +72,6 @@ namespace WWFontEditor.Domain.FontTypes
                 Int32 skipLen;
                 Byte comprByte = fileData[offset + 5];
                 Boolean compressed = comprByte != 0;
-                //    throw new FileTypeLoadException("Bad header data.");
                 //Int32 xOffset = fileData[offset + 6];
                 Int32 yOffset = fileData[offset + 7];
                 offset += 8;
@@ -83,8 +82,6 @@ namespace WWFontEditor.Domain.FontTypes
                     if (comprByte != 1)
                         throw new FileTypeLoadException("Unknown compression type: " + comprByte);
                     skipLen = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, offset, 2, true) - 8;
-                    //if (skipLen < 0)
-                    //    throw new FileTypeLoadException("Bad compressed size in header.");
                 }
                 else
                 {
@@ -98,11 +95,9 @@ namespace WWFontEditor.Domain.FontTypes
                     UInt32 endOffset = (UInt32)(offset + skipLen);
                     try
                     {
-                        MythosCompression mc = new MythosCompression();
-                        imageData = mc.FlagRleDecode(fileData, (UInt32)offset, endOffset, dataLen, true);
+                        imageData = MythosCompression.FlagRleDecode(fileData, (UInt32)offset, endOffset, dataLen, true);
                         if (imageData == null)
-                            imageData = mc.CollapsedTransparencyDecode(fileData, (UInt32)offset, endOffset, dataLen, symbWidth, this.TransparencyColor, true);
-                        
+                            imageData = MythosCompression.CollapsedTransparencyDecode(fileData, (UInt32)offset, endOffset, dataLen, symbWidth, this.TransparencyColor, true);
                     }
                     catch (Exception e)
                     {
@@ -115,14 +110,6 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     Array.Copy(fileData, offset, imageData, 0, dataLen);
                 }
-                /*/
-                if (symbWidth == 1 && symbHeight == 1 && yOffset == 0 && imageData.Length == 1 && imageData[0] == this.TransparencyColor)
-                {
-                    imageData = new Byte[] {this.TransparencyColor, 0, 0, this.TransparencyColor };
-                    symbWidth = 2;
-                    symbHeight = 2;
-                }
-                //*/
                 FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
                 offset += skipLen;

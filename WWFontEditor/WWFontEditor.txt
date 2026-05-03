@@ -319,6 +319,11 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.13.5: (2020/03/24 18:12)
+-Fixed crash when using the revert function after saving a new font.
+-Fixed a number of threading problems related to the "unsaved file" warning.
+-Fixed bug where you could drop a file into the editor while saving a file.
+
 v1.13.4: (2020/03/04 18:35)
 -Fixed bug: preview image ignored empty lines at the end of the text.
 

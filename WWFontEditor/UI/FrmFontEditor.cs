@@ -40,6 +40,7 @@ namespace WWFontEditor.UI
         private const String UNHANDLED_EXCEPTION_MESSAGE = "Unhandled exception. Please copy this message to the clipboard using Ctrl+C and send it to the development team.\n\n";
         private readonly Byte[] ByteRange128To255 = Enumerable.Range(0x80, 0x7F).Select(c => (Byte)c).ToArray();
 
+        private Boolean m_Closing;
         private Boolean m_Loading;
         private Boolean m_Clicking;
         private Int32 m_GridRowTemplateHeight;
@@ -1610,15 +1611,17 @@ namespace WWFontEditor.UI
             }
         }
 
-        private void SaveFontFile()
+        private void SaveFontFile(Action continueAction)
         {
+            if (this.m_LoadedFont == null)
+                return;
             if (!this.m_LoadedFont.CanSave || this.m_FileName == null)
-                this.SaveFontAs();
+                this.SaveFontAs(true, continueAction);
             else
-                this.SaveFontFile(this.m_FileName, true);
+                this.SaveFontFile(this.m_FileName, true, continueAction);
         }
-        
-        private void SaveFontAs()
+
+        private void SaveFontAs(Boolean replaceLoaded, Action continueAction)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1629,10 +1632,10 @@ namespace WWFontEditor.UI
                 return;
             if (this.m_LoadedFont.GetType() != selectedItem.GetType() && !this.ChangeFontType(selectedItem))
                 return;
-            this.SaveFontFile(filename, false);
+            this.SaveFontFile(filename, replaceLoaded, continueAction);
         }
 
-        private void SaveFontFile(String fileName, Boolean replaceLoaded)
+        private void SaveFontFile(String fileName, Boolean replaceLoaded, Action continueAction)
         {
             if (this.m_LoadedFont == null)
                 return;
@@ -1652,7 +1655,7 @@ namespace WWFontEditor.UI
                     saveOptions = extraopts.GetSaveOptions();
                 }
                 //Arguments: func returning FontFile, process type indication string.
-                Object[] arrParams = { new Func<FontFile>(() => this.SaveFile(this.m_LoadedFont, fileName, replaceLoaded, saveOptions)), "Saving" };
+                Object[] arrParams = { new Func<FontFile>(() => this.SaveFile(this.m_LoadedFont, fileName, replaceLoaded, saveOptions)), "Saving", continueAction };
                 this.m_ProcessingThread = new Thread(this.ExecuteThreaded);
                 this.m_ProcessingThread.Start(arrParams);
 
@@ -1687,10 +1690,11 @@ namespace WWFontEditor.UI
             try
             {
                 Object[] arrParams = parameters as Object[];
-                if (arrParams == null || arrParams.Length != 2)
+                if (arrParams == null || arrParams.Length < 2)
                     return;
                 Func<FontFile> func = arrParams[0] as Func<FontFile>;
                 String operationType = arrParams[1] as String;
+                Action callAfter = arrParams.Length < 3 ? null : arrParams[2] as Action;
                 if (func == null)
                     return;
                 this.Invoke(new InvokeDelegateEnableControls(this.EnableControls), false, operationType);
@@ -1715,6 +1719,8 @@ namespace WWFontEditor.UI
                 {
                     this.Invoke(new InvokeDelegateEnableControls(this.EnableControls), true, null);
                     this.Invoke(new InvokeDelegateReload(this.ReloadUIWithSelection), false);
+                    if (callAfter != null)
+                        this.Invoke(callAfter);
                 }
                 catch (InvalidOperationException) { /* ignore */ }
             }
@@ -1730,6 +1736,7 @@ namespace WWFontEditor.UI
             this.m_Loading = true;
             try
             {
+                this.AllowDrop = enabled;
                 this.menuStrip1.Enabled = enabled;
                 this.btnValType.Enabled = enabled;
                 this.numSymbols.Enabled = enabled;
@@ -1806,17 +1813,28 @@ namespace WWFontEditor.UI
             return MessageBox.Show(this, message, GetTitle(false), buttons, icon);
         }
 
-        private Boolean AbortForChangesAskSave(String question)
+        /// <summary>
+        /// Asks if the current file should be saved before the next action is executed.
+        /// </summary>
+        /// <param name="question">Question to ask.</param>
+        /// <param name="continueAction">Action to execute after save. IS not executed if user presses Cancel.</param>
+        /// <returns>True if the user pressed Cancel, aborting the execution of continueAction.</returns>
+        private void AbortForChangesAskSave(String question, Action continueAction)
         {
             Boolean? saveFile = this.ConfirmOnUnsavedChanges(question, true);
-            // abort
+            // User pressed "Cancel": abort
             if (!saveFile.HasValue)
-                return true;
-            // Save
+                return;
             if (saveFile.Value)
-                this.SaveFontFile();
-            // Not aborted; either saved or user doesn't care about lost changes.
-            return false;
+            {
+                // User pressed Yes; Save and tell it to execute ContinueAction afterwards.
+                this.SaveFontFile(continueAction);
+            }
+            else if (continueAction != null)
+            {
+                // User pressed No, or no save needed; execute ContinueAction.
+                continueAction();
+            }
         }
 
         /// <summary>
@@ -1868,9 +1886,7 @@ namespace WWFontEditor.UI
             //String ext = Path.GetExtension(path).TrimStart('.');
             //List<String> supportedExtensions = FontFile.GetSupportedExtensions();
             //if (!supportedExtensions.Any(x => x.Equals(ext, StringComparison.InvariantCultureIgnoreCase))) return;
-            if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
-                return;
-            this.LoadFontFile(path, null);
+            this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW, () => this.LoadFontFile(path, null));
         }
 
         private void FrmFontEditor_Shown(Object sender, EventArgs e)
@@ -2088,8 +2104,11 @@ namespace WWFontEditor.UI
 
         private void TsmiNewFont_Click(Object sender, EventArgs e)
         {
-            if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
-                return;
+            this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW, this.OpenNewFontFromMenu);
+        }
+        
+        private void OpenNewFontFromMenu()
+        {
             FontFile sourceFontFile = new FontDummy();
             FrmConvertFontType fontConvertDialog = new FrmConvertFontType(sourceFontFile, true);
             fontConvertDialog.StartPosition = FormStartPosition.CenterParent;
@@ -2120,8 +2139,11 @@ namespace WWFontEditor.UI
 
         private void TsmiOpenFont_Click(Object sender, EventArgs e)
         {
-            if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
-                return;
+            this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW, this.OpenFontFromMenu);
+        }
+
+        private void OpenFontFromMenu()
+        {
             FontFile selectedItem;
             String filename = FileDialogGenerator.ShowOpenFileFialog(this, GetTitle(false), FontFile.SupportedTypes, this.m_FileName, "fonts", "fnt", true, out selectedItem);
             if (filename == null)
@@ -2135,16 +2157,16 @@ namespace WWFontEditor.UI
                 return;
             // no backup: new font file.
             if (this.m_LoadedFontBackup == null || this.m_LoadedFontBackup.GetType() != this.m_LoadedFont.GetType())
-                this.SaveFontAs();
+                this.SaveFontAs(true, null);
             else
-                this.SaveFontFile();
+                this.SaveFontFile(null);
         }
         
         private void TsmiSaveFontAs_Click(Object sender, EventArgs e)
         {
             if (this.m_LoadedFont == null)
                 return;
-            this.SaveFontAs();
+            this.SaveFontAs(false, null);
         }
 
         private void TsmiExit_Click(Object sender, EventArgs e)
@@ -2487,11 +2509,17 @@ namespace WWFontEditor.UI
 
         private void FrmFontEditor_FormClosing(Object sender, FormClosingEventArgs e)
         {
-            e.Cancel = this.AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE);
-            if(e.Cancel)
+            // Close immediately.
+            if (m_Closing)
                 return;
-            this.m_LoadedFont = null;
-            this.ReloadUi(true);
+            e.Cancel = true;
+            this.AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE, this.ForceCloseForm);
+        }
+
+        private void ForceCloseForm()
+        {
+            m_Closing = true;
+            this.Close();
         }
 
         private void LblPaintColor1_MouseEnter(Object sender, EventArgs e)

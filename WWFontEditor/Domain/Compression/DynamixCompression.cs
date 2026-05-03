@@ -8,7 +8,7 @@ namespace Nyerguds.FileData.Dynamix
     /// Dynamix compression / decompression class. Offers functionality to decompress chunks using RLE or LZW decompression,
     /// and has functions to compress to RLE.
     /// </summary>
-    public class DynamixCompression
+    public static class DynamixCompression
     {
 
         public static Byte[] EnrichFourBit(Byte[] vgaData, Byte[] binData)
@@ -26,12 +26,12 @@ namespace Nyerguds.FileData.Dynamix
                 // This can be written much simpler, but I expanded it to clearly show each step.
                 Byte vgaPix = vgaData[i]; // 0xAB
                 Byte binPix = binData[i]; // 0xab
-                Byte vgaPixHi = (Byte)((vgaPix & 0xF0) >> 4); // 0x0A
+                Byte vgaPixHi = (Byte)(vgaPix & 0xF0); // 0xA0
                 Byte binPixHi = (Byte)((binPix & 0xF0) >> 4); // 0x0a
-                Byte finalPixHi = (Byte)((vgaPixHi << 4) + binPixHi); // Aa
-                Byte vgaPixLo = (Byte)(vgaPix & 0x0F); // 0x0B
+                Byte finalPixHi = (Byte)(vgaPixHi | binPixHi); // Aa
+                Byte vgaPixLo = (Byte)((vgaPix & 0x0F) << 4); // 0xB0
                 Byte binPixLo = (Byte)(binPix & 0x0F); // 0x0b
-                Byte finalPixLo = (Byte)((vgaPixLo << 4) + binPixLo); // Bb
+                Byte finalPixLo = (Byte)(vgaPixLo | binPixLo); // Bb
                 // Final result: AB + ab == [Aa Bb]
                 fullData[offs] = finalPixHi;
                 fullData[offs + 1] = finalPixLo;
