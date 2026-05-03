@@ -30,15 +30,14 @@
         {
             this.btnClose = new System.Windows.Forms.Button();
             this.btnSavePalette = new System.Windows.Forms.Button();
-            this.chkColorOption = new System.Windows.Forms.CheckBox();
             this.palettePanel = new WWFontEditor.Ui.PalettePanel();
             this.SuspendLayout();
             // 
             // btnClose
             // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnClose.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnClose.Location = new System.Drawing.Point(216, 398);
+            this.btnClose.Location = new System.Drawing.Point(216, 369);
             this.btnClose.Margin = new System.Windows.Forms.Padding(0);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(120, 23);
@@ -49,7 +48,8 @@
             // 
             // btnSavePalette
             // 
-            this.btnSavePalette.Location = new System.Drawing.Point(20, 398);
+            this.btnSavePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnSavePalette.Location = new System.Drawing.Point(20, 369);
             this.btnSavePalette.Margin = new System.Windows.Forms.Padding(0);
             this.btnSavePalette.Name = "btnSavePalette";
             this.btnSavePalette.Size = new System.Drawing.Size(120, 23);
@@ -58,19 +58,9 @@
             this.btnSavePalette.UseVisualStyleBackColor = true;
             this.btnSavePalette.Click += new System.EventHandler(this.btnSavePalette_Click);
             // 
-            // chkColorOption
-            // 
-            this.chkColorOption.AutoSize = true;
-            this.chkColorOption.Location = new System.Drawing.Point(20, 362);
-            this.chkColorOption.Name = "chkColorOption";
-            this.chkColorOption.Size = new System.Drawing.Size(230, 17);
-            this.chkColorOption.TabIndex = 1;
-            this.chkColorOption.Text = "Show only colors used in the filtered palette";
-            this.chkColorOption.UseVisualStyleBackColor = true;
-            this.chkColorOption.CheckedChanged += new System.EventHandler(this.chkColorOption_CheckedChanged);
-            // 
             // palettePanel
             // 
+            this.palettePanel.AutoSize = true;
             this.palettePanel.Border = new System.Windows.Forms.Padding(20);
             this.palettePanel.EmptyIndicatorBackColor = System.Drawing.Color.Black;
             this.palettePanel.EmptyIndicatorChar = 'X';
@@ -88,6 +78,9 @@
             this.palettePanel.ShowRemappedPalette = true;
             this.palettePanel.Size = new System.Drawing.Size(356, 356);
             this.palettePanel.TabIndex = 0;
+            this.palettePanel.TransparencyIndicatorBackColor = System.Drawing.Color.Empty;
+            this.palettePanel.TransparencyIndicatorChar = 'T';
+            this.palettePanel.TransparencyIndicatorCharColor = System.Drawing.Color.Blue;
             this.palettePanel.LabelMouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.palettePanel_LabelMouseDoubleClick);
             // 
             // FrmPalette
@@ -96,9 +89,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnClose;
-            this.ClientSize = new System.Drawing.Size(356, 441);
+            this.ClientSize = new System.Drawing.Size(356, 407);
             this.Controls.Add(this.palettePanel);
-            this.Controls.Add(this.chkColorOption);
             this.Controls.Add(this.btnSavePalette);
             this.Controls.Add(this.btnClose);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -106,7 +98,6 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Color Palette";
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -114,7 +105,6 @@
 
         protected System.Windows.Forms.Button btnClose;
         protected System.Windows.Forms.Button btnSavePalette;
-        protected System.Windows.Forms.CheckBox chkColorOption;
         protected Ui.PalettePanel palettePanel;
 
     }

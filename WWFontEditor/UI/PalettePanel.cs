@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using ColorManipulation;
+using System.Drawing.Imaging;
 
 namespace WWFontEditor.Ui
 {
@@ -30,6 +31,8 @@ namespace WWFontEditor.Ui
         protected Char m_TransparencyIndicatorChar = 'T';
         protected Color m_TransparencyIndicatorCharColor = Color.Blue;
 
+        protected Int32 m_Width = 16;
+        protected PixelFormat m_PixelFormat = PixelFormat.Format8bppIndexed;
         protected Boolean m_ShowColorToolTips = true;
         protected Boolean m_Selectable = true;
         protected Boolean m_Multiselect = false;
@@ -41,13 +44,23 @@ namespace WWFontEditor.Ui
             get { return base.Size; }
             set
             {
-                Int32 sizeX = m_Padding.Left + LabelSize.Width * 16 + PadBetween.X * 15 + m_Padding.Right;
-                Int32 sizeY = m_Padding.Top + LabelSize.Height * 16 + PadBetween.Y * 15 + m_Padding.Bottom;
+                Int32 pxf = Image.GetPixelFormatSize(m_PixelFormat);
+                Int32 totalColors = (Int32)Math.Pow(2, pxf);
+                Int32 rows = totalColors / m_Width + totalColors % m_Width;
+                Int32 sizeX = m_Padding.Left + LabelSize.Width * m_Width + PadBetween.X * (m_Width - 1) + m_Padding.Right;
+                Int32 sizeY = m_Padding.Top + LabelSize.Height * rows + PadBetween.Y * (rows - 1) + m_Padding.Bottom;
                 base.Size = new Size(sizeX, sizeY);
                 Refresh();
             }
         }
-        
+
+        [Description("Autosize"), Category("Layout")]
+        public Boolean AutoSize
+        {
+            get { return true; }
+            set {  }
+        }
+
         [Description("Border padding around the control"), Category("Palette panel")]
         public Padding Border
         {
@@ -74,6 +87,13 @@ namespace WWFontEditor.Ui
         {
             get { return m_Palette; }
             set { this.m_Palette = value; Refresh(); }
+        }
+
+        [Description("Table used to remap the color palette. Set to null for no remapping."), Category("Palette panel")]
+        public PixelFormat PixelFormat
+        {
+            get { return m_PixelFormat; }
+            set { this.m_PixelFormat = value; Refresh(); }
         }
 
         [Description("Table used to remap the color palette. Set to null for no remapping."), Category("Palette panel")]
@@ -227,6 +247,19 @@ namespace WWFontEditor.Ui
             DrawPalette();
             this.Paint += PalettePanel_Paint;
         }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public PalettePanel(Int32 width, PixelFormat pixelFormat)
+        {
+            m_Width = width;
+            m_PixelFormat = pixelFormat;
+            InitializeComponent();
+            DrawPalette();
+            this.Paint += PalettePanel_Paint;
+        }
+
 
         protected void PalettePanel_Paint(object sender, PaintEventArgs e)
         {

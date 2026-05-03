@@ -36,8 +36,8 @@
             this.lblFontWidth = new System.Windows.Forms.Label();
             this.lblFontHeight = new System.Windows.Forms.Label();
             this.lblValHeight = new System.Windows.Forms.Label();
-            this.lblColors = new System.Windows.Forms.Label();
-            this.lblValColors = new System.Windows.Forms.Label();
+            this.lblCharacters = new System.Windows.Forms.Label();
+            this.lblValCharacters = new System.Windows.Forms.Label();
             this.lblFilename = new System.Windows.Forms.Label();
             this.lblValFilename = new System.Windows.Forms.Label();
             this.lblValFontWidth = new System.Windows.Forms.Label();
@@ -46,6 +46,9 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.lblYOffset = new System.Windows.Forms.Label();
+            this.chkGrid = new System.Windows.Forms.CheckBox();
+            this.lblPaintColor = new System.Windows.Forms.Label();
+            this.chkOutline = new System.Windows.Forms.CheckBox();
             this.numIndex = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.pnlImageScroll = new Nyerguds.Util.UI.SelectablePanel();
@@ -53,7 +56,6 @@
             this.pxbImage = new RedCell.UI.Controls.PixelBox();
             this.pxbEditGridBehind = new RedCell.UI.Controls.PixelBox();
             this.pxbFullSize = new RedCell.UI.Controls.PixelBox();
-            this.chkGrid = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numIndex)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numZoom)).BeginInit();
             this.pnlImageScroll.SuspendLayout();
@@ -67,30 +69,30 @@
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSave.Enabled = false;
-            this.btnSave.Location = new System.Drawing.Point(591, 327);
+            this.btnSave.Location = new System.Drawing.Point(591, 359);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(81, 23);
             this.btnSave.TabIndex = 2;
             this.btnSave.Text = "Save image";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Visible = false;
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            this.btnSave.Click += new System.EventHandler(this.BtnSave_Click);
             // 
             // btnOpen
             // 
             this.btnOpen.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOpen.Location = new System.Drawing.Point(510, 327);
+            this.btnOpen.Location = new System.Drawing.Point(510, 359);
             this.btnOpen.Name = "btnOpen";
             this.btnOpen.Size = new System.Drawing.Size(75, 23);
             this.btnOpen.TabIndex = 1;
             this.btnOpen.Text = "Open file";
             this.btnOpen.UseVisualStyleBackColor = true;
-            this.btnOpen.Click += new System.EventHandler(this.btnOpen_Click);
+            this.btnOpen.Click += new System.EventHandler(this.BtnOpen_Click);
             // 
             // lblZoom
             // 
             this.lblZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblZoom.Location = new System.Drawing.Point(171, 330);
+            this.lblZoom.Location = new System.Drawing.Point(168, 345);
             this.lblZoom.Name = "lblZoom";
             this.lblZoom.Size = new System.Drawing.Size(72, 20);
             this.lblZoom.TabIndex = 23;
@@ -147,25 +149,25 @@
             this.lblValHeight.TabIndex = 26;
             this.lblValHeight.Text = "-";
             // 
-            // lblColors
+            // lblCharacters
             // 
-            this.lblColors.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblColors.Location = new System.Drawing.Point(375, 64);
-            this.lblColors.Name = "lblColors";
-            this.lblColors.Size = new System.Drawing.Size(94, 20);
-            this.lblColors.TabIndex = 27;
-            this.lblColors.Text = "Colors:";
-            this.lblColors.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblCharacters.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblCharacters.Location = new System.Drawing.Point(375, 64);
+            this.lblCharacters.Name = "lblCharacters";
+            this.lblCharacters.Size = new System.Drawing.Size(94, 20);
+            this.lblCharacters.TabIndex = 27;
+            this.lblCharacters.Text = "Characters:";
+            this.lblCharacters.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblValColors
+            // lblValCharacters
             // 
-            this.lblValColors.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValColors.AutoSize = true;
-            this.lblValColors.Location = new System.Drawing.Point(475, 68);
-            this.lblValColors.Name = "lblValColors";
-            this.lblValColors.Size = new System.Drawing.Size(10, 13);
-            this.lblValColors.TabIndex = 28;
-            this.lblValColors.Text = "-";
+            this.lblValCharacters.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValCharacters.AutoSize = true;
+            this.lblValCharacters.Location = new System.Drawing.Point(475, 68);
+            this.lblValCharacters.Name = "lblValCharacters";
+            this.lblValCharacters.Size = new System.Drawing.Size(10, 13);
+            this.lblValCharacters.TabIndex = 28;
+            this.lblValCharacters.Text = "-";
             // 
             // lblFilename
             // 
@@ -247,6 +249,44 @@
             this.lblYOffset.Text = "Y-offset:";
             this.lblYOffset.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // chkGrid
+            // 
+            this.chkGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkGrid.AutoSize = true;
+            this.chkGrid.Checked = true;
+            this.chkGrid.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkGrid.Location = new System.Drawing.Point(12, 348);
+            this.chkGrid.Name = "chkGrid";
+            this.chkGrid.Size = new System.Drawing.Size(73, 17);
+            this.chkGrid.TabIndex = 31;
+            this.chkGrid.Text = "Show grid";
+            this.chkGrid.UseVisualStyleBackColor = true;
+            this.chkGrid.CheckedChanged += new System.EventHandler(this.ChkTrans_CheckedChanged);
+            // 
+            // lblPaintColor
+            // 
+            this.lblPaintColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblPaintColor.BackColor = System.Drawing.Color.Black;
+            this.lblPaintColor.Location = new System.Drawing.Point(375, 331);
+            this.lblPaintColor.Name = "lblPaintColor";
+            this.lblPaintColor.Size = new System.Drawing.Size(20, 20);
+            this.lblPaintColor.TabIndex = 119;
+            this.lblPaintColor.Click += new System.EventHandler(this.lblPaintColor_Click);
+            // 
+            // chkOutline
+            // 
+            this.chkOutline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkOutline.AutoSize = true;
+            this.chkOutline.Checked = true;
+            this.chkOutline.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkOutline.Location = new System.Drawing.Point(12, 371);
+            this.chkOutline.Name = "chkOutline";
+            this.chkOutline.Size = new System.Drawing.Size(117, 17);
+            this.chkOutline.TabIndex = 120;
+            this.chkOutline.Text = "Show editable area";
+            this.chkOutline.UseVisualStyleBackColor = true;
+            this.chkOutline.CheckedChanged += new System.EventHandler(this.ChkOutline_CheckedChanged);
+            // 
             // numIndex
             // 
             this.numIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -264,7 +304,7 @@
             this.numIndex.Name = "numIndex";
             this.numIndex.Size = new System.Drawing.Size(53, 20);
             this.numIndex.TabIndex = 24;
-            this.numIndex.ValueChanged += new System.EventHandler(this.numIndex_ValueChanged);
+            this.numIndex.ValueChanged += new System.EventHandler(this.NumIndex_ValueChanged);
             // 
             // numZoom
             // 
@@ -274,7 +314,7 @@
             0,
             0,
             0});
-            this.numZoom.Location = new System.Drawing.Point(252, 330);
+            this.numZoom.Location = new System.Drawing.Point(249, 345);
             this.numZoom.Minimum = new decimal(new int[] {
             1,
             0,
@@ -288,7 +328,7 @@
             0,
             0,
             0});
-            this.numZoom.ValueChanged += new System.EventHandler(this.numZoom_ValueChanged);
+            this.numZoom.ValueChanged += new System.EventHandler(this.NumZoom_ValueChanged);
             // 
             // pnlImageScroll
             // 
@@ -305,28 +345,30 @@
             this.pnlImageScroll.Location = new System.Drawing.Point(12, 12);
             this.pnlImageScroll.Margin = new System.Windows.Forms.Padding(0);
             this.pnlImageScroll.Name = "pnlImageScroll";
-            this.pnlImageScroll.Size = new System.Drawing.Size(360, 307);
-            this.pnlImageScroll.TabIndex = 3;
+            this.pnlImageScroll.Size = new System.Drawing.Size(360, 326);
+            this.pnlImageScroll.TabIndex = 0;
             this.pnlImageScroll.TabStop = true;
             // 
             // pxbEditGridFront
             // 
-            this.pxbEditGridFront.BackColor = System.Drawing.Color.Coral;
-            this.pxbEditGridFront.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.pxbEditGridFront.BackColor = System.Drawing.Color.Transparent;
             this.pxbEditGridFront.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbEditGridFront.Location = new System.Drawing.Point(0, 0);
             this.pxbEditGridFront.Margin = new System.Windows.Forms.Padding(0);
             this.pxbEditGridFront.Name = "pxbEditGridFront";
             this.pxbEditGridFront.Size = new System.Drawing.Size(50, 50);
-            this.pxbEditGridFront.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pxbEditGridFront.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pxbEditGridFront.TabIndex = 2;
             this.pxbEditGridFront.TabStop = false;
             this.pxbEditGridFront.Visible = false;
+            this.pxbEditGridFront.Click += new System.EventHandler(this.ImageBox_Click);
+            this.pxbEditGridFront.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pxbEditGridFront_MouseDown);
+            this.pxbEditGridFront.MouseLeave += new System.EventHandler(this.pxbEditGridFront_MouseLeave);
+            this.pxbEditGridFront.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pxbEditGridFront_MouseMove);
             // 
             // pxbImage
             // 
             this.pxbImage.BackColor = System.Drawing.Color.Transparent;
-            this.pxbImage.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.pxbImage.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbImage.Location = new System.Drawing.Point(0, 0);
             this.pxbImage.Margin = new System.Windows.Forms.Padding(0);
@@ -336,25 +378,24 @@
             this.pxbImage.TabIndex = 0;
             this.pxbImage.TabStop = false;
             this.pxbImage.Visible = false;
-            this.pxbImage.Click += new System.EventHandler(this.picImage_Click);
+            this.pxbImage.Click += new System.EventHandler(this.ImageBox_Click);
             // 
             // pxbEditGridBehind
             // 
-            this.pxbEditGridBehind.BackColor = System.Drawing.Color.Coral;
-            this.pxbEditGridBehind.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.pxbEditGridBehind.BackColor = System.Drawing.Color.Transparent;
             this.pxbEditGridBehind.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbEditGridBehind.Location = new System.Drawing.Point(0, 0);
             this.pxbEditGridBehind.Margin = new System.Windows.Forms.Padding(0);
             this.pxbEditGridBehind.Name = "pxbEditGridBehind";
             this.pxbEditGridBehind.Size = new System.Drawing.Size(150, 150);
-            this.pxbEditGridBehind.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.pxbEditGridBehind.TabIndex = 2;
             this.pxbEditGridBehind.TabStop = false;
             this.pxbEditGridBehind.Visible = false;
+            this.pxbEditGridBehind.Click += new System.EventHandler(this.ImageBox_Click);
             // 
             // pxbFullSize
             // 
-            this.pxbFullSize.BackColor = System.Drawing.Color.Maroon;
+            this.pxbFullSize.BackColor = System.Drawing.Color.Transparent;
             this.pxbFullSize.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbFullSize.Location = new System.Drawing.Point(0, 0);
             this.pxbFullSize.Margin = new System.Windows.Forms.Padding(0);
@@ -364,35 +405,24 @@
             this.pxbFullSize.TabIndex = 1;
             this.pxbFullSize.TabStop = false;
             this.pxbFullSize.Visible = false;
-            // 
-            // chkGrid
-            // 
-            this.chkGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.chkGrid.AutoSize = true;
-            this.chkGrid.Checked = true;
-            this.chkGrid.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkGrid.Location = new System.Drawing.Point(13, 331);
-            this.chkGrid.Name = "chkGrid";
-            this.chkGrid.Size = new System.Drawing.Size(73, 17);
-            this.chkGrid.TabIndex = 31;
-            this.chkGrid.Text = "Show grid";
-            this.chkGrid.UseVisualStyleBackColor = true;
-            this.chkGrid.CheckedChanged += new System.EventHandler(this.chkTrans_CheckedChanged);
+            this.pxbFullSize.Click += new System.EventHandler(this.ImageBox_Click);
             // 
             // FrmFontEditor
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(684, 362);
+            this.ClientSize = new System.Drawing.Size(684, 394);
+            this.Controls.Add(this.chkOutline);
+            this.Controls.Add(this.lblPaintColor);
             this.Controls.Add(this.chkGrid);
             this.Controls.Add(this.lblValFilename);
             this.Controls.Add(this.lblFilename);
-            this.Controls.Add(this.lblValColors);
+            this.Controls.Add(this.lblValCharacters);
             this.Controls.Add(this.lblYOffset);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.lblFontHeight);
-            this.Controls.Add(this.lblColors);
+            this.Controls.Add(this.lblCharacters);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.lblValYOffset);
             this.Controls.Add(this.lblFontWidth);
@@ -429,7 +459,6 @@
 
         #endregion
 
-        private RedCell.UI.Controls.PixelBox pxbImage;
         private Nyerguds.Util.UI.SelectablePanel pnlImageScroll;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnOpen;
@@ -441,8 +470,8 @@
         private System.Windows.Forms.Label lblFontWidth;
         private System.Windows.Forms.Label lblFontHeight;
         private System.Windows.Forms.Label lblValHeight;
-        private System.Windows.Forms.Label lblColors;
-        private System.Windows.Forms.Label lblValColors;
+        private System.Windows.Forms.Label lblCharacters;
+        private System.Windows.Forms.Label lblValCharacters;
         private System.Windows.Forms.Label lblFilename;
         private System.Windows.Forms.Label lblValFilename;
         private System.Windows.Forms.Label lblValFontWidth;
@@ -452,9 +481,12 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label lblYOffset;
         private RedCell.UI.Controls.PixelBox pxbFullSize;
-        private RedCell.UI.Controls.PixelBox pxbEditGridFront;
         private RedCell.UI.Controls.PixelBox pxbEditGridBehind;
+        private RedCell.UI.Controls.PixelBox pxbImage;
+        private RedCell.UI.Controls.PixelBox pxbEditGridFront;
         private System.Windows.Forms.CheckBox chkGrid;
+        private System.Windows.Forms.Label lblPaintColor;
+        private System.Windows.Forms.CheckBox chkOutline;
     }
 }
 

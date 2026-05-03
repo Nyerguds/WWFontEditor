@@ -14,105 +14,18 @@ namespace ColorManipulation
 
         public static Color GetVisibleBorderColor(Color color)
         {
-            float sat = color.GetSaturation();
             float bri = color.GetBrightness();
             if (color.GetSaturation() < .16)
             {
                 // this color is grey
-                if (color.GetBrightness() < .5)
-                    return Color.White;
-                else
-                    return Color.Black;
+                return bri < .5 ? Color.White : Color.Black;
             }
-            else return GetInvertedColor(color);
+            return GetInvertedColor(color);
         }
 
         public static Color GetInvertedColor(Color color)
         {
             return Color.FromArgb((Int32)(0x00FFFFFFu ^ (UInt32)color.ToArgb()));
-        }
-
-        private static Color[] ConvertToColors(Byte[] colorData, Bitmap sourceImage, Int32? depth)
-        {
-            Int32 colDepth;
-            if (!depth.HasValue)
-                colDepth = depth.Value;
-            else
-                colDepth = Image.GetPixelFormatSize(sourceImage.PixelFormat);
-            // Get color components count
-            Int32 byteCount = colDepth / 8;
-            if (depth != 32 && depth != 24)
-                throw new NotSupportedException("Unsupported colour depth!");
-
-            // colorData.Length / byteCount
-            Color[] newColors = new Color[sourceImage.Width];
-            for (Int32 i = 0; i < newColors.Length; i++)
-            {
-                Int32 pos = i * byteCount;
-                Color clr = Color.Empty;
-
-                // Get start index of the specified pixel
-
-                if (depth == 32) // For 32 bpp: get Red, Green, Blue and Alpha
-                {
-                    Byte b = colorData[pos];
-                    Byte g = colorData[pos + 1];
-                    Byte r = colorData[pos + 2];
-                    Byte a = colorData[pos + 3]; // a
-                    clr = Color.FromArgb(a, r, g, b);
-                }
-                else if (depth == 24) // For 24 bpp: get Red, Green and Blue
-                {
-                    Byte b = colorData[pos];
-                    Byte g = colorData[pos + 1];
-                    Byte r = colorData[pos + 2];
-                    clr = Color.FromArgb(r, g, b);
-                }
-                newColors[i] = clr;
-            }
-            return newColors;
-        }
-
-        private static Byte[] ConvertToBytes(Color[] colorData, Bitmap sourceImage, Int32? depth)
-        {
-            Int32 colDepth;
-            if (depth.HasValue)
-                colDepth = depth.Value;
-            else
-                colDepth = Image.GetPixelFormatSize(sourceImage.PixelFormat);
-            // Get color components count
-            Int32 byteCount = colDepth / 8;
-            if (depth != 32 && depth != 24)
-                throw new NotSupportedException("Unsupported colour depth!");
-
-            Byte[] newBytes = new Byte[colorData.Length * byteCount];
-            for (Int32 i = 0; i < colorData.Length; i++)
-            {
-                Int32 pos = i * byteCount;
-                Color clr = colorData[i];
-
-                // Get start index of the specified pixel
-
-                if (depth == 32) // For 32 bpp: get Red, Green, Blue and Alpha
-                {
-                    newBytes[pos] = clr.B;
-                    newBytes[pos + 1] = clr.G;
-                    newBytes[pos + 2] = clr.R;
-                    newBytes[pos + 3] = clr.A;
-                }
-                else if (depth == 24) // For 24 bpp: get Red, Green and Blue
-                {
-                    newBytes[pos] = clr.B;
-                    newBytes[pos + 1] = clr.G;
-                    newBytes[pos + 2] = clr.R;
-                }
-            }
-            return newBytes;
-        }
-
-        public static Int32 GetPixelFormatSize(Bitmap image)
-        {
-            return Image.GetPixelFormatSize(image.PixelFormat);
         }
 
         public static void SaveImage(Bitmap image, String filename)
@@ -208,10 +121,7 @@ namespace ColorManipulation
         public static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat, ColorPalette palette)
         {
             Bitmap newImage = new Bitmap(width, height, pixelFormat);
-            BitmapData targetData = newImage.LockBits(
-                new Rectangle(0, 0, width, height),
-                ImageLockMode.WriteOnly, newImage.PixelFormat);
-
+            BitmapData targetData = newImage.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
             CopyMemory(targetData.Scan0, sourceData, sourceData.Length, stride, targetData.Stride);
             newImage.UnlockBits(targetData);
             // For 8-bit images, set the palette.
@@ -220,10 +130,10 @@ namespace ColorManipulation
             return newImage;
         }
 
-        public static void CopyMemory(IntPtr target, Byte[] bytes, Int32 length, Int32 origStride, Int32 targetStride)
+        public static void CopyMemory(IntPtr target, Byte[] sourceBytes, Int32 length, Int32 origStride, Int32 targetStride)
         {
-            IntPtr unmanagedPointer = Marshal.AllocHGlobal(bytes.Length);
-            Marshal.Copy(bytes, 0, unmanagedPointer, bytes.Length);
+            IntPtr unmanagedPointer = Marshal.AllocHGlobal(sourceBytes.Length);
+            Marshal.Copy(sourceBytes, 0, unmanagedPointer, sourceBytes.Length);
             CopyMemory(target, unmanagedPointer, length, origStride, targetStride);
             Marshal.FreeHGlobal(unmanagedPointer);
         }
@@ -249,7 +159,6 @@ namespace ColorManipulation
             }
         }
 
-
         public static Boolean HasTransparency(Bitmap bitmap)
         {
             // not an alpha-capable color format.
@@ -261,7 +170,7 @@ namespace ColorManipulation
                 ColorPalette pal = bitmap.Palette;
                 // Find the transparent indexea on the palette.
                 List<Int32> transCols = new List<Int32>();
-                for (int i = 0; i < pal.Entries.Length; i++)
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
                 {
                     Color col = pal.Entries[i];
                     if (col.A != 255)
@@ -315,11 +224,11 @@ namespace ColorManipulation
                         if (linepos > lineMax)
                             continue;
                         Byte b = bytes[i];
-                        if (transCols.Contains((Int32)(b & 0x0F)))
+                        if (transCols.Contains((b & 0x0F)))
                             return true;
                         if (halfByte && linepos == lineMax) // reached last byte of the line. If only half a byte to check on that, abort and go on with loop.
                             continue;
-                        if (transCols.Contains((Int32)((b & 0xF0) >> 4)))
+                        if (transCols.Contains((b & 0xF0) >> 4))
                             return true;
                     }
                 }
@@ -355,21 +264,36 @@ namespace ColorManipulation
             return false;
         }
 
-        public static Bitmap GenerateBlankImage(Int32 width, Int32 height, Color color)
+        public static Color ColorFromUInt(UInt32 argb)
         {
-            Bitmap bm = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
+            return Color.FromArgb((Byte)((argb & 0xff000000) >> 0x18), (Byte)((argb & 0xff0000) >> 0x10), (Byte)((argb & 0xff00) >> 0x08), (Byte)(argb & 0xff));
+        }
+
+        private static ColorPalette GeneratePalette(Color[] colors, Color def)
+        {
+            Bitmap bm = new Bitmap(1, 1, PixelFormat.Format8bppIndexed);
             ColorPalette pal = bm.Palette;
-            pal.Entries[0] = color;
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+                if (i < colors.Length)
+                    pal.Entries[i] = colors[i];
+                else
+                    pal.Entries[i] = def;
+            return pal;
+        }
+
+        public static Bitmap GenerateBlankImage(Int32 width, Int32 height, Color[] colors, Byte paintColor)
+        {
+            ColorPalette pal = GeneratePalette(colors, Color.Empty);
             Byte[] blankArray = new Byte[width * height];
+            if (paintColor != 0)
+                for (Int32 i = 0; i < blankArray.Length; i++)
+                    blankArray[i] = paintColor;
             return BuildImage(blankArray, width, height, width, PixelFormat.Format8bppIndexed, pal);
         }
 
-        public static Bitmap GenerateCheckerboardImage(Int32 width, Int32 height, Color color1, Color color2)
+        public static Bitmap GenerateCheckerboardImage(Int32 width, Int32 height, Color[] colors, Byte color1, Byte color2)
         {
-            Bitmap bm = new Bitmap(width, height, PixelFormat.Format8bppIndexed);
-            ColorPalette pal = bm.Palette;
-            pal.Entries[0] = color1;
-            pal.Entries[1] = color2;
+            ColorPalette pal = GeneratePalette(colors, Color.Empty);
             Byte[] patternArray = new Byte[width * height];
             for (Int32 y = 0; y < width; y++)
             {
@@ -382,34 +306,107 @@ namespace ColorManipulation
             return BuildImage(patternArray, width, height, width, PixelFormat.Format8bppIndexed, pal);
         }
 
-        public static Bitmap GenerateGridImage(Int32 origWidth, Int32 origHeight, Int32 zoomFactor, Color bgColor, Color gridcolor, Color outLineColor)
+        public static Bitmap GenerateGridImage(Int32 origWidth, Int32 origHeight, Int32 zoomFactor, Color[] colors, Byte bgColor, Byte gridcolor, Byte outLineColor)
         {
             if (zoomFactor <= 0)
                 throw new ArgumentOutOfRangeException("zoomFactor");
-            Bitmap bm = new Bitmap(10, 10, PixelFormat.Format8bppIndexed);
-            ColorPalette pal = bm.Palette;
-            pal.Entries[0] = bgColor;
-            pal.Entries[1] = gridcolor;
-            pal.Entries[2] = outLineColor;
-            Byte colGrid = 1;
-            Byte colOutline = outLineColor == Color.Empty ? (Byte)1 : (Byte)2;
+            ColorPalette pal = GeneratePalette(colors, Color.Empty);
             Int32 width1 = origWidth * zoomFactor;
             Int32 height1 = origHeight * zoomFactor;
             Int32 width = width1 + 1;
             Int32 height = height1 + 1;
             Byte[] patternArray = new Byte[width * height];
+            if (bgColor != 0)
+                for (Int32 i = 0; i < patternArray.Length; i++)
+                    patternArray[i] = bgColor;
             for (Int32 y = 0; y < height; y++)
             {
                 for (Int32 x = 0; x < width; x++)
                 {
                     Int32 offset = x + y * width;
                     if (x == 0 || x == width1 || y == 0 || y == height1)
-                        patternArray[offset] = colOutline;
+                        patternArray[offset] = outLineColor;
                     else if (x % zoomFactor == 0 || y % zoomFactor == 0)
-                        patternArray[offset] = colGrid;
+                        patternArray[offset] = gridcolor;
                 }
             }
             return BuildImage(patternArray, width, height, width, PixelFormat.Format8bppIndexed, pal);
         }
+
+        /// <summary>
+        ///     Gets an 8-bit image's internal byte array for editing, executes a given function with that data, and writes the edited array back to the image afterwards.
+        /// </summary>
+        /// <param name="source">The source image</param>
+        /// <param name="editDelegate">A delegate to edit the resulting byte array, with the byte array's stride as second argument.</param>
+        public static void EditRawImageBytes(Bitmap source, Action<Byte[], Int32> editDelegate)
+        {
+            BitmapData sourceData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, source.PixelFormat);
+            // Could technically design this to edit the bytes directly instead of copying, but this way doesn't require (technically) unsafe code.
+            Byte[] picData = new Byte[sourceData.Stride * sourceData.Height];
+            Int32 sourceStride = sourceData.Stride;
+            Marshal.Copy(sourceData.Scan0, picData, 0, picData.Length);
+            source.UnlockBits(sourceData);
+            // =======================================
+            // Call delegate function to perform the actual actions.
+            editDelegate(picData, sourceStride);
+            // =======================================
+            BitmapData destData = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.WriteOnly, source.PixelFormat);
+            CopyMemory(destData.Scan0, picData, picData.Length, sourceStride, destData.Stride);
+            source.UnlockBits(destData);
+        }
+
+        public static void DrawRect8Bit(Bitmap source, Int32 startX, Int32 startY, Int32 endX, Int32 endY, Byte colorIndex, Boolean fill)
+        {
+            // Switch incorrect start and end positions
+            if (startX > endX)
+            {
+                Int32 tmp = startX;
+                startX = endX;
+                endX = tmp;
+            }
+            if (startY > endY)
+            {
+                Int32 tmp = startY;
+                startY = endY;
+                endY = tmp;
+            }
+            // Check if bounds are completely outside image
+            if ((startX < 0 && endX < 0) || (startX >= source.Width && endX >= source.Width)
+                || (startY < 0 && endY < 0) || (startY >= source.Height && endX >= source.Height))
+                return;
+            // Restrict bounds to image.
+            Int32 maxw = source.Width - 1;
+            Int32 maxh = source.Height - 1;
+            startX = Math.Min(maxw, Math.Max(0, startX));
+            endX = Math.Min(maxw, Math.Max(0, endX));
+            startY = Math.Min(maxh, Math.Max(0, startY));
+            endY = Math.Min(maxh, Math.Max(0, endY));
+            EditRawImageBytes(source, (arr, stride) => FillRect8BitFunc(startX, startY, endX, endY, colorIndex, arr, stride, fill));
+        }
+
+        private static void FillRect8BitFunc(Int32 startX, Int32 startY, Int32 endX, Int32 endY, Byte colorIndex, Byte[] dataArray, Int32 stride, Boolean fill)
+        {
+            for (Int32 y = startY; y <= endY; y++)
+            {
+                if (fill)
+                {
+                    for (Int32 x = startX; x <= endX; x++)
+                        dataArray[x + y * stride] = colorIndex;
+                }
+                else
+                {
+                    if (y == startY || y == endY)
+                        for (Int32 x = startX; x <= endX; x++)
+                            dataArray[x + y * stride] = colorIndex;
+                    else
+                    {
+                        dataArray[startX + y * stride] = colorIndex;
+                        dataArray[endX + y * stride] = colorIndex;
+                    }
+                }
+            }
+        }
+
+
     }
 }
