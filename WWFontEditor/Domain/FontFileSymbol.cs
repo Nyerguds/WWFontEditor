@@ -188,6 +188,35 @@ namespace WWFontEditor.Domain
             this.Width = newWidth;
         }
 
+        public Boolean TryExpandImage(ShiftDirection direction, FontFile parentFont)
+        {
+            Int32 maxWidth = parentFont.FontWidth;
+            Int32 maxHeight = parentFont.FontHeight;
+            switch (direction)
+            {
+                case ShiftDirection.Up:
+                    if (this.Height >= maxHeight || this.YOffset <= 0)
+                        return false;
+                    ChangeHeight(this.Height + 1);
+                    this.YOffset--;
+                    return false;
+                case ShiftDirection.Down:
+                    if (this.Height >= maxHeight)
+                        return false;
+                    ChangeHeight(this.Height + 1);
+                    break;
+                case ShiftDirection.Left:
+                    // can't expand to the left.
+                    return false;
+                case ShiftDirection.Right:
+                    if (this.Width >= maxWidth)
+                        return false;
+                    ChangeWidth(this.Width + 1);
+                    break;
+            }
+            return true;
+        }
+
         public void ShiftImageData(ShiftDirection direction, Boolean wrap)
         {
             if (ByteData.Length == 0)

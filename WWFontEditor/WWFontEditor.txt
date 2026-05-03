@@ -16,6 +16,7 @@ Have fun with it!
 Table of Contents
 =================
 > Features list
+> Shortcuts
 > Adding palettes
 > Full list of supported types / games
 > Note on Dune 2000 support
@@ -33,8 +34,6 @@ Features list
 * Symbol sizes can be adjusted (if the font type supports it).
 * New symbols can be added (if the font type supports it).
 * Symbol images can be shifted up/down/left/right.
-* Ctrl + arrow keys act as as shortcuts for symbol shifting.
-* Holding Shift while doing a symbol shift will shift all symbols in the font.
 * Data can be copied to other WWFontEditor windows, or even to image editors.
 * Data can be pasted from other WWFontEditor windows, or from images.
 * Has a text encoding dropdown to view character mappings for other encodings.
@@ -45,6 +44,26 @@ Features list
 * Has support for adding and editing custom added palettes (see next section).
 * The editor's colors and defaults can be customized in the settings.
 * Color Replace simplifies adapting fonts to the colors used on other fonts.
+
+
+---------
+Shortcuts
+---------
+
+The following shortcuts can be used in the editor:
+
+[Ctrl] : Holding down [Ctrl] enables the Colour Picker.
+
+[Ctrl] + [Up]    : Shift image up   
+[Ctrl] + [Down]  : Shift image down	
+[Ctrl] + [Left]  : Shift image left	
+[Ctrl] + [Right] : Shift image right
+Hold the [Shift] key to apply this operation to all symbols.
+Hold the [Alt] key to expand the frame with the shifting, to avoid losing data.
+
+[Ctrl] + [PageUp]   : Decrease Y-offset
+[Ctrl] + [PageDown] : Increase Y-offset
+Hold the [Shift] key to apply this operation to all symbols.
 
 
 ---------------
@@ -183,6 +202,11 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+v1.5.9: (2017/04/09 12:49)
+-Added shortcuts for bulk shifting without data loss and Y-offset changes.
+-Holding down ctrl now enables colour picker mode, for fast color picking.
+-Optimized refreshing of paint mode and color pick mode.
+-Colour picker now shows a hand cursor.
 
 v1.5.8: (2017/04/09 00:30)
 -Fixed a bug in the font size changing that made it change the wrong dimension.

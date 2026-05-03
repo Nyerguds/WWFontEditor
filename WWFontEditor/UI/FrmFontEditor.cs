@@ -30,6 +30,8 @@ namespace WWFontEditor
 
         private Boolean m_Loading;
         private Boolean m_Clicking;
+        private Boolean m_TempColActive;
+        private Boolean m_TempColPickerSelected;
         private String m_TitleText;
         private String m_FileName;
         private FontFile m_LoadedFont;
@@ -116,7 +118,11 @@ namespace WWFontEditor
             ContextMenu cmCopyPreview = new ContextMenu();
             MenuItem mniCopy = new MenuItem("Copy");
             mniCopy.Click += new EventHandler(CopyPreview);
+            // doesn't work; clipboard itself doesn't support transparency.
+            //MenuItem mniCopyTrans = new MenuItem("Copy (transparent background)");
+            //mniCopyTrans.Click += new EventHandler(CopyPreviewTrans);
             cmCopyPreview.MenuItems.Add(mniCopy);
+            //cmCopyPreview.MenuItems.Add(mniCopyTrans);
             pxbPreview.ContextMenu = cmCopyPreview;
 
             // Create right-click menu for toolstrip items
@@ -672,7 +678,11 @@ namespace WWFontEditor
 
                 //pxbEditGridFront.Image is the overlay image on which the currently hovered pixel is drawn. Make it null if one of the dimensions is 0.
                 if (imgLoadOk)
+                {
                     this.WipeEditGridFront();
+                    this.WipeColorPickInfo();
+                    CheckMouseForced();
+                }
                 else
                     pxbEditGridFront.Image = null;
                 pxbFullSize.Visible = fntLoadOk;
@@ -725,7 +735,7 @@ namespace WWFontEditor
 
         private void pxbEditGridFront_MouseMove(object sender, MouseEventArgs e)
         {
-            CheckMouse(sender, e, this.chkPaint.Checked);
+            CheckMouse(e.X, e.Y, e.Button, this.chkPaint.Checked, false);
         }
 
         private void pxbEditGridFront_MouseDown(object sender, MouseEventArgs e)
@@ -733,7 +743,7 @@ namespace WWFontEditor
             pnlImageScroll.Focus();
             // prevents problem where the closing click of a dialog is seen as valid mouse-up event on the edit grid
             m_Clicking = (e.Button & MouseButtons.Left) != 0 || (e.Button & MouseButtons.Right) != 0;
-            CheckMouse(sender, e, false);
+            CheckMouse(e.X, e.Y, e.Button, false, false);
         }
 
         private void pxbEditGridFront_MouseUp(object sender, MouseEventArgs e)
@@ -751,28 +761,32 @@ namespace WWFontEditor
         {
             m_Clicking = false;
             this.WipeEditGridFront();
-            this.toolTip1.SetToolTip(this.pxbEditGridFront, null);
-            this.palColorSelector.TransItemCharColor = Color.Blue;
-            this.palColorSelector.ColorSelectMode = ColorSelMode.None;
+            this.WipeColorPickInfo();
             this.m_LastHoverPixelX = -1;
             this.m_LastHoverPixelY = -1;
         }
 
-        private void CheckMouse(object sender, MouseEventArgs e, Boolean drawPreviewPixel)
+        private void CheckMouseForced()
+        {
+            Point mousePos = pxbEditGridFront.PointToClient(Cursor.Position);
+            this.CheckMouse(mousePos.X, mousePos.Y, MouseButtons.None, this.chkPaint.Checked, true);
+        }
+
+        private void CheckMouse(Int32 mouseX, Int32 mouseY, MouseButtons pressedbuttons, Boolean drawPreviewPixel, Boolean force)
         {
             Bitmap gridFront = this.pxbEditGridFront.Image as Bitmap;
             if (gridFront == null || this.m_LoadedFont == null)
                 return;
-            Int32 picX = e.X / (Int32)this.numZoom.Value;
-            Int32 picY = e.Y / (Int32)this.numZoom.Value;
+            Int32 picX = mouseX / (Int32)this.numZoom.Value;
+            Int32 picY = mouseY / (Int32)this.numZoom.Value;
             // Optimize by aborting immediately if location is unchanged
             Boolean inBounds = picX >= 0 && picX < gridFront.Width && picY >= 0 && picY < gridFront.Height;
             Boolean hasntMoved = m_LastHoverPixelX == picX && m_LastHoverPixelY == picY;
-            Boolean isLeftClick = (e.Button & MouseButtons.Left) != 0;
-            Boolean isRightClick = (e.Button & MouseButtons.Right) != 0;
-            if (hasntMoved && !isLeftClick && !isRightClick)
+            Boolean isLeftClick = (pressedbuttons & MouseButtons.Left) != 0;
+            Boolean isRightClick = (pressedbuttons & MouseButtons.Right) != 0;
+            if (hasntMoved && !isLeftClick && !isRightClick && !force)
                 return;
-            if (drawPreviewPixel && !hasntMoved)
+            if ((drawPreviewPixel && !hasntMoved) || force)
             {
                 // Clear previous pixel
                 if (m_LastHoverPixelX != -1 && m_LastHoverPixelY != -1)
@@ -781,7 +795,7 @@ namespace WWFontEditor
                 if (m_CurrentPalette.Length > this.m_CurrentPaintColor1)
                     gridFront.Palette.Entries[1] = m_CurrentPalette[this.m_CurrentPaintColor1];
                 // Draw new pixel
-                if (inBounds)
+                if (inBounds && drawPreviewPixel)
                     ImageUtils.DrawRect8Bit(gridFront, picX, picY, picX, picY, 1, true);
                 pxbEditGridFront.Invalidate();
             }
@@ -792,6 +806,7 @@ namespace WWFontEditor
             Int32 curIndex = GetSelectedIndex();
             if (chkPaint.Checked)
             {
+                this.toolTip1.SetToolTip(this.pxbEditGridFront, null);
                 if ((isLeftClick || isRightClick) && this.m_Clicking)
                 {
                     try
@@ -896,6 +911,13 @@ namespace WWFontEditor
             Color col = this.m_CurrentPaintColor1 < m_CurrentPalette.Length ? m_CurrentPalette[this.m_CurrentPaintColor1] : Color.Black;
             Color paintColor = Color.FromArgb(0xFF, col);
             pxbEditGridFront.Image = ImageUtils.GenerateBlankImage(this.m_CurWidth, this.m_CurHeight, new Color[] { Color.Transparent, paintColor }, 0);
+        }
+
+        private void WipeColorPickInfo()
+        {
+            this.toolTip1.SetToolTip(this.pxbEditGridFront, null);
+            this.palColorSelector.TransItemCharColor = Color.Blue;
+            this.palColorSelector.ColorSelectMode = ColorSelMode.None;
         }
 
         private void palColorSelector_ColorLabelMouseClick(object sender, PaletteClickEventArgs e)
@@ -1031,14 +1053,50 @@ namespace WWFontEditor
             Application.Exit();
         }
 
-        private void ShiftCurrentImage(ShiftDirection shiftDirection, Boolean all)
+        private void YShiftCurrentImage(ShiftDirection shiftDirection, Boolean all)
+        {
+            Int32 shift = 0;
+            if (this.m_LoadedFont == null)
+                return;
+            if (this.m_LoadedFont.YOffsetTypeMax == 0)
+                return;
+            if (shiftDirection == ShiftDirection.Up)
+                shift--;
+            else if (shiftDirection == ShiftDirection.Down)
+                shift++;
+            if (all)
+            {
+                foreach (FontFileSymbol symbol in this.m_LoadedFont.GetAllSymbols())
+                    symbol.YOffset = Math.Min(this.m_LoadedFont.YOffsetTypeMax, Math.Max(0, symbol.YOffset + shift));
+            }
+            else
+            {
+                FontFileSymbol symbol = this.m_LoadedFont.GetSymbol(GetSelectedIndex());
+                if (symbol == null)
+                    return;
+                symbol.YOffset = Math.Min(this.m_LoadedFont.YOffsetTypeMax, Math.Max(0, symbol.YOffset + shift));
+            }
+            this.ReloadImageInfo(true);
+            this.ReloadDataGrid();
+        }
+        
+        private void ShiftCurrentImage(ShiftDirection shiftDirection, Boolean all, Boolean expand)
         {
             if (this.m_LoadedFont == null)
                 return;
+            if (expand && shiftDirection == ShiftDirection.Left)
+                return;
+            Boolean cont = true;
             if (all)
             {
-                foreach (FontFileSymbol ffs in this.m_LoadedFont.GetAllSymbols())
-                    ffs.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
+                foreach (FontFileSymbol symbol in this.m_LoadedFont.GetAllSymbols())
+                {
+                    cont = true;
+                    if (expand)
+                        cont = symbol.TryExpandImage(shiftDirection, m_LoadedFont);
+                    if (cont)
+                        symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
+                }
             }
             else
             {
@@ -1046,29 +1104,62 @@ namespace WWFontEditor
                 FontFileSymbol symbol = this.m_LoadedFont.GetSymbol(curIndex);
                 if (symbol == null)
                     return;
-                symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
+                if (expand)
+                    cont = symbol.TryExpandImage(shiftDirection, m_LoadedFont);
+                if (cont)
+                    symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
             }
             this.ReloadImageInfo(true);
             this.ReloadDataGrid();
         }
 
+        private void ToggleTempColorSelect(Boolean enabled)
+        {
+            if (this.m_Loading)
+                return;
+            if (enabled && m_TempColActive)
+                return;
+            if (!enabled && !m_TempColActive)
+                return;
+            this.m_Loading = true;
+
+            if (enabled)
+            {
+                m_TempColPickerSelected = chkPicker.Checked;
+                chkPaint.Checked = false;
+                chkPicker.Checked = true;
+                WipeEditGridFront();
+                pxbEditGridFront.Cursor = Cursors.Hand;
+            }
+            else
+            {
+                chkPaint.Checked = !m_TempColPickerSelected;
+                chkPicker.Checked = m_TempColPickerSelected;
+                WipeColorPickInfo();
+                pxbEditGridFront.Cursor = Cursors.Default;
+            }
+            m_TempColActive = enabled;
+            this.m_Loading = false;
+            CheckMouseForced();
+        }
+
         private void BtnShiftUp_Click(object sender, EventArgs e)
         {
-            ShiftCurrentImage(ShiftDirection.Up, Control.ModifierKeys == Keys.Shift);
+            ShiftCurrentImage(ShiftDirection.Up, (Control.ModifierKeys & Keys.Shift) != 0, (Control.ModifierKeys & Keys.Alt) != 0);
         }
         private void BtnShiftRight_Click(object sender, EventArgs e)
         {
-            ShiftCurrentImage(ShiftDirection.Right, Control.ModifierKeys == Keys.Shift);
+            ShiftCurrentImage(ShiftDirection.Right, (Control.ModifierKeys & Keys.Shift) != 0, (Control.ModifierKeys & Keys.Alt) != 0);
         }
 
         private void BtnShiftDown_Click(object sender, EventArgs e)
         {
-            ShiftCurrentImage(ShiftDirection.Down, Control.ModifierKeys == Keys.Shift);
+            ShiftCurrentImage(ShiftDirection.Down, (Control.ModifierKeys & Keys.Shift) != 0, (Control.ModifierKeys & Keys.Alt) != 0);
         }
 
         private void BtnShiftLeft_Click(object sender, EventArgs e)
         {
-            ShiftCurrentImage(ShiftDirection.Left, Control.ModifierKeys == Keys.Shift);
+            ShiftCurrentImage(ShiftDirection.Left, (Control.ModifierKeys & Keys.Shift) != 0, (Control.ModifierKeys & Keys.Alt) != 0);
         }
 
         private void ChangeCurrentImageDimension(Byte newDimension, Boolean isHeight)
@@ -1099,6 +1190,90 @@ namespace WWFontEditor
             this.ChangeCurrentImageDimension((Byte)this.numHeight.Value, true);
         }
 
+        protected override Boolean IsInputKey(Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Control:
+                    return true;
+                case Keys.Control | Keys.Right:
+                case Keys.Control | Keys.Left:
+                case Keys.Control | Keys.Up:
+                case Keys.Control | Keys.Down:
+                    return true;
+                case Keys.Control | Keys.Alt | Keys.Right:
+                case Keys.Control | Keys.Alt | Keys.Left:
+                case Keys.Control | Keys.Alt | Keys.Up:
+                case Keys.Control | Keys.Alt | Keys.Down:
+                    return true;
+                case Keys.Control | Keys.Shift | Keys.Right:
+                case Keys.Control | Keys.Shift | Keys.Left:
+                case Keys.Control | Keys.Shift | Keys.Up:
+                case Keys.Control | Keys.Shift | Keys.Down:
+                    return true;
+                case Keys.Control | Keys.Alt | Keys.Shift | Keys.Right:
+                case Keys.Control | Keys.Alt | Keys.Shift | Keys.Left:
+                case Keys.Control | Keys.Alt | Keys.Shift | Keys.Up:
+                case Keys.Control | Keys.Alt | Keys.Shift | Keys.Down:
+                    return true;
+                case Keys.Control | Keys.PageUp:
+                case Keys.Control | Keys.PageDown:
+                    return true;
+            }
+            return base.IsInputKey(keyData);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (this.m_LoadedFont == null)
+                return;
+            base.OnKeyDown(e);
+            if (!e.Control)
+                return;
+            ToggleTempColorSelect(true);
+            ShiftDirection sd;
+            Boolean yShift = false;
+            switch (e.KeyCode)
+            {
+                case Keys.Left:
+                    sd = ShiftDirection.Left;
+                    break;
+                case Keys.Right:
+                    sd = ShiftDirection.Right;
+                    break;
+                case Keys.Up:
+                    sd = ShiftDirection.Up;
+                    break;
+                case Keys.Down:
+                    sd = ShiftDirection.Down;
+                    break;
+                case Keys.PageUp:
+                    sd = ShiftDirection.Up;
+                    yShift = true;
+                    break;
+                case Keys.PageDown:
+                    sd = ShiftDirection.Down;
+                    yShift = true;
+                    break;
+                default:
+                    return;
+            }
+            Boolean processAll = e.Shift;
+            if (yShift)
+            {
+                YShiftCurrentImage(sd, processAll);
+            }
+            else
+            {
+                ShiftCurrentImage(sd, processAll, e.Alt);
+            }
+        }
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            if ((Control.ModifierKeys & Keys.Control) == 0)
+                ToggleTempColorSelect(false);
+        }
+
         protected override Boolean ProcessCmdKey(ref Message msg, Keys keyData)
         {
             // override of menu shortcuts to allow copying and pasting text in the preview text field.
@@ -1116,40 +1291,6 @@ namespace WWFontEditor
                     ((TextBox)this.ActiveControl).SelectedText = Clipboard.GetText();
                 return true;
             }
-            if (this.m_LoadedFont != null && (keyData & Keys.Control) != 0
-                && ((keyData & Keys.Up) != 0 || (keyData & Keys.Left) != 0 || (keyData & Keys.Right) != 0 || (keyData & Keys.Down) != 0)
-                && !(this.ActiveControl is DataGridView) && !(this.ActiveControl is NumericUpDown) && !(this.ActiveControl is TextBox))
-            {
-                Boolean processAll = (keyData & Keys.Shift) != 0;
-                ShiftDirection sd = ShiftDirection.Up;
-                Boolean doShift = true;
-                if (keyData == (Keys.Control | Keys.Up) || keyData == (Keys.Control | Keys.Shift | Keys.Up))
-                    sd = ShiftDirection.Up;
-                else if (keyData == (Keys.Control | Keys.Left) || keyData == (Keys.Control | Keys.Shift | Keys.Left))
-                    sd = ShiftDirection.Left;
-                else if (keyData == (Keys.Control | Keys.Right) || keyData == (Keys.Control | Keys.Shift | Keys.Right))
-                    sd = ShiftDirection.Right;
-                else if (keyData == (Keys.Control | Keys.Down) || keyData == (Keys.Control | Keys.Shift | Keys.Down))
-                    sd = ShiftDirection.Down;
-                else
-                    doShift = false;
-                if (doShift)
-                {
-                    if (processAll)
-                        foreach (FontFileSymbol ffs in this.m_LoadedFont.GetAllSymbols())
-                            ffs.ShiftImageData(sd, chkShiftWrap.Checked);
-                    else
-                    {
-                        Int32 selectedIndex = GetSelectedIndex();
-                        FontFileSymbol ffs = this.m_LoadedFont.GetSymbol(selectedIndex);
-                        ffs.ShiftImageData(sd, chkShiftWrap.Checked);
-                    }
-                    this.ReloadImageInfo(true);
-                    this.ReloadDataGrid();
-                    return true;
-                }
-            }
-
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
@@ -1344,6 +1485,9 @@ namespace WWFontEditor
             this.palColorSelector.TransItemCharColor = Color.Blue;
             this.palColorSelector.ColorSelectMode = ColorSelMode.None;
             this.chkPicker.Checked = false;
+            WipeEditGridFront();
+            pxbEditGridFront.Cursor = Cursors.Default;
+            CheckMouseForced();
             this.m_Loading = false;
         }
 
@@ -1353,6 +1497,9 @@ namespace WWFontEditor
                 return;
             this.m_Loading = true;
             chkPaint.Checked = false;
+            WipeColorPickInfo();
+            pxbEditGridFront.Cursor = Cursors.Hand;
+            CheckMouseForced();
             this.m_Loading = false;
         }
 
@@ -1505,13 +1652,23 @@ namespace WWFontEditor
             RepaintPreview();
         }
 
+        private void CopyPreviewTrans(object sender, EventArgs e)
+        {
+            CopyPreview(true);
+        }
+
         private void CopyPreview(object sender, EventArgs e)
+        {
+            CopyPreview(false);
+        }
+
+        private void CopyPreview(Boolean asTransparent)
         {
             if (m_LoadedFont == null)
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            data.SetData(DataFormats.Bitmap, GeneratePreview(0, false));
+            data.SetData(DataFormats.Bitmap, GeneratePreview(0, asTransparent));
             Clipboard.SetDataObject(data);
         }
 
