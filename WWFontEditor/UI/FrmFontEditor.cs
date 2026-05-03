@@ -38,7 +38,7 @@ namespace WWFontEditor
             };
 
 
-        private Boolean m_loading = true;
+        private Boolean m_loading;
         private String m_TitleText;
         private String m_FileName;
         private FontFile m_LoadedFont;
@@ -49,8 +49,7 @@ namespace WWFontEditor
         private Int32 m_CurYOffset;
         private Int32 m_LastHoverPixelX = -1;
         private Int32 m_LastHoverPixelY = -1;
-        // Would need to be a List<Boolean> with one status per index
-        //private Boolean m_CurrentPicEdited = false;
+
         private Byte m_CurrentPaintColor1 = 1;
         private Byte m_CurrentPaintColor2 = 0;
         private Color[] m_CurrentPalette;
@@ -65,6 +64,7 @@ namespace WWFontEditor
 
         public FrmFontEditor()
         {
+            this.m_loading = true;
             InitializeComponent();
             // encodings init
             List<EncodingDropDownInfo> encodings = Encoding.GetEncodings() // Get all known .Net encodings
@@ -73,24 +73,24 @@ namespace WWFontEditor
                 .Select(e => new EncodingDropDownInfo(e)) // Put in wrapper class to add a ToString() for the dropdown
                 .OrderBy(n => n.ToString()) // Order by name as returned by wrapper class (with extra info first)
                 .ToList();
-            cmbEncodings.DataSource = encodings;
+            this.cmbEncodings.DataSource = encodings;
             // Select DOS-437 encoding, the one all original C&C fonts are based on.
-            cmbEncodings.SelectedItem = encodings.Find(e => e.Encoding.CodePage == 437);
+            this.cmbEncodings.SelectedItem = encodings.Find(e => e.Encoding.CodePage == 437);
             
             // Colors init.
-            InitColorPalette(PixelFormat.Format4bppIndexed);
-
+            this.InitColorPalette(4);
+            
             // PixelBox hierarchy init            
-            pxbEditGridBehind.Parent = pxbFullSize;
-            pxbEditGridBehind.BackColor = Color.Transparent;
-            pxbEditGridBehind.Location = new Point(0,0);
-            pxbImage.Parent = pxbFullSize;
-            pxbImage.BackColor = Color.Transparent;
-            pxbImage.Location = new Point(0, 0);
-            pxbImage.BringToFront();
-            pxbEditGridFront.Parent = pxbImage;
-            pxbEditGridFront.BackColor = Color.Transparent;
-            pxbEditGridFront.Location = new Point(0, 0);
+            this.pxbEditGridBehind.Parent = pxbFullSize;
+            this.pxbEditGridBehind.BackColor = Color.Transparent;
+            this.pxbEditGridBehind.Location = new Point(0,0);
+            this.pxbImage.Parent = pxbFullSize;
+            this.pxbImage.BackColor = Color.Transparent;
+            this.pxbImage.Location = new Point(0, 0);
+            this.pxbImage.BringToFront();
+            this.pxbEditGridFront.Parent = pxbImage;
+            this.pxbEditGridFront.BackColor = Color.Transparent;
+            this.pxbEditGridFront.Location = new Point(0, 0);
 
             this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor1]);
             this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor2]);
@@ -130,96 +130,126 @@ namespace WWFontEditor
             {
                 this.m_FileName = path;
                 String error = null;
-                Boolean loadOk = false;
                 try
                 {
                     this.m_LoadedFont = null;
                     Byte[] data = File.ReadAllBytes(path);
-                    this.m_LoadedFont = new FontFile(data);
-                    loadOk = this.m_LoadedFont != null;
+                    List<LoadFailedException> loadErrors;
+                    this.m_LoadedFont = FontFile.LoadFontFile(data, out loadErrors);
+                    if (this.m_LoadedFont == null)
+                    {
+                        String errors = String.Join("\n", loadErrors.Select(er => er.AttemptedLoadedType + ": " + er.Message).ToArray());
+                        MessageBox.Show(this, "Font type could not be identified. Errors returned by all attempts:\n\n" + errors, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
                     error = ex.Message;
                     this.m_LoadedFont = null;
                 }
-                this.numCharacters.Enabled = loadOk;
-                this.numFontHeight.Enabled = loadOk;
-                this.numFontWidth.Enabled = loadOk;
-                this.numWidth.Enabled = loadOk;
-                this.numHeight.Enabled = loadOk;
-                this.numYOffset.Enabled = loadOk;
-                this.btnShiftUp.Enabled = loadOk;
-                this.btnShiftLeft.Enabled = loadOk;
-                this.btnShiftRight.Enabled = loadOk;
-                this.btnShiftDown.Enabled = loadOk;
-                this.btnRevert.Enabled = false;
-                this.btnCopy.Enabled = loadOk;
-                this.copyToolStripMenuItem.Enabled = loadOk;
-                this.btnPaste.Enabled = m_Clipboard != null;
-                this.pasteToolStripMenuItem.Enabled = m_Clipboard != null;
-                this.saveFontToolStripMenuItem.Enabled = loadOk;
-                this.saveFontAsToolStripMenuItem.Enabled = loadOk;
-                this.pxbFullSize.Visible = loadOk;
-                if (loadOk)
-                {
-                    InitColorPalette(this.m_LoadedFont.GetPixelFormat());
-                    this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
-                    this.Text = m_TitleText + " - \"" + Path.GetFileName(path) + "\" (" + m_LoadedFont.GetShortTypeCode() + ")";
-                    this.lblValType.Text = m_LoadedFont.GetShortTypeCode().Replace("&", "&&");
-                    this.numCharacters.Maximum = 0x100;
-                    this.numCharacters.Value = this.m_LoadedFont.Length;
-                    this.numFontHeight.Maximum = 0xFF;
-                    this.numFontHeight.Value = this.m_LoadedFont.FontHeight;
-                    this.numFontWidth.Maximum = 0xFF;
-                    this.numFontWidth.Value = this.m_LoadedFont.FontWidth;
-                }
-                else
-                {
-                    this.m_FileName = null;
-                    this.Text = m_TitleText;
-                    this.lblValType.Text = "-";
-                    this.numCharacters.Maximum = 0;
-                    this.numCharacters.Value = 0;
-                    this.numFontHeight.Maximum = 0;
-                    this.numFontHeight.Value = 0;
-                    this.numFontWidth.Maximum = 0;
-                    this.numFontWidth.Value = 0;
-                }
-                this.ReloadImageInfo(true);
-                this.ReloadDataGrid();
-                // to allow index changed events on the following piece
-                this.m_loading = false;
-                if (loadOk && this.m_LoadedFont.Length > 32)
-                {
-                    //dgrvCharactersList.Rows[32].Cells[0].Selected = true;
-                    this.dgrvCharactersList.FirstDisplayedCell = dgrvCharactersList.Rows[32].Cells[0];
-                    this.dgrvCharactersList.Rows[32].Cells[0].Selected = true;
-                    this.dgrvCharactersList.Focus();
-                }
+                Boolean loadOk = ReloadUi();
                 if (!loadOk)
-                    MessageBox.Show(this, "Font loading failed" + (error == null ? "." : ": " + error), this.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(this, "Font loading failed" + (error == null ? "." : ": " + error), m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {
                 this.m_loading = false;
             }
         }
-        
-        private void InitColorPalette(PixelFormat pixelFormat)
+
+        private Boolean ReloadUi()
         {
-            if (pixelFormat == PixelFormat.Format4bppIndexed)
+            Boolean loadOk = this.m_LoadedFont != null;
+            this.numCharacters.Enabled = loadOk && this.m_LoadedFont.CharactersMin < this.m_LoadedFont.CharactersMax;
+            this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthMin < this.m_LoadedFont.FontWidthMax;
+            this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightMin < this.m_LoadedFont.FontHeightMax;
+            this.numWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthMin < this.m_LoadedFont.FontWidthMax;
+            this.numHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightMin < this.m_LoadedFont.FontHeightMax;
+            this.numYOffset.Enabled = loadOk && this.m_LoadedFont.YOffsetMax > 0;
+            this.btnShiftUp.Enabled = loadOk;
+            this.btnShiftLeft.Enabled = loadOk;
+            this.btnShiftRight.Enabled = loadOk;
+            this.btnShiftDown.Enabled = loadOk;
+            this.btnRevert.Enabled = false;
+            this.btnCopy.Enabled = loadOk;
+            this.copyToolStripMenuItem.Enabled = loadOk;
+            this.btnPaste.Enabled = m_Clipboard != null;
+            this.pasteToolStripMenuItem.Enabled = m_Clipboard != null;
+            this.saveFontToolStripMenuItem.Enabled = loadOk;
+            this.saveFontAsToolStripMenuItem.Enabled = loadOk;
+            this.pxbFullSize.Visible = loadOk;
+            if (loadOk)
+            {
+                InitColorPalette(this.m_LoadedFont.BitsPerPixel);
+                this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
+                this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeCode + ")";
+                this.lblValType.Text = m_LoadedFont.ShortTypeCode.Replace("&", "&&");
+                this.toolTip1.SetToolTip(this.lblValType, m_LoadedFont.LongTypeCode);
+                //this.lblValType.Text = m_LoadedFont.ShortTypeCode.Replace("&", "&&");
+                this.numCharacters.Minimum = this.m_LoadedFont.CharactersMin;
+                this.numCharacters.Maximum = this.m_LoadedFont.CharactersMax;
+                this.numCharacters.Value = this.m_LoadedFont.Length;
+                this.numFontHeight.Minimum= this.m_LoadedFont.FontHeightMin;
+                this.numFontHeight.Maximum = this.m_LoadedFont.FontHeightMax;
+                this.numFontHeight.Value = this.m_LoadedFont.FontHeight;
+                this.numFontWidth.Minimum = this.m_LoadedFont.FontWidthMin;
+                this.numFontWidth.Maximum = this.m_LoadedFont.FontWidthMax;
+                this.numFontWidth.Value = this.m_LoadedFont.FontWidth;
+                this.numYOffset.Maximum = this.m_LoadedFont.YOffsetMax;
+                this.numWidth.Maximum = this.m_LoadedFont.FontWidthMax;
+                this.numHeight.Maximum = this.m_LoadedFont.FontHeightMax;
+            }
+            else
+            {
+                this.m_FileName = null;
+                this.Text = m_TitleText;
+                this.lblValType.Text = "-";
+                this.toolTip1.SetToolTip(this.lblValType, null);
+                this.numCharacters.Maximum = 0;
+                this.numCharacters.Value = 0;
+                this.numFontHeight.Maximum = 0;
+                this.numFontHeight.Value = 0;
+                this.numFontWidth.Maximum = 0;
+                this.numFontWidth.Value = 0;
+                this.numWidth.Maximum = 0;
+                this.numWidth.Value = 0;
+                this.numHeight.Maximum = 0;
+                this.numHeight.Value = 0;
+                this.numYOffset.Maximum = 0;
+                this.numYOffset.Value = 0;
+            }
+            this.ReloadImageInfo(true);
+            this.ReloadDataGrid();
+            // to allow index changed events on the following piece
+            this.m_loading = false;
+            if (loadOk && this.m_LoadedFont.Length > 32)
+            {
+                //dgrvCharactersList.Rows[32].Cells[0].Selected = true;
+                this.dgrvCharactersList.FirstDisplayedCell = dgrvCharactersList.Rows[32].Cells[0];
+                this.dgrvCharactersList.Rows[32].Cells[0].Selected = true;
+                this.dgrvCharactersList.Focus();
+            }
+            return loadOk;
+        }
+
+        private void InitColorPalette(Int32 bitsPerPixel)
+        {
+            Int32 colors = (Int32)Math.Pow(2, bitsPerPixel);
+            if (bitsPerPixel <= 4)
                 m_CurrentPalette = PaletteRainbow;
             else
             {
-                m_CurrentPalette = ImageUtils.MakePalette(null, pixelFormat, false).Entries.Select(c => Color.FromArgb(0XFF, c)) //.ToArray();
+                m_CurrentPalette = ImageUtils.MakePalette(null, bitsPerPixel, false).Entries.Select(c => Color.FromArgb(0XFF, c)) //.ToArray();
                                     .Reverse().ToArray();
                 m_CurrentPalette[0] = Color.Black;
             }
             m_CurrentPalette[0] = Color.FromArgb(0x00, m_CurrentPalette[0]);
-            palColorSelector.MaxColors = m_CurrentPalette.Length;
+            palColorSelector.MaxColors = colors;
             Int32 aimDim = 134;
-            Int32 squaresPerRow = (Int32)Math.Sqrt(m_CurrentPalette.Length);
+            Int32 squaresPerRow = (Int32)Math.Sqrt(colors);
+            Int32 squaresPerCol = colors / squaresPerRow + ((colors % squaresPerRow) > 0 ? 1 : 0);
+            squaresPerRow = Math.Max(squaresPerRow, squaresPerCol);
             Int32 sqrWidth = (Int32)Math.Ceiling(aimDim * 7.5 / 8.5 / squaresPerRow);
             Int32 padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
             while (aimDim < squaresPerRow * sqrWidth + (squaresPerRow - 1) * padding)
@@ -246,7 +276,7 @@ namespace WWFontEditor
                 }
                 // add as param later
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
-                ColorPalette palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.GetPixelFormat(), false);
+                ColorPalette palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.BitsPerPixel, false);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = 0;
                 Int32 scrollOffset = 0;
@@ -297,9 +327,15 @@ namespace WWFontEditor
         {
             if (this.m_LoadedFont == null)
                 return;
-            //FntFileVersion ver = m_Loadedfont.Unknown0E == 0x1012 ? FntFileVersion.CnC : FntFileVersion.Kyrandia;
-            Byte[] filedata = this.m_LoadedFont.WriteFntFile();
-            File.WriteAllBytes(fileName, filedata);
+            try
+            {
+                Byte[] filedata = this.m_LoadedFont.SaveFont();
+                File.WriteAllBytes(fileName, filedata);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(this, "Error occurred when saving:\n\n" + e.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void FrmFontEditor_Shown(object sender, EventArgs e)
@@ -545,7 +581,7 @@ namespace WWFontEditor
                 catch (IndexOutOfRangeException ex)
                 {
                     // Trying to draw a >15 color index on a 4-bit image. Shouldn't happen in the final version.
-                    MessageBox.Show(this, ex.Message, this.Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, ex.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -610,7 +646,7 @@ namespace WWFontEditor
 
         private void btnRevert_Click(object sender, EventArgs e)
         {
-            DialogResult dr = MessageBox.Show("This will revert the current edits on this\ncharacter image to their original state!\n\nAre you sure you want to continue?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult dr = MessageBox.Show("This will revert the current edits on this\ncharacter image to their original state!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dr != DialogResult.Yes)
                 return;
             this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup);
@@ -720,7 +756,7 @@ namespace WWFontEditor
             FontFileCharacter fc = this.m_LoadedFont.GetRawData(curIndex);
             if (fc == null)
                 return;
-            fc.ShiftImageData(shiftDirection);
+            fc.ShiftImageData(shiftDirection, false);
             this.ReloadImageInfo(true);
             this.ReloadDataGrid();
         }
@@ -797,7 +833,7 @@ namespace WWFontEditor
             // if there are unsaved changes, or the image is new and not empty, ask specifically
             if (canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.ByteData.Length > 0))
             {
-                DialogResult dr = MessageBox.Show("This will completely overwrite the current character\n\nAre you sure you want to continue?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                DialogResult dr = MessageBox.Show("This will completely overwrite the current character\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
                     return;
             }
@@ -806,7 +842,14 @@ namespace WWFontEditor
                 fc.ChangeHeight(this.m_LoadedFont.FontHeight);
             if (fc.Width > this.m_LoadedFont.FontWidth)
                 fc.ChangeWidth(this.m_LoadedFont.FontWidth);
-            this.m_LoadedFont.RestorePicFromBackup(curIndex, fc);
+            try
+            {
+                this.m_LoadedFont.RestorePicFromBackup(curIndex, fc);
+            }
+            catch(InvalidOperationException ex)
+            {
+                MessageBox.Show(ex.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             this.ReloadImageInfo(true);
             this.ReloadDataGrid();
         }
@@ -864,19 +907,37 @@ namespace WWFontEditor
 
         private void revertFontToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            DialogResult dr = MessageBox.Show("This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?", this.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult dr = MessageBox.Show("This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dr != DialogResult.Yes)
                 return;
             this.m_LoadedFont = this.m_LoadedFontBackup.Clone();
-            this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
-            this.pnlImageScroll.Focus();
-            this.btnRevert.Enabled = false;
+            m_loading = true;
+            try
+            {
+                Int32 selectedIndex = GetSelectedIndex();
+                Int32 scrollOffset = 0;
+                if (dgrvCharactersList.SelectedRows.Count > 0)
+                {
+                    selectedIndex = dgrvCharactersList.CurrentCell.RowIndex;
+                    scrollOffset = dgrvCharactersList.VerticalScrollbarOffset;
+                }
+                ReloadUi();
+                if ((dgrvCharactersList.DataSource as DataTable) != null && selectedIndex < ((DataTable)(dgrvCharactersList.DataSource)).Rows.Count)
+                {
+                    if (selectedIndex > 0)
+                        dgrvCharactersList.VerticalScrollbarOffset = scrollOffset;
+                    dgrvCharactersList.Rows[selectedIndex].Cells[0].Selected = true;
+                }
+            }
+            finally
+            {
+                m_loading = false;
+            }
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(this.Text + "\n\nProgram icon created by Tomsons26\n\nWestwood font format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26", this.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(this, m_TitleText + "\n\nProgram icon created by Tomsons26\n\nWestwood font format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26", m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void chkPaint_CheckStateChanged(object sender, EventArgs e)

@@ -67,6 +67,12 @@
     <Compile Include="Domain\ArrayUtils.cs" />
     <Compile Include="Domain\FontFile.cs" />
     <Compile Include="Domain\FontFileCharacter.cs" />
+    <Compile Include="Domain\FontTypes\FontFileD2K.cs" />
+    <Compile Include="Domain\FontTypes\FontFileV1.cs" />
+    <Compile Include="Domain\FontTypes\FontFileV4.cs" />
+    <Compile Include="Domain\FontTypes\FontFileV2.cs" />
+    <Compile Include="Domain\FontTypes\FontFileV3_1.cs" />
+    <Compile Include="Domain\FontTypes\FontFileV3.cs" />
     <Compile Include="Domain\GeneralUtils.cs" />
     <Compile Include="Domain\ImageUtils.cs" />
     <Compile Include="Domain\TextUtils.cs" />
@@ -147,6 +153,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

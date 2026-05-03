@@ -92,6 +92,32 @@ namespace ColorManipulation
             return targetImage;
         }
 
+        public static PixelFormat GetPalettedFormat(Int32 bitsPerPixel)
+        {
+            switch (bitsPerPixel)
+            {
+                case 1:
+                    return PixelFormat.Format1bppIndexed;
+                case 4:
+                    return PixelFormat.Format4bppIndexed;
+                case 8:
+                    return PixelFormat.Format8bppIndexed;
+            }
+            throw new NotSupportedException("No indexed PixelFormat available for " + bitsPerPixel + " bpp.");
+        }
+
+        public static ColorPalette MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero)
+        {
+            PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
+            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
+        }
+
+        public static ColorPalette MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero, Color? defaultColor)
+        {
+            PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
+            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, defaultColor);
+        }
+
         public static ColorPalette MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero)
         {
             return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
@@ -169,7 +195,7 @@ namespace ColorManipulation
             IntPtr destPos = target;
             Int32 minStride = Math.Min(origStride, targetStride);
             Byte[] imageData = new Byte[targetStride];
-            while (length > targetStride)
+            while (length >= origStride && length > 0)
             {
                 Marshal.Copy(sourcePos, imageData, 0, minStride);
                 Marshal.Copy(imageData, 0, destPos, targetStride);

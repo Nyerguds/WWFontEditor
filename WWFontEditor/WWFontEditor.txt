@@ -1,4 +1,66 @@
+Westwood Font Editor v1.2
+------------------------- Created by Nyerguds
+
+This editor can read and write fonts of Westwood games.
+
+Have fun with it!
+
+
+Special thanks to:
+-tomsons26, Omniblade and CCHyper for their research assistance.
+-tomsons26 for the creation of the program icon, for digging through ancient
+ Westwood games, and for his tireless nagging.
+
+
+---------------------------------------
+
+
+Full list of supported types / games:
+
+WWFont v1:
+-Wargame Construction Set
+-A Nightmare On Elm Street
+-DragonStrike
+-Circuit's Edge
+
+WWFont v2 (Note: saving optimizes them; not sure if the games support this)
+-BattleTech The Crescent Hawk's Revenge
+-Eye of the Beholder
+-Eye of the Beholder II The Legend of Darkmoon
+
+WWFont v3
+-The Legend of Kyrandia
+-Dune II
+-Lands of Lore The Throne of Chaos
+-The Legend of Kyrandia Hand of Fate
+-The Legend of Kyrandia Malcolm's Revenge
+-The Legend of Kyrandia Malcolm's Revenge Installer
+-Command & Conquer
+-Command & Conquer Installer
+-Command & Conquer Red Alert
+-Command & Conquer Red Alert Installer
+-Lands of Lore Guardians of Destiny
+-Lands of Lore Guardians of Destiny Installer
+-Command & Conquer Sole Survivor
+-Lands of Lore III
+
+WWFont v4
+-Tiberian Sun
+-Tiberian Sun Installer
+-Tiberian Sun Firestorm
+-Tiberian Sun Firestorm Installer
+-Lands of Lore III Installer
+
+
+---------------------------------------
+
+
 Version history:
+
+v1.2:
+-Implemented support for older versions of the font format.
+-Split internal font versions off into separate classes.
+-Made unified reading and writing methods for 1, 4 and 8 bit data.
 
 v1.1:
 -Implemented TS font support.

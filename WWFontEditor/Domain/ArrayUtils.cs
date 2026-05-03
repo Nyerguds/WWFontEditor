@@ -56,7 +56,7 @@ namespace WWFontEditor.Domain
 
         public static Int16 GetBEShortFromByteArray(byte[] data, int startIndex)
         {
-            return Convert.ToInt16((data[startIndex] << 8) | data[startIndex + 1]);
+            return (Int16)Convert.ToUInt16((data[startIndex] << 8) | data[startIndex + 1]);
         }
 
         public static Int32 GetLEIntFromByteArray(byte[] data, int startIndex)
@@ -69,7 +69,7 @@ namespace WWFontEditor.Domain
 
         public static Int16 GetLEShortFromByteArray(byte[] data, int startIndex)
         {
-            return Convert.ToInt16((data[startIndex + 1] << 8) | data[startIndex]);
+            return (Int16)Convert.ToUInt16((data[startIndex + 1] << 8) | data[startIndex]);
         }
     }
 }
