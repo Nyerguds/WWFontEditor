@@ -62,7 +62,7 @@ namespace WWFontEditor.Domain.FontTypes
                     throw new Exception("File data too short for symbol data of symbol #" + firstSymbol + ".");
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolData.Length);
                 // should happen after the currentSymbol byte wraps around to 0
-                FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel);
+                FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 if (m_ImageDataList.Count > currentSymbol)
                     this.m_ImageDataList[currentSymbol] = ffs;
                 else

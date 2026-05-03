@@ -75,7 +75,7 @@ namespace WWFontEditor.UI.Wrappers
                 if (file.Length != 0x300)
                     return palettes;
                 // Treat as C&C 6-bit colour palette
-                SixBitColor[] pal = ColorUtils.ReadSixBitPaletteFile(file.FullName);
+                ColorSixBit[] pal = ColorUtils.ReadSixBitPaletteFile(file.FullName);
                 Color[] fullPal = ColorUtils.GetEightBitColorPalette(pal);
 
                 String bareName = file.Name;

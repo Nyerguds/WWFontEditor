@@ -74,7 +74,7 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(fileData, widthsIndex, widths, 0, nrOfSymbols);
             // Read symbols
             for (Int32 i = 0; i < startSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             for (int i = 0; i < offsets.Length; i++)
             {
                 Byte[] curData8bit;
@@ -86,7 +86,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", ShortTypeName, i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }

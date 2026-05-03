@@ -18,7 +18,6 @@ namespace WWFontEditor
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FrmFontEditor(args));
-            //Application.Run(new FrmFontEditTest());
         }
 
         /// <summary>
@@ -30,17 +29,14 @@ namespace WWFontEditor
         /// <returns>The System.Reflection.Assembly that resolves the type, assembly, or resource; or null if the assembly cannot be resolved.</returns>
         private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
-            String dllName = args.Name.Contains(',') ? args.Name.Substring(0, args.Name.IndexOf(',')) : args.Name.Replace(".dll", "");
-            dllName = dllName.Replace(".", "_");
+            String baseName = args.Name;
+            String dllName = baseName.Contains(',') ? baseName.Substring(0, baseName.IndexOf(',')) : baseName.Replace(".dll", "");
+            dllName = dllName.Replace(".", "_").Replace("-", "_");
             if (dllName.EndsWith("_resources"))
                 return null;
             System.Resources.ResourceManager rm = new System.Resources.ResourceManager(typeof(Program).Namespace + ".Properties.Resources", System.Reflection.Assembly.GetExecutingAssembly());
             Byte[] dllBytes = rm.GetObject(dllName) as Byte[];
-
-            if (dllBytes == null)
-                return null;
-            return System.Reflection.Assembly.Load(dllBytes);
+            return dllBytes == null ? null : System.Reflection.Assembly.Load(dllBytes);
         }
-
     }
 }

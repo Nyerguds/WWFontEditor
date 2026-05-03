@@ -121,7 +121,7 @@ namespace WWFontEditor.Domain.FontTypes
             readStart += nrOfSymbols;
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
             for (Int32 i = 0; i < startSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             for (int i = 0; i < offsets.Length; i++)
             {
                 Byte[] curData8bit;
@@ -133,7 +133,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", ShortTypeName, i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -215,7 +215,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[] fileData = new Byte[writeOffset + writeData.Length];
             Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fileData, 0, 4);
             ArrayUtils.WriteIntToByteArray(fileData, 4, 4, true, (UInt32)(fileData.Length - 8));
-            // Indicator for v2 format
+            // Indicator for v4/v5 format
             fileData[0x08] = (Byte)(asV5 ? 0xFD : 0xFF);
             fileData[0x09] = (Byte)this.m_FontWidth;
             fileData[0x0A] = (Byte)this.m_FontHeight;
@@ -237,7 +237,7 @@ namespace WWFontEditor.Domain.FontTypes
             Dictionary<Int32,Int32> frequencies = new Dictionary<Int32, Int32>();
             foreach (FontFileSymbol symbol in imageDataList)
             {
-                FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel);
+                FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel, 0);
                 ffs.OptimizeYHeight();
                 Int32 fullHeight = ffs.Height == 0? 0 : ffs.YOffset + ffs.Height;
                 if (fullHeight == 0)

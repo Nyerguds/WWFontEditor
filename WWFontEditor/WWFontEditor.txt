@@ -299,6 +299,11 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.10.3: (2017/09/18 14:28)
+-Optimised code for Dynamix font v1 so the a and b variants use the same code.
+-Fixed a small bug that would prevent the correct saving of Dynamix font v1a.
+-Added better clipboard support, for both copying and pasting.
+
 v1.10.2: (2017/08/14 08:15)
 -Tweaked the Mythos Software font to act as 8-bit
 -Implemented support for fonts with a different transparency index.

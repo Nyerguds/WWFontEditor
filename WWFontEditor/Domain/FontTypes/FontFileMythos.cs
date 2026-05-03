@@ -50,16 +50,16 @@ namespace WWFontEditor.Domain.FontTypes
 
             // fill in dummy symbols.
             for (Int32 i = 0; i < 0x20; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[]{0xFF}, 0, 0, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[] { 0xFF }, 0, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Add space
 
-            this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel));
+            this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Read data
             while (offset < fileData.Length)
             {
                 // Dummy symbol after 126
                 if (this.m_ImageDataList.Count == 127)
-                    this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, 0, 0, this.BitsPerPixel));
+                    this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, 0, 0, this.BitsPerPixel, this.TransparencyColor));
 
                 Int32 symbWidth = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset + 0, 2, true) + 1;
                 Int32 symbHeight = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset + 2, 2, true) + 1;
@@ -120,7 +120,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     Array.Copy(fileData, offset, imageData, 0, dataLen);
                 }
-                FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel);
+                FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
                 offset += skipLen;
             }

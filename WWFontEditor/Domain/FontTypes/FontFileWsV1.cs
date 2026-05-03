@@ -47,7 +47,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i / 8));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }

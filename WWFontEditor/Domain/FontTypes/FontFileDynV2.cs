@@ -51,7 +51,7 @@ namespace WWFontEditor.Domain.FontTypes
 
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
             for (Int32 i = 0; i < startSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[m_FontHeight * m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[m_FontHeight * m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             for (Int32 i = 0; i < nrOfSymbols; i++)
             {
                 Byte[] curData8bit;
@@ -63,7 +63,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -100,7 +100,7 @@ namespace WWFontEditor.Domain.FontTypes
             if (withheader)
             {
                 Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fullData, 0, 4);
-                ArrayUtils.WriteIntToByteArray(fullData, 4, 4, true, (UInt32)(fullData.Length - 8));
+                ArrayUtils.WriteIntToByteArray(fullData, 4, 4, true, (UInt32)(fullSize - 8));
             }
             fullData[startOffset + 0x00] = (Byte)this.m_FontWidth;
             fullData[startOffset + 0x01] = (Byte)this.m_FontHeight;

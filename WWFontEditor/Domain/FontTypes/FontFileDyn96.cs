@@ -44,7 +44,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontHeight = 0;
             this.m_FontWidth = 0;
             Int32 indexOffset = offset + 6;
-            
+
             for (Int32 i = 0; i < symbols; i++)
             {
                 Int32 symbolOffset = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, indexOffset + (i * 2), 2, true) + offset;
@@ -56,13 +56,13 @@ namespace WWFontEditor.Domain.FontTypes
                 if (symbolWidth > m_FontWidth)
                     m_FontWidth = symbolWidth;
                 if (symbolHeight > m_FontHeight)
-                    m_FontHeight= symbolHeight;
+                    m_FontHeight = symbolHeight;
                 Int32 symbolStride = (symbolWidth + 7) / 8;
                 Int32 symbolSize = symbolStride * symbolHeight;
                 if (fileData.Length < symbolOffset + 2 + symbolSize)
                     throw new FileTypeLoadException(ERR_SIZECHECK);
                 Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, symbolWidth, symbolHeight, symbolOffset + 2, 1, true);
-                this.m_ImageDataList.Add(new FontFileSymbol(curData8bit, symbolWidth, symbolHeight, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(curData8bit, symbolWidth, symbolHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             }
         }
 

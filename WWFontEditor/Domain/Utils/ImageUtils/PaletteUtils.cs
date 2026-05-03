@@ -29,7 +29,7 @@ namespace Nyerguds.ImageManipulation
             Int32 palLen = bpp > 8 ? 0 : 1 << bpp;
             Boolean[] tranGuide = new Boolean[palLen];
             if (transparentColor < tranGuide.Length)
-            tranGuide[transparentColor] = true;
+                tranGuide[transparentColor] = true;
             return tranGuide;
         }
 
@@ -161,7 +161,7 @@ namespace Nyerguds.ImageManipulation
             Color[] smallPal = GenerateRainbowPalette(4, blackIndex, null, reverseGenerated);
             Color[] bigPal = GenerateRainbowPalette(8, blackIndex, null, reverseGenerated);
             Array.Copy(smallPal, 0, bigPal, 0, smallPal.Length);
-            return ApplyTransparencyGuide(bigPal, transparencyGuide);;
+            return ApplyTransparencyGuide(bigPal, transparencyGuide);
         }
 
         public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] transparencyGuide, Boolean reverseGenerated)
@@ -169,6 +169,17 @@ namespace Nyerguds.ImageManipulation
             return GenerateRainbowPalette(bpp, blackIndex, transparencyGuide, reverseGenerated, 0, (Int32)ColorHSL.SCALE, false);
         }
 
+        /// <summary>
+        /// Generates a colour palette of the given bits per pixel containing a hue rotation of the given range.
+        /// </summary>
+        /// <param name="bpp">Bits per pixel of the image the palette is for.</param>
+        /// <param name="blackIndex">Index on the palette to replace with black.</param>
+        /// <param name="transparencyGuide">Array with booleans indicating which indices should become transparent.</param>
+        /// <param name="reverseGenerated">Reverse the generated range. This happens after the generating, and before the operations on the first index/</param>
+        /// <param name="startHue">Start hue range. Value from 0 to 240.</param>
+        /// <param name="endHue">End hue range. Value from 0 to 240. Must be higher then startHue.</param>
+        /// <param name="inclusiveEnd">True to include the end hue in the palette. If you generate a full hue range, this can be set to False to avoid getting a duplicate red colour on it.</param>
+        /// <returns>The generated palette, as array of System.Drawing.Color objects.</returns>
         public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] transparencyGuide, Boolean reverseGenerated, Int32 startHue, Int32 endHue, Boolean inclusiveEnd)
         {
             Int32 colors = 1 << bpp;

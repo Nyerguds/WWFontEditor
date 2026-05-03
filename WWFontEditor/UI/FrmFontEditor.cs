@@ -17,6 +17,8 @@ using WWFontEditor.UI.Wrappers;
 using WWFontEditor.UI.Tools;
 using Nyerguds.Util;
 using WWFontEditor.Domain.FontTypes;
+using System.Runtime.InteropServices;
+using WWFontEditor.Domain.Utils;
 
 namespace WWFontEditor
 {
@@ -56,7 +58,7 @@ namespace WWFontEditor
         private Int32[] m_CustomColors;
 
         private FontEditSettings m_Settings;
-
+        private MemoryStream clipboardMemoryStream;
 
         public FrmFontEditor(String[] args)
             : this()
@@ -123,10 +125,11 @@ namespace WWFontEditor
             ContextMenu cmCopyPreview = new ContextMenu();
             MenuItem mniCopy = new MenuItem("Copy");
             mniCopy.Click += new EventHandler(CopyPreview);
-            // doesn't work; clipboard itself doesn't support transparency.
-            //MenuItem mniCopyTrans = new MenuItem("Copy (transparent background)");
-            //mniCopyTrans.Click += new EventHandler(CopyPreviewTrans);
             cmCopyPreview.MenuItems.Add(mniCopy);
+            // doesn't work; clipboard itself doesn't support transparency.
+            MenuItem mniCopyTrans = new MenuItem("Copy (transparent background)");
+            mniCopyTrans.Click += new EventHandler(CopyPreviewTrans);
+            cmCopyPreview.MenuItems.Add(mniCopyTrans);
             //cmCopyPreview.MenuItems.Add(mniCopyTrans);
             this.pnlImagePreview.ContextMenu = cmCopyPreview;
 
@@ -1358,6 +1361,25 @@ namespace WWFontEditor
             Paste(true);
         }
 
+
+        //*/
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        private struct BitmapInfoHeader {
+          public int biSize;
+          public int biWidth;
+          public int biHeight;
+          public short biPlanes;
+          public short biBitCount;
+          public int biCompression;
+          public int biSizeImage;
+          public int biXPelsPerMeter;
+          public int biYPelsPerMeter;
+          public int biClrUsed;
+          public int biClrImportant;
+        }
+        //*/
+
         private void Paste(Boolean pasteCombined)
         {
             if (this.m_LoadedFont == null)
@@ -1366,20 +1388,7 @@ namespace WWFontEditor
             FontFileSymbol clipboard = null;
             if (retrievedData != null)
             {
-                if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
-                {
-                    clipboard = retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
-                }
-                if (clipboard == null && retrievedData.GetDataPresent(DataFormats.Bitmap))
-                {
-                    Image srcImage = retrievedData.GetData(DataFormats.Bitmap) as Image;
-                    clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
-                }
-                if (clipboard == null && retrievedData.GetDataPresent(typeof(Image)))
-                {
-                    Image srcImage = retrievedData.GetData(typeof(Image)) as Image;
-                    clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
-                }
+                clipboard = GetClipboardData(retrievedData);
             }
             if (clipboard == null)
             {
@@ -1427,6 +1436,33 @@ namespace WWFontEditor
             }
             this.ReloadImageInfo(true);
             this.ReloadDataGrid(false);
+        }
+
+        private FontFileSymbol GetClipboardData(DataObject retrievedData)
+        {
+            if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
+                return retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
+            Bitmap clipboardimage = null;
+            // Order: try PNG, move on to try 32-bit ARGB DIB, then try the normal Bitmap and Image types.
+            if (Clipboard.ContainsData("PNG"))
+            {
+                MemoryStream png_stream = Clipboard.GetData("PNG") as MemoryStream;
+                if (png_stream != null)
+                    using (Bitmap bm = new Bitmap(png_stream))
+                        clipboardimage = ImageUtils.CloneImage(bm, null);
+            }
+            if (clipboardimage == null && retrievedData.GetDataPresent(DataFormats.Dib))
+            {
+                Byte[] dibdata = ClipboardImage.TryGetDibDataClipboard(retrievedData);
+                clipboardimage = ClipboardImage.ImageFromClipboardDib(dibdata);
+            }
+            if (clipboardimage == null && retrievedData.GetDataPresent(DataFormats.Bitmap))
+                clipboardimage = new Bitmap(retrievedData.GetData(DataFormats.Bitmap) as Image);
+            if (clipboardimage == null && retrievedData.GetDataPresent(typeof(Image)))
+                clipboardimage = new Bitmap(retrievedData.GetData(typeof(Image)) as Image);
+            if (clipboardimage == null)
+                return null;
+            return new FontFileSymbol(clipboardimage, this.m_CurrentPalette, this.m_LoadedFont);
         }
 
         private void NumSymbols_ValueChanged(object sender, EventArgs e)
@@ -1782,14 +1818,37 @@ namespace WWFontEditor
             CopyPreview(false);
         }
 
+        private void CopyPreviewTrans(object sender, EventArgs e)
+        {
+            CopyPreview(true);
+        }
+
         private void CopyPreview(Boolean asTransparent)
         {
             if (m_LoadedFont == null)
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            data.SetData(DataFormats.Bitmap, GeneratePreview(0, asTransparent));
-            Clipboard.SetDataObject(data);
+            using (MemoryStream pngMemStream = new MemoryStream())
+            using (MemoryStream dibMemStream = new MemoryStream())
+            using (Bitmap prevNoTrans = GeneratePreview(0, false))
+            using (Bitmap prevTrans = GeneratePreview(0, asTransparent))
+            {
+                // version without transparency support
+                data.SetData(DataFormats.Bitmap, prevNoTrans);
+                data.SetImage(asTransparent ? prevTrans : prevNoTrans);
+                
+                // Add the image as PNG. Gimp will prefer this over the other two.
+                Byte[] pngData = BitmapHandler.GetPngImageData(asTransparent ? prevTrans : prevNoTrans, 0);
+                pngMemStream.Write(pngData, 0, pngData.Length);
+                data.SetData("PNG", false, pngMemStream);
+
+                // Add the image as DIB. This is (wrongly) accepted as ARGB by many applications.
+                Byte[] dibData = ClipboardImage.ConvertToDib(asTransparent ? prevTrans : prevNoTrans);
+                dibMemStream.Write(dibData, 0, dibData.Length);
+                data.SetData(DataFormats.Dib, false, dibMemStream);
+                Clipboard.SetDataObject(data, true);
+            }
         }
 
         private void CopyCharacter(object sender, EventArgs e)
@@ -1869,6 +1928,15 @@ namespace WWFontEditor
         private void FrmFontEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE);
+            if (!e.Cancel && this.clipboardMemoryStream != null)
+            {
+                try
+                {
+                    this.clipboardMemoryStream.Close();
+                    this.clipboardMemoryStream.Dispose();
+                }
+                catch { /* ignore */ }
+            }
         }
 
         private Boolean AbortForChangesAskSave(String question)
