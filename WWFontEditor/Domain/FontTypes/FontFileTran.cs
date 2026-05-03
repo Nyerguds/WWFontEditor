@@ -19,7 +19,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
         /// <summary>File extensions typically used for this font type.</summary>
-        public override String[] FileExtensions { get { return new String[] { "GDA" }; } }
+        public override String[] FileExtensions { get { return new String[] { "gda" }; } }
         public override String ShortTypeName { get { return "TranFont"; } }
         public override String ShortTypeDescription { get { return "Transylvania 1 & 2 Font"; } }
         public override String LongTypeDescription { get { return "A simple 1 BPP font with a tiny header of seemingly fixed values."; } }

@@ -71,7 +71,7 @@ namespace WWFontEditor.Domain.FontTypes
         
         public override SaveOption[] GetSaveOptions(String targetFileName)
         {
-            return new SaveOption[] { new SaveOption("OPT", SaveOptionType.Boolean, "Optimise duplicate symbols (Does not work for Eye of the Beholder 1)", "0") };
+            return new SaveOption[] { new SaveOption("OPT", SaveOptionType.Boolean, "Optimise duplicate symbols (Not advised for Eye of the Beholder 1)", "0") };
         }
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)

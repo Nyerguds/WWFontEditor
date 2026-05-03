@@ -301,6 +301,11 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.12: (2018/02/02 23:20)
+-Added the ability to create completely new files.
+-Fixed a crash that happened when the preview tried to draw a 0-width symbol.
+-Improved handling of empty symbols in the data grid.
+
 v1.11: (2017/11/20 13:31)
 -Optimised image memory handling in the user interface.
 -Added save options system that allows specific options per font type.

@@ -148,7 +148,7 @@ namespace WWFontEditor.Domain.FontTypes
             return new SaveOption[]
             {
                 new SaveOption("CMP", SaveOptionType.ChoicesList, "Compression type", "None,RLE", "1"),
-                new SaveOption("OPT", SaveOptionType.Boolean, "Optimise duplicate symbols", "1"),
+                new SaveOption("OPT", SaveOptionType.Boolean, "Optimise to remove duplicate symbols", "1"),
                 new SaveOption("YOF", SaveOptionType.Number, "Font base line Y-offset", lHeight.ToString())
                 
             };

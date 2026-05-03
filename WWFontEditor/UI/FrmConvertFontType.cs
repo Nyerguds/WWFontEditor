@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using WWFontEditor.Domain;
+using WWFontEditor.Domain.FontTypes;
 
 namespace WWFontEditor.UI
 {
@@ -12,20 +13,28 @@ namespace WWFontEditor.UI
         public FontFile SourceFontFile { get; private set; }
         public FontFile TargetFontFile { get; private set; }
         
-        public FrmConvertFontType()
+        private FrmConvertFontType(Boolean asCreateNew)
         {
             InitializeComponent();
         }
 
-        public FrmConvertFontType(FontFile fontfile)
-            : this()
+        public FrmConvertFontType(FontFile fontfile, Boolean asCreateNew)
+            : this(false)
         {
             this.SourceFontFile = fontfile;
+            if (asCreateNew)
+            {
+                lblNeedsConversion.Visible = false;
+                lblNeedsConversionVal.Visible = false;
+                lblNote.Visible = false;
+                this.Text = "Create new font";
+                btnConvert.Text = "Create";
+            }
             FileDialogItem<FontFile>[] fonttypes = FontFile.SupportedTypes.Select(x => new FileDialogItem<FontFile>(x)).ToArray();
             cmbTypes.DataSource = fonttypes;
             if (SourceFontFile != null)
             {
-                FileDialogItem<FontFile> fontItem = fonttypes.First(x => x.ItemType == SourceFontFile.GetType());
+                FileDialogItem<FontFile> fontItem = fonttypes.FirstOrDefault(x => x.ItemType == SourceFontFile.GetType());
                 if (fontItem != null)
                     cmbTypes.SelectedItem = fontItem;
             }

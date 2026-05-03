@@ -484,7 +484,8 @@ namespace WWFontEditor.Domain
                     if (ffs.Width != 0)
                     {
                         Bitmap symbol = ffs.GetBitmapFullSize(palette, this, true);
-                        g.DrawImage(symbol, new Point(curWidth, curHeight));
+                        if (symbol != null)
+                            g.DrawImage(symbol, new Point(curWidth, curHeight));
                         curWidth += ffs.Width;
                     }
                     curWidth += this.FontTypePaddingRight;
