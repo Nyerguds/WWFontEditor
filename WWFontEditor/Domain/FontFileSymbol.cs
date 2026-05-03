@@ -163,7 +163,7 @@ namespace WWFontEditor.Domain
         public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont)
         {
             FontFileSymbol ffs = this.Clone();
-            ffs.ChangeHeight(baseFont.FontHeight);
+            ffs.ChangeHeight(baseFont.FontHeight + ffs.YOffset);
             for (Int32 i = 0; i < ffs.YOffset; i++)
                 ffs.ShiftImageData(ShiftDirection.Down, false);
             return ffs.GetBitmap(palette);

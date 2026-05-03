@@ -476,8 +476,7 @@ namespace Nyerguds.ImageManipulation
             }
             return finalFileData;
         }
-
-
+        
         /// <summary>
         /// Converts given raw image data for a paletted image to 8-bit, so we have a simple one-byte-per-pixel format to work with.
         /// Stride is assumed to be the minimum needed to contain the data. Output stride will be the same as the width.

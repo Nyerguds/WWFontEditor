@@ -67,6 +67,7 @@
     <Compile Include="Domain\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
     <None Include="Domain\Compression\WestwoodCompression.cs" />
+    <Compile Include="Domain\FontTypes\FontFileCent.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV2.cs" />
     <Compile Include="Domain\FontTypes\FontFileMK.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV1.cs" />

@@ -143,6 +143,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileD2K),
             typeof(FontFileDynV1),
             typeof(FontFileDynV2),
+            typeof(FontFileCent),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
         };
 
@@ -162,6 +163,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileV1),
             // Can safely be put behind V1, since its minimum size is more than V1's fixed size.
             typeof(FontFileD2K),
+            typeof(FontFileCent),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
         };
 
@@ -351,9 +353,10 @@ namespace WWFontEditor.Domain
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
             // just to be sure this never overflows to infinite height
+            Int32 addedY = this.m_ImageDataList.Max(ffc => ffc.Height + ffc.YOffset);
             wrapAt = Math.Max(wrapAt, this.FontWidth);
             Int32 fullWidth = 0;
-            Int32 fullHeight = this.FontHeight;
+            Int32 fullHeight = addedY;
             Int32 curWidth = 0;
             List<FontFileSymbol> symbols = new List<FontFileSymbol>();
             text = text.Trim().Trim('\r', '\n').Replace("\r\n", "\n");
