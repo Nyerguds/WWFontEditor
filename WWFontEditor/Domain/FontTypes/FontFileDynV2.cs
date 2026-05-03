@@ -41,7 +41,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_BADHEADER);
             Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
-                throw new FileTypeLoadException(ERR_SIZECHECK);
+                throw new FileTypeLoadException(ERR_SIZEHEADER);
             Int32 dataOffset = 0x08;
             if (fileData[dataOffset] != 0xFF)
                 throw new FileTypeLoadException("Not a complex Dynamix font!");

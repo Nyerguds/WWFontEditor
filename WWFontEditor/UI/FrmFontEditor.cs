@@ -263,8 +263,8 @@ namespace WWFontEditor
             this.numSymbols.Enabled = loadOk && this.m_LoadedFont.SymbolsTypeMin < this.m_LoadedFont.SymbolsTypeMax;
             this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
             this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
-            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbXForType && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
-            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbYForType && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
+            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbXForType;
+            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbYForType;
             this.numYOffset.Enabled = loadOk && this.m_LoadedFont.YOffsetTypeMax > 0;
             this.btnShiftUp.Enabled = loadOk;
             this.btnShiftLeft.Enabled = loadOk;

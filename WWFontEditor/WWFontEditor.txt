@@ -158,8 +158,13 @@ Dynamix Font v1 & v2
 -Heart of China
 -The Adventures of Willy Beamish
 
+Centurion Font
+-Centurion: Defender of Rome
+(files need to be extracted from OVL0.OVL and given a header)
+
+
 -------------------------
-Note on Dune 2000 support
+Notes on Dune 2000 support
 -------------------------
 
 The text encoding dropdown list has an extra "Dune 2000 text encoding" item
@@ -235,9 +240,12 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.9.7: (2017/07/24 09:52)
+-Added support for Centurion fonts without header.
+-Removed support for Centurion fonts with artificially added header.
+
 v1.9.6: (2017/07/23 20:00)
--Added support for the Centurion fonts, if a header is added with structure
- "CFNT" + 4 bytes for width, height, start symbol and amount of symbols.
+-Added support for the Centurion fonts, if a header is added.
 -Characters pushed beyond their boundaries by Y-offset are now drawn correctly.
 
 v1.9.5: (2017/07/14 18:42)

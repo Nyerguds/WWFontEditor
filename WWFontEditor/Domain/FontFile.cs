@@ -15,7 +15,8 @@ namespace WWFontEditor.Domain
     {
         protected const String ERR_NOHEADER = "File data too short to contain header.";
         protected const String ERR_BADHEADER = "Identifying bytes in header do not match.";
-        protected const String ERR_SIZECHECK = "File size value in header does not match file data length.";
+        protected const String ERR_SIZEHEADER = "File size value in header does not match file data length.";
+        protected const String ERR_SIZECHECK = "File size does not match expected data length.";
 
         #region protected variables
         /// <summary>Overall maximum font height.</summary>
@@ -46,6 +47,10 @@ namespace WWFontEditor.Domain
         public virtual Boolean CustomSymbXForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
         public virtual Boolean CustomSymbYForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
+        /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
+        public virtual Int32 FontTypePaddingBottom { get { return 0; } }
+        /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
+        public virtual Int32 FontTypePaddingRight { get { return 0; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
         /// <summary>File extensions typically used for this font type.</summary>
@@ -352,11 +357,9 @@ namespace WWFontEditor.Domain
 
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
-            // just to be sure this never overflows to infinite height
-            Int32 addedY = this.m_ImageDataList.Max(ffc => ffc.Height + ffc.YOffset);
             wrapAt = Math.Max(wrapAt, this.FontWidth);
             Int32 fullWidth = 0;
-            Int32 fullHeight = addedY;
+            Int32 fullHeight = this.m_FontHeight + this.FontTypePaddingBottom;
             Int32 curWidth = 0;
             List<FontFileSymbol> symbols = new List<FontFileSymbol>();
             text = text.Trim().Trim('\r', '\n').Replace("\r\n", "\n");
@@ -370,7 +373,7 @@ namespace WWFontEditor.Domain
                     // they are (shouldn't, either; it'd complicate copying), use "null" for a line break.
                     symbols.Add(null);
                     curWidth = 0;
-                    fullHeight += this.FontHeight;
+                    fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                     continue;
                 }
                 Byte[] val = enc.GetBytes(new Char[]{c});
@@ -382,9 +385,9 @@ namespace WWFontEditor.Domain
                 {
                     fullWidth = Math.Max(fullWidth, curWidth);
                     curWidth = 0;
-                    fullHeight += this.FontHeight;
+                    fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                 }
-                curWidth += ffs.Width;
+                curWidth += ffs.Width + this.FontTypePaddingRight;
             }
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
@@ -402,20 +405,24 @@ namespace WWFontEditor.Domain
                     if (ffs == null)
                     {
                         // special case: Line break. Increase height, reset width, and go to next symbol.
-                        curHeight += this.FontHeight;
+                        curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                         curWidth = 0;
                         continue;
                     }
                     if (wrapAt != -1 && curWidth + ffs.Width > fullWidth)
                     {
                         curWidth = 0;
-                        curHeight += this.FontHeight;
+                        curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                     }
-                    if (ffs.Width != 0)
+                    else
                     {
-                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
-                        g.DrawImage(symbol, new Point(curWidth, curHeight));
-                        curWidth += ffs.Width;
+                        if (ffs.Width != 0)
+                        {
+                            Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
+                            g.DrawImage(symbol, new Point(curWidth, curHeight));
+                            curWidth += ffs.Width;
+                        }
+                        curWidth += this.FontTypePaddingRight;
                     }
                 }                
             }
@@ -433,7 +440,7 @@ namespace WWFontEditor.Domain
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileLength)
-                throw new FileTypeLoadException(ERR_SIZECHECK);
+                throw new FileTypeLoadException(ERR_SIZEHEADER);
             Byte dataFormat = fileData[0x02];
             //Byte unknown03 = fileData[0x03];
             //this.Unknown04 = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 2, true);

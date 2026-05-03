@@ -35,7 +35,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileData.Length - 2)
-                throw new FileTypeLoadException(ERR_SIZECHECK);
+                throw new FileTypeLoadException(ERR_SIZEHEADER);
             // the size of the file: already read. Skip this.
             //Int16 filesize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
