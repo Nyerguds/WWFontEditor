@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace Nyerguds.Util.UI
@@ -15,20 +16,33 @@ namespace Nyerguds.Util.UI
         private void SetDropDownWidth(EventArgs e)
         {
             Int32 widestStringInPixels = this.Width;
-            Boolean hasScrollBar = this.Items.Count * this.ItemHeight > this.DropDownHeight;
+            Int32 count = this.Items.Count;
+            Boolean hasScrollBar = count * this.ItemHeight > this.DropDownHeight;
             if (hasScrollBar)
                 widestStringInPixels -= SystemInformation.VerticalScrollBarWidth;
             Boolean noDisplayMember = String.IsNullOrEmpty(this.DisplayMember);
-            foreach (Object o in Items)
+            for (Int32 i = 0; i < count; ++i)
             {
+                Object o = this.Items[i];
                 String toCheck;
                 if (noDisplayMember)
                     toCheck = o == null ? String.Empty : o.ToString();
                 else
                 {
                     Object val = null;
-                    try { val = o.GetType().GetProperty(this.DisplayMember).GetValue(o, null); }
-                    catch { /* ignore; if it fails, just consider it empty. */ }
+                    if (o != null)
+                    {
+                        try
+                        {
+                            PropertyInfo po = o.GetType().GetProperty(this.DisplayMember);
+                            if (po != null)
+                                val = po.GetValue(o, null);
+                        }
+                        catch
+                        {
+                            /* ignore; if it fails, just consider it empty. */
+                        }
+                    }
                     toCheck = val == null ? String.Empty : val.ToString();
                 }
                 if (toCheck.Length > 0)
@@ -38,7 +52,7 @@ namespace Nyerguds.Util.UI
                     using (Graphics g = this.CreateGraphics())
                         newWidth2 = g.MeasureString(toCheck, this.Font).ToSize().Width;
                     newWidth = Math.Max(newWidth, newWidth2);
-                    if (this.DrawMode == System.Windows.Forms.DrawMode.OwnerDrawFixed)
+                    if (this.DrawMode == DrawMode.OwnerDrawFixed)
                         newWidth += 4;
                     if (newWidth > widestStringInPixels)
                         widestStringInPixels = newWidth;

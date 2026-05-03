@@ -43,20 +43,20 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontHeight = fileData[dataOffset + 1];
             // Treating as signed since high bytes in the width position denote complex font types.
             if (this.m_FontWidth >= 0x80 || this.m_FontHeight >= 0x80)
-                throw new FileTypeLoadException(ERR_BADHEADER);
+                throw new FileTypeLoadException(ERR_BADHEADERDATA);
             Byte startSymbol = fileData[dataOffset + 2];
             Byte nrOfSymbols = fileData[dataOffset + 3];
             if (startSymbol + nrOfSymbols > 0x100)
-                throw new FileTypeLoadException(ERR_SYMBCHECK);
+                throw new FileTypeLoadException(ERR_MAXSYMB);
             dataOffset += 4;
             Int32 symbolSize = ((this.m_FontWidth + 7) / 8) * this.m_FontHeight;
             if ((fileData.Length - dataOffset) != symbolSize * nrOfSymbols)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
 
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
-            for (Int32 i = 0; i < startSymbol; i++)
+            for (Int32 i = 0; i < startSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight * this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i < nrOfSymbols; i++)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Byte[] curData8bit;
                 try
@@ -95,7 +95,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 startSymbol = 0;
             Int32 fullNrOfSymbols = this.m_ImageDataList.Count;
             Byte[][] imageData = new Byte[fullNrOfSymbols][];
-            for (Int32 i = 0; i < fullNrOfSymbols; i++)
+            for (Int32 i = 0; i < fullNrOfSymbols; ++i)
             {
                 if (!foundStart)
                 {
@@ -125,7 +125,7 @@ namespace WWFontEditor.Domain.FontTypes
             fullData[startOffset + 0x02] = (Byte) startSymbol;
             fullData[startOffset + 0x03] = (Byte) nrOfSymbols;
             Int32 fontDataOffset = startOffset + 4;
-            for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
+            for (Int32 i = startSymbol; i < fullNrOfSymbols; ++i)
             {
                 Array.Copy(imageData[i], 0, fullData, fontDataOffset, symbolSize);
                 fontDataOffset += symbolSize;

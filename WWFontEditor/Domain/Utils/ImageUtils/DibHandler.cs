@@ -251,11 +251,11 @@ namespace Nyerguds.ImageManipulation
                         imageData32 = ImageUtils.GetImageData(indexedBm, out stride, PixelFormat.Format32bppArgb);
                     Int32 inputOffsetLine = 0;
                     Int32 outputOffsetLine = 0;
-                    for (Int32 y = 0; y < height; y++)
+                    for (Int32 y = 0; y < height; ++y)
                     {
                         Int32 inputOffs = inputOffsetLine;
                         Int32 outputOffs = outputOffsetLine;
-                        for (Int32 x = 0; x < width; x++)
+                        for (Int32 x = 0; x < width; ++x)
                         {
                             imageData32[outputOffs + 3] = (Byte)(imageDataMask[inputOffs] == 0 ? 255 : 0);
                             inputOffs++;
@@ -320,11 +320,11 @@ namespace Nyerguds.ImageManipulation
             {
                 Byte[] maskBytes = ImageUtils.GetImageData(maskImage, out maskStride, PixelFormat.Format8bppIndexed);
                 newImageData = ImageUtils.GetImageData(actualImage, out stride, PixelFormat.Format32bppArgb);
-                for (Int32 y = 0; y < height; y++)
+                for (Int32 y = 0; y < height; ++y)
                 {
                     Int32 offs = y*stride;
                     Int32 maskOffs = y*maskStride;
-                    for (Int32 x = 0; x < hdrWidth; x++)
+                    for (Int32 x = 0; x < hdrWidth; ++x)
                     {
                         Byte andVal = (Byte) (maskBytes[maskOffs] == 0 ? 0x00 : 0xFF);
                         newImageData[offs] = (Byte) (andVal ^ newImageData[offs + 0]);
@@ -428,7 +428,7 @@ namespace Nyerguds.ImageManipulation
                     return false;
                 if (paletteLength > 0)
                 {
-                    for (Int32 i = 0; i < paletteLength; i++)
+                    for (Int32 i = 0; i < paletteLength; ++i)
                     {
                         palette[i] = Color.FromArgb(dibBytes[readIndex + 2], dibBytes[readIndex + 1], dibBytes[readIndex]);
                         readIndex += 4;

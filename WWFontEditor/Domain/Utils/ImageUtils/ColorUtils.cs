@@ -37,7 +37,7 @@ namespace Nyerguds.ImageManipulation
             Color[] pal = image.Palette.Entries;
             if (pal.Length != grayPalette.Length)
                 return false;
-            for (Int32 i = 0; i < 256; i++)
+            for (Int32 i = 0; i < 256; ++i)
             {
                 Color palcol = pal[i];
                 Color graycol = grayPalette[i];
@@ -55,12 +55,17 @@ namespace Nyerguds.ImageManipulation
             colorPalette.CopyTo(palette, 0);
 
             Boolean[] excludedFrom = new Boolean[0x100];
-            foreach (Byte index in exclIndSrc)
-                excludedFrom[index] = true;
-            Byte[] interlaceTable = new Byte[0x10000];
-            for (Int32 y = 0; y < 0x100; y++)
+            Int32 nrExcl = exclIndSrc.Count;
+            for (Int32 i = 0; i < nrExcl; ++i)
             {
-                for (Int32 x = y; x < 0x100; x++)
+                Int32 index = exclIndSrc[i];
+                if (index >= 0 && index < 0x100)
+                    excludedFrom[index] = true;
+            }
+            Byte[] interlaceTable = new Byte[0x10000];
+            for (Int32 y = 0; y < 0x100; ++y)
+            {
+                for (Int32 x = y; x < 0x100; ++x)
                 {
                     Byte value;
                     Boolean equal = y == x;
@@ -91,7 +96,7 @@ namespace Nyerguds.ImageManipulation
         public static Color[] GetEightBitColorPalette(ColorSixBit[] sixbitpalette)
         {
             Color[] eightbitpalette = new Color[sixbitpalette.Length];
-            for (Int32 i = 0; i < sixbitpalette.Length; i++)
+            for (Int32 i = 0; i < sixbitpalette.Length; ++i)
                 eightbitpalette[i] = sixbitpalette[i].GetAsColor();
             return eightbitpalette;
         }
@@ -99,7 +104,7 @@ namespace Nyerguds.ImageManipulation
         public static ColorSixBit[] GetSixBitColorPalette(Color[] eightbitpalette)
         {
             ColorSixBit[] sixbitpalette = new ColorSixBit[eightbitpalette.Length];
-            for (Int32 i = 0; i < eightbitpalette.Length; i++)
+            for (Int32 i = 0; i < eightbitpalette.Length; ++i)
                 sixbitpalette[i] = new ColorSixBit(eightbitpalette[i]);
             return sixbitpalette;
         }
@@ -120,7 +125,7 @@ namespace Nyerguds.ImageManipulation
         {
             Byte[] pal = new Byte[768];
             Int32 end = Math.Min(768, palette.Length);
-            for (Int32 i = 0; i < end; i++)
+            for (Int32 i = 0; i < end; ++i)
             {
                 Int32 index = i * 3;
                 pal[index] = palette[i].R;
@@ -140,7 +145,7 @@ namespace Nyerguds.ImageManipulation
         {
             Int32 end = expandTo256 ? 256 : Math.Min(256, palette.Length);
             Byte[] pal = new Byte[end * 3];
-            for (Int32 i = 0; i < end; i++)
+            for (Int32 i = 0; i < end; ++i)
             {
                 Int32 index = i * 3;
                 Color col;
@@ -170,7 +175,7 @@ namespace Nyerguds.ImageManipulation
             ColorSixBit[] pal = new ColorSixBit[256];
             try
             {
-                for (Int32 i = 0; i < pal.Length; i++)
+                for (Int32 i = 0; i < pal.Length; ++i)
                 {
                     Int32 index = i * 3;
                     pal[i] = new ColorSixBit(paletteData[index], paletteData[index + 1], paletteData[index + 2]);
@@ -196,7 +201,7 @@ namespace Nyerguds.ImageManipulation
             if (dataLength % 3 != 0)
                 throw new ArgumentException("This is not a valid palette file.");
             Color[] pal = new Color[readFull ? 256 : dataLength / 3];
-            for (Int32 i = 0; i < pal.Length; i++)
+            for (Int32 i = 0; i < pal.Length; ++i)
             {
                 Int32 index = i * 3;
                 if (index + 2 > dataLength)
@@ -214,7 +219,7 @@ namespace Nyerguds.ImageManipulation
             Int32 red = col.R;
             Int32 green = col.G;
             Int32 blue = col.B;
-            for (Int32 i = 0; i < colorPalette.Length; i++)
+            for (Int32 i = 0; i < colorPalette.Length; ++i)
             {
                 if (excludedindexes != null && excludedindexes.Contains(i))
                     continue;

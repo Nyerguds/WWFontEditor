@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nyerguds.GameData.Dynamix
+namespace Nyerguds.FileData.Dynamix
 {
     public class DynamixLzHuffDecoder
     {
@@ -51,9 +51,9 @@ namespace Nyerguds.GameData.Dynamix
         {
             Int32 i;
 
-            for (i = N + 1; i <= N + 256; i++)
+            for (i = N + 1; i <= N + 256; ++i)
                 this._rson[i] = Nil; /* root */
-            for (i = 0; i < N; i++)
+            for (i = 0; i < N; ++i)
                 this._dad[i] = Nil; /* node */
         }
 
@@ -89,7 +89,7 @@ namespace Nyerguds.GameData.Dynamix
                     }
                 }
                 Int32 i;
-                for (i = 1; i < F; i++)
+                for (i = 1; i < F; ++i)
                     if ((cmp = this._textBuf[key + i] - this._textBuf[p + i]) != 0)
                         break;
                 if (i > Threshold)
@@ -291,7 +291,7 @@ namespace Nyerguds.GameData.Dynamix
         {
 
 
-            for (Int32 index = 0; index < NChar; index++)
+            for (Int32 index = 0; index < NChar; ++index)
             {
                 this._freq[index] = 1;
                 this._son[index] = index + T;
@@ -321,7 +321,7 @@ namespace Nyerguds.GameData.Dynamix
 
             Int32 j = 0;
             Int32 k;
-            for (Int32 i = 0; i < T; i++)
+            for (Int32 i = 0; i < T; ++i)
             {
                 if (this._son[i] >= T)
                 {
@@ -345,7 +345,7 @@ namespace Nyerguds.GameData.Dynamix
                 this._son[k] = i;
             }
             /* connect prnt */
-            for (Int32 i = 0; i < T; i++)
+            for (Int32 i = 0; i < T; ++i)
             {
                 if ((k = this._son[i]) >= T)
                 {
@@ -456,7 +456,7 @@ namespace Nyerguds.GameData.Dynamix
                 return new Byte[0];
             this.Reset();
             this.StartHuff();
-            for (Int32 i = 0; i < N - F; i++)
+            for (Int32 i = 0; i < N - F; ++i)
                 this._textBuf[i] = 0x20;
             Int32 r = N - F;
             for (UInt32 count = 0; count < len;)
@@ -475,7 +475,7 @@ namespace Nyerguds.GameData.Dynamix
                     Int32 i = (r - this.DecodePosition() - 1) & (N - 1);
                     Int32 j = c - 255 + Threshold;
                     Int32 k;
-                    for (k = 0; k < j; k++)
+                    for (k = 0; k < j; ++k)
                     {
                         c = this._textBuf[(i + k) & (N - 1)];
 

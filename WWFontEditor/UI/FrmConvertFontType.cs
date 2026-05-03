@@ -27,7 +27,9 @@ namespace WWFontEditor.UI
                 lblNeedsConversion.Visible = false;
                 lblNeedsConversionVal.Visible = false;
                 lblNote.Visible = false;
+                lblTypeInfo.Height = lblNote.Location.Y - lblTypeInfo.Location.Y + lblNote.Height;
                 this.Text = "Create new font";
+                this.Height = this.MinimumSize.Height;
                 btnConvert.Text = "Create";
             }
             FileDialogItem<FontFile>[] fonttypes = FontFile.SupportedTypes.Select(x => new FileDialogItem<FontFile>(x)).ToArray();

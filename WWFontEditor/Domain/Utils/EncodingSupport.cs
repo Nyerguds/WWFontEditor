@@ -91,12 +91,14 @@ namespace Nyerguds.Util
         {
             if (encoding == null)
                 encoding = Encoding.GetEncoding(1252);
-
-            foreach (Encoding enc in SupportedBomEncodings)
+            Int32 supportedLen = SupportedBomEncodings.Length;
+            Int32 docLen = docBytes.Length;
+            for (Int32 i = 0; i < supportedLen; ++i)
             {
+                Encoding enc = SupportedBomEncodings[i];
                 Byte[] preamble = enc.GetPreamble();
                 Int32 prLen = preamble.Length;
-                if (docBytes.Length < prLen || !docBytes.Take(prLen).SequenceEqual(preamble))
+                if (docLen < prLen || !docBytes.Take(prLen).SequenceEqual(preamble))
                     continue;
                 try
                 {
@@ -110,7 +112,17 @@ namespace Nyerguds.Util
                     /* Ignore and move on */
                 }
             }
-            if (docBytes.All(x => (x < 0x80 && (x >= 0x20 || x == 0x09 || x == 0x0D || x == 0x0A))))
+            Boolean isAscii = true;
+            for (Int32 i = 0; i < docLen; ++i)
+            {
+                Byte x = docBytes[i];
+                // Specifically only allow special text chars in the 00-1F range.
+                if (x < 0x80 && (x >= 0x20 || x == 0x09 || x == 0x0D || x == 0x0A))
+                    continue;
+                isAscii = false;
+                break;
+            }
+            if (isAscii)
             {
                 // pure ASCII
                 encoding = new ASCIIEncoding();

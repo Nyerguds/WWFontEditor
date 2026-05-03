@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using Nyerguds.Util;
 using Nyerguds.ImageManipulation;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Westwood Studios RA2 font format.
+    /// Westwood Studios RA2 Unicode font format.
     /// </summary>
     public class FontFileWsBfUni : FontFile
     {
@@ -26,7 +25,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override String ShortTypeName { get { return "WW BitFont (Unicode)"; } }
         public override String ShortTypeDescription { get { return "WW BitFont (Unicode) (RA2)"; } }
-        public override String LongTypeDescription { get { return "A 1-bpp font which supports unicode."; } }
+        public override String LongTypeDescription { get { return "A 1-bpp font which supports unicode. It is optimised by saving duplicate symbols only one time."; } }
         public override String[] GamesListForType { get { return new String[] { "Command & Conquer Red Alert 2", }; } }
         /// <summary>Indicates that the font file is unicode, and is thus not limited to 256 characters.</summary>
         public override Boolean IsUnicode { get { return true; } }
@@ -52,7 +51,7 @@ namespace WWFontEditor.Domain.FontTypes
             List<Int32>[] symbolUsage = new List<Int32>[count];
             if (fileData.Length <= readOffset + 0x20000)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            for (Int32 i = 0; i <= 0xFFFF; i++)
+            for (Int32 i = 0; i <= 0xFFFF; ++i)
             {
                 Int32 symbolIndex = (UInt16)(ArrayUtils.ReadIntFromByteArray(fileData, readOffset, 2, true)) - 1;
                 if (symbolIndex >= count)
@@ -66,7 +65,7 @@ namespace WWFontEditor.Domain.FontTypes
                 readOffset += 2;
             }
             FontFileSymbol[] symbols = new FontFileSymbol[0x10000];
-            for (Int32 i = 0; i < count; i++)
+            for (Int32 i = 0; i < count; ++i)
             {
                 if (readOffset >= fileData.Length)
                     throw new FileTypeLoadException("File is not long enough to contain all symbols!");
@@ -82,25 +81,32 @@ namespace WWFontEditor.Domain.FontTypes
                 readOffset += symbolImageSize;
                 Int32 symbolStride = stride;
                 Byte[] symbolData8Bit = ImageUtils.ConvertTo8Bit(symbolData, symbolWidth, this.m_FontHeight, 0, 1, true, ref symbolStride);
-                foreach (Int32 index in curSymbolUsage)
-                    symbols[index] = new FontFileSymbol(symbolData8Bit, symbolWidth, this.m_FontHeight, 0, 1, this.TransparencyColor);
+                // Debug: view symbol.
+                //String symbol = this.VisualiseOneBitData(symbolData, Int32 symbolWidth, this.m_FontHeight);
+                Int32 usageCount = curSymbolUsage.Count;
+                for (Int32 use = 0; use < usageCount; ++use)
+                    symbols[curSymbolUsage[use]] = new FontFileSymbol(symbolData8Bit, symbolWidth, this.m_FontHeight, 0, 1, this.TransparencyColor);
             }
-            for (Int32 i = 0; i <= 0xFFFF; i++)
+            for (Int32 i = 0; i <= 0xFFFF; ++i)
                 if (symbols[i] == null)
                     symbols[i] = new FontFileSymbol(this);
             m_ImageDataList = new List<FontFileSymbol>(symbols);
         }
 
+        private String VisualiseOneBitData(Byte[] data, Int32 width, Int32 height)
+        {
+            return String.Join("\r\n", Enumerable.Range(0, height).Select(line => String.Join("", data.Skip(line * width).Take(width).Select(c => c > 0 ? "X" : "_").ToArray())).ToArray());
+        }
+
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            
             Int32 stride = ImageUtils.GetMinimumStride(this.m_FontWidth, 1);
             Int32 dataLength = stride * m_FontHeight;
             Int32 blockLength = dataLength + 1;
             Int32 imageListcount = m_ImageDataList.Count; // should always be 0x10000
             Byte[][] fontListBin = new Byte[0x10000][];
             // Make list of binary entries, skipping any with width == 0
-            for (Int32 i = 0; i < imageListcount; i++)
+            for (Int32 i = 0; i < imageListcount; ++i)
             {
                 FontFileSymbol ffs = m_ImageDataList[i];
                 Int32 symbWidth = ffs.Width;
@@ -114,63 +120,65 @@ namespace WWFontEditor.Domain.FontTypes
                 Array.Copy(oneBppArr, 0, output, 1, dataLength);
                 fontListBin[i] = output;
             }
-            List<Byte[]> optimisedList = new List<Byte[]>();
-            // Make optimised list, and write all entries to the index.
+            // Optimise list by removing all duplicates, and write all entries to the index.
             Byte[] index = new Byte[0x20000];
-            for (Int32 i = 0; i < imageListcount; i++)
+            Int32 curNum = 0;
+            for (Int32 i = 0; i < imageListcount; ++i)
             {
                 Byte[] curWritesymbol = fontListBin[i];
                 if (curWritesymbol == null)
                     continue;
-                optimisedList.Add(curWritesymbol);
-                UInt64 curNum = (UInt64)optimisedList.Count;
+                curNum++;
                 if (curNum > 0xFFFF)
                     throw new NotSupportedException("WWFont v5 can only contain 65535 (0xFFFF) characters!");
-                ArrayUtils.WriteIntToByteArray(index, i << 1, 2, true, curNum);
+                ArrayUtils.WriteIntToByteArray(index, i << 1, 2, true, (UInt64)curNum);
                 // Start at i; everything before it is already checked. This means the inner loop becomes shorter as this progresses.
-                for (Int32 j = i + 1; j < imageListcount; j++)
+                for (Int32 j = i + 1; j < imageListcount; ++j)
                 {
                     Byte[] curChecksymbol = fontListBin[j];
                     if (curChecksymbol == null)
                         continue;
                     Boolean isEqual = true;
-                    // Seems x.SequenceEquals(y) is about 4x as slow as a simple 'for' loop, so I stopped using it.
+                    // Seems x.SequenceEquals(y) is about 4x as slow as a simple 'for' loop here, so I stopped using it.
                     // Since they're stride-adjusted, the arrays are all of equal length at this point anyway.
-                    for (Int32 b = 0; b < blockLength; b++)
+                    for (Int32 b = 0; b < blockLength; ++b)
                     {
                         if (curWritesymbol[b] == curChecksymbol[b])
                             continue;
                         isEqual = false;
                         break;
                     }
-                    if (isEqual)
-                    {
-                        ArrayUtils.WriteIntToByteArray(index, j << 1, 2, true, curNum);
-                        // Remove it from any following equal checks, to further increase speed.
-                        fontListBin[j] = null;
-                    }
+                    if (!isEqual)
+                        continue;
+                    ArrayUtils.WriteIntToByteArray(index, j << 1, 2, true, (UInt64)curNum);
+                    // Remove it from any following equal checks, to further increase speed,
+                    // and to end up with a list containing only uniques.
+                    fontListBin[j] = null;
                 }
-                // I originally nulled fontListBin[i] here, but the inner loops only starting at i makes this unnecessary.
-                // I guess this means the final fontListBin will contain only the originals. Not that it matters; it's no longer used.
             }
-            Int32 count = optimisedList.Count;
-            Byte[] outputArray = new Byte[0x1C + index.Length + count * blockLength];
+            Byte[] outputArray = new Byte[0x1C + index.Length + curNum * blockLength];
             Array.Copy(Encoding.ASCII.GetBytes("fonT"), outputArray, 4);
             // not sure what this is; just gonna hardcode it to what's in 'game.fnt'.
             ArrayUtils.WriteIntToByteArray(outputArray, 0x04, 4, true, 0x14);
 
-            //UInt32 dataStart? = (UInt32) ArrayUtils.WriteIntToByteArray(fileData, 0x04, 4, true);
+            // Unknown. May be a corrupted width value?
+            ArrayUtils.WriteIntToByteArray(outputArray, 0x04, 4, true, 0x14);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x08, 4, true, (UInt64)stride);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x0C, 4, true, (UInt64)this.m_FontHeight);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x10, 4, true, (UInt64)this.m_FontWidth);
-            ArrayUtils.WriteIntToByteArray(outputArray, 0x14, 4, true, (UInt64)count);
+            ArrayUtils.WriteIntToByteArray(outputArray, 0x14, 4, true, (UInt64)curNum);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x18, 4, true, (UInt32)blockLength);
             // currently at 0x1C.
             Array.Copy(index, 0, outputArray, 0x1C, index.Length);
             Int32 curIndex = 0x1C + index.Length;
-            foreach (Byte[] ffs in optimisedList)
+            // Go over fontListBin and write all symbols that remain in it;
+            // that should be exactly and only the remaining non-duplicates.
+            for (Int32 i = 0; i < fontListBin.Length; ++i)
             {
-                Array.Copy(ffs, 0, outputArray, curIndex, blockLength);
+                Byte[] symbolBytes = fontListBin[i];
+                if (symbolBytes == null)
+                    continue;
+                Array.Copy(symbolBytes, 0, outputArray, curIndex, blockLength);
                 curIndex += blockLength;
             }
             return outputArray;

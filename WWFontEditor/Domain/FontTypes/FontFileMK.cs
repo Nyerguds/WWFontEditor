@@ -32,9 +32,9 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontHeight = 15;
             Int32 dataSize = this.m_FontWidth * this.m_FontHeight;
             // There should be a check on fail conditions here, but the file itself doesn't match an exact multiple of 8*15 bytes.
-            for (Int32 i = 0; i < 0x20; i++)
+            for (Int32 i = 0; i < 0x20; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[dataSize], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i * dataSize < fileData.Length; i++)
+            for (Int32 i = 0; i * dataSize < fileData.Length; ++i)
             {
                 Byte[] curData8bit = new Byte[dataSize];
                 try

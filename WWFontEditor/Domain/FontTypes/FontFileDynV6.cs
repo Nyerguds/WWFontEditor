@@ -64,34 +64,36 @@ namespace WWFontEditor.Domain.FontTypes
             if (startSymbol < 0 || nrOfSymbols < 0)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
             if(startSymbol + nrOfSymbols > 0x100)
-                throw new FileTypeLoadException(ERR_SYMBCHECK);
+                throw new FileTypeLoadException(ERR_MAXSYMB);
             this.m_FontWidth = fileData[dataOffset + 0x10];
             this.m_FontHeight = fileData[dataOffset + 0x11];
             if (this.m_FontWidth <= 0 || this.m_FontHeight <= 0)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
             // Read symbol information
             Int16[] offsets = new Int16[nrOfSymbols];
-            for (Int32 i = 0; i < nrOfSymbols; i++)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
                 offsets[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, dataIndexOffset + i * 2, 2, true);
             Byte[] widths = new Byte[nrOfSymbols];
             Array.Copy(fileData, widthsOffset, widths, 0, nrOfSymbols);
             // Read symbols
-            for (Int32 i = 0; i < startSymbol; i++)
+            for (Int32 i = 0; i < startSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(this));
-            for (Int32 i = 0; i < offsets.Length; i++)
+            for (Int32 i = 0; i < offsets.Length; ++i)
             {
                 Byte[] curData8bit;
+                Byte symbWidth = widths[i];
+                if (symbWidth > this.m_FontWidth)
+                    throw new FileTypeLoadException(ERR_MAXWIDTH);
                 try
                 {
-                    curData8bit = new Byte[widths[i] * this.m_FontHeight];
+                    curData8bit = new Byte[symbWidth * this.m_FontHeight];
                     Array.Copy(fileData, symbolDataStart + offsets[i], curData8bit, 0, curData8bit.Length);
-                    //curData8bit = ImageUtils.ConvertTo8Bit(fileData, widths[i], this.m_FontHeight, symbolDataStart + offsets[i], this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
                     throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", this.ShortTypeName, i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, symbWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -127,7 +129,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fullNrOfSymbols = this.m_ImageDataList.Count;
             Byte[] symbolWidths = new Byte[fullNrOfSymbols];
             Byte[][] symbolData = new Byte[fullNrOfSymbols][];
-            for (Int32 i = 0; i < fullNrOfSymbols; i++)
+            for (Int32 i = 0; i < fullNrOfSymbols; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i];
                 if (!foundStart)
@@ -167,7 +169,7 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(symbolWidths, startSymbol, fileData, widthsIndex, actualSymbols);
             // Third: actual font data.
             dataIndex += chunkOffset;
-            for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
+            for (Int32 i = startSymbol; i < fullNrOfSymbols; ++i)
             {
                 Byte[] image = symbolData[i];
                 if (image == null || image.Length == 0)
@@ -191,7 +193,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 indexOffset = 0;
             Boolean foundStart = false;
             Int32 startSymbol = 0;
-            for (Int32 i = 0; i < len; i++)
+            for (Int32 i = 0; i < len; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i];
                 if (!foundStart)
@@ -224,7 +226,7 @@ namespace WWFontEditor.Domain.FontTypes
             fileData[chunkOffset + 0x10] = (Byte) this.m_FontWidth;
             fileData[chunkOffset + 0x11] = (Byte) this.m_FontHeight;
             Array.Copy(symbolWidths, startSymbol, fileData, chunkOffset + widthsIndex, actualSymbols);
-            for (Int32 i = startSymbol; i < len; i++)
+            for (Int32 i = startSymbol; i < len; ++i)
             {
                 Int32 symbIndex = i - startSymbol;
                 ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + offsetsIndex + symbIndex * 2, 2, true, (UInt32)symbolOffsets[i]);

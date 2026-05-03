@@ -57,7 +57,7 @@ namespace Nyerguds.ImageManipulation
                 if (loadedImage.Palette.Entries.Length != 0 && transparencyData != null)
                 {
                     ColorPalette pal = loadedImage.Palette;
-                    for (Int32 i = 0; i < pal.Entries.Length; i++)
+                    for (Int32 i = 0; i < pal.Entries.Length; ++i)
                     {
                         if (i >= transparencyData.Length)
                             break;
@@ -128,10 +128,10 @@ namespace Nyerguds.ImageManipulation
             {
                 changedPal = image.Palette;
                 palette = image.Palette.Entries;
-                for (Int32 i = 0; i < palette.Length; i++)
+                for (Int32 i = 0; i < palette.Length; ++i)
                     changedPal.Entries[i] = Color.FromArgb(0xFF, palette[i]);
                 if (!noPalTrans)
-                    for (Int32 i = 0; i < paletteLength; i++)
+                    for (Int32 i = 0; i < paletteLength; ++i)
                         transparencyData[i] = palette[i].A;
             }
             using (MemoryStream ms = new MemoryStream())
@@ -248,7 +248,7 @@ namespace Nyerguds.ImageManipulation
             using (Bitmap loadedImage = new Bitmap(ms))
             {
                 ColorPalette pal = loadedImage.Palette;
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                for (Int32 i = 0; i < pal.Entries.Length; ++i)
                     pal.Entries[i] = colors[i];
                 return pal;
             }

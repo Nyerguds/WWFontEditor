@@ -66,10 +66,10 @@ namespace WWFontEditor.Domain
                 trans = new List<Int32>();
                 trans.Add(this.TransparencyColor);
             }
-            for (Int32 y = 0; y < this.Height; y++)
+            for (Int32 y = 0; y < this.Height; ++y)
             {
                 Int32 inputOffs = y * stride;
-                for (Int32 x = 0; x < this.Width; x++)
+                for (Int32 x = 0; x < this.Width; ++x)
                 {
                     Color col = Color.FromArgb(hiColImg[inputOffs + 3], hiColImg[inputOffs + 2], hiColImg[inputOffs + 1], hiColImg[inputOffs]);
                     inputOffs += 4;
@@ -82,6 +82,15 @@ namespace WWFontEditor.Domain
             this.AdaptSizeToFont(this, source);
         }
 
+        /// <summary>
+        /// Creates a new font file symbol from the given byte data.
+        /// </summary>
+        /// <param name="byteData">8-bit image data.</param>
+        /// <param name="width">Width of the image</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="yOffset">Y-offset</param>
+        /// <param name="bitsPerPixel">Bit depth of the font it belongs to.</param>
+        /// <param name="transparencyColor">Transparency colour of the font it belongs to.</param>
         public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel, Byte transparencyColor)
         {
             this.ByteData = new Byte[byteData.Length];
@@ -98,6 +107,10 @@ namespace WWFontEditor.Domain
             return new FontFileSymbol(this.ByteData.ToArray(), this.Width, this.Height, this.YOffset, this.BitsPerPixel, this.TransparencyColor);
         }
 
+        public FontFileSymbol CloneFor(FontFile targetVersion)
+        {
+            return this.CloneFor(targetVersion, null, targetVersion.BitsPerPixel);
+        }
         public FontFileSymbol CloneFor(FontFile targetVersion, Int32 targetBpp)
         {
             return this.CloneFor(targetVersion, null, targetBpp);
@@ -130,7 +143,7 @@ namespace WWFontEditor.Domain
                 symbol.ChangeHeight(this.Height + diff, newFont.TransparencyColor);
                 symbol.YOffset = 0;
                 // Not ideal, I know, but I haven't adapted the shift function to accept an amount to shift.
-                for (Int32 i = 0; i < diff; i++)
+                for (Int32 i = 0; i < diff; ++i)
                     symbol.ShiftImageData(ShiftDirection.Down, false, newFont.TransparencyColor);
             }
             // Adapt to font width
@@ -191,7 +204,7 @@ namespace WWFontEditor.Domain
         {
             FontFileSymbol ffs = this.Clone();
             ffs.ChangeHeight(baseFont.FontHeight + ffs.YOffset, baseFont.TransparencyColor);
-            for (Int32 i = 0; i < ffs.YOffset; i++)
+            for (Int32 i = 0; i < ffs.YOffset; ++i)
                 ffs.ShiftImageData(ShiftDirection.Down, false, baseFont.TransparencyColor);
             ffs.YOffset = 0;
             ffs.ChangeHeight(expandToY ? Math.Max(baseFont.FontHeight, this.Height + this.YOffset) : baseFont.FontHeight, baseFont.TransparencyColor);
@@ -228,12 +241,22 @@ namespace WWFontEditor.Domain
             return this.ByteData[y * this.Width + x];
         }
 
+        public void ChangeHeight(Int32 newHeight)
+        {
+            ChangeHeight(newHeight, this.TransparencyColor);
+        }
+
         public void ChangeHeight(Int32 newHeight, Byte backColor)
         {
             if (this.Height == newHeight)
                 return;
             this.ByteData = ImageUtils.ChangeHeight(this.ByteData, this.Width, this.Height, newHeight, false, backColor);
             this.Height = newHeight;
+        }
+
+        public void ChangeWidth(Int32 newWidth)
+        {
+            ChangeWidth(newWidth, this.TransparencyColor);
         }
 
         public void ChangeWidth(Int32 newWidth, Byte backColor)
@@ -271,6 +294,11 @@ namespace WWFontEditor.Domain
                     break;
             }
             return true;
+        }
+
+        public void ShiftImageData(ShiftDirection direction, Boolean wrap)
+        {
+            ShiftImageData(direction, wrap, this.TransparencyColor);
         }
 
         public void ShiftImageData(ShiftDirection direction, Boolean wrap, Byte backColor)
@@ -353,7 +381,6 @@ namespace WWFontEditor.Domain
         /// Crop the right side of the image in x-dimension.
         /// This can not be performed on fonts that don't support custom width!
         /// </summary>
-        /// <returns>The amound the image was shifted to the left.</returns>
         public void CropRightSide()
         {
             Int32 width = this.Width;
@@ -363,9 +390,8 @@ namespace WWFontEditor.Domain
 
         /// <summary>
         /// Crop the bottom side of the image in x-dimension.
-        /// This can not be performed on fonts that don't support custom width!
+        /// This can not be performed on fonts that don't support custom height!
         /// </summary>
-        /// <returns>The amound the image was shifted to the left.</returns>
         public void CropBottomSide()
         {
             Int32 height = this.Height;
@@ -373,6 +399,14 @@ namespace WWFontEditor.Domain
             this.Height= height;
         }
 
+        /// <summary>
+        /// Combines two font symbols without changing the involved FontFileSymbol objects, and returns the result as a new FontFileSymbol.
+        /// </summary>
+        /// <param name="firstLayer">Bottom layer of the image paste.</param>
+        /// <param name="secondLayer">Top layer of the image paste.</param>
+        /// <param name="fontFile">Font file whose general rules to apply to the resulting image.</param>
+        /// <param name="transparencyGuide">Transparency guide indicating which palette indices are considered transparent.</param>
+        /// <returns></returns>
         internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Boolean[] transparencyGuide)
         {
             Int32 trueFcHeight = firstLayer.Height + firstLayer.YOffset;
@@ -387,7 +421,7 @@ namespace WWFontEditor.Domain
             secondLayer = new FontFileSymbol(newSymbolData, newWidth, newHeight, 0, firstLayer.BitsPerPixel, fontFile.TransparencyColor);
             if (fontFile.YOffsetTypeMax != 0)
                 secondLayer.OptimizeYHeight(fontFile.YOffsetTypeMax);
-            return secondLayer.CloneFor(fontFile, fontFile.BitsPerPixel);
+            return secondLayer.CloneFor(fontFile);
         }
     }
 

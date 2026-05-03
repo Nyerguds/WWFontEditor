@@ -81,7 +81,7 @@ namespace WWFontEditor.Domain
             // Not really necessary; input for d2k is Windows-1252.
             // But, it gives the symbol index to use for a character, I guess. Could be useful if I implement previews.
             Int32 retval = this.m_BaseEncoding.GetBytes(chars, charIndex, charCount, bytes, byteIndex);
-            for (Int32 i = byteIndex; i < byteIndex + charCount; i++)
+            for (Int32 i = byteIndex; i < byteIndex + charCount; ++i)
                 bytes[i] = this.m_RemapTable[bytes[i]];
             return retval;
         }
@@ -91,7 +91,7 @@ namespace WWFontEditor.Domain
             // make copy of array
             Byte[] bytesCopy = new Byte[bytes.Length];
             Array.Copy(bytes, 0, bytesCopy, 0, bytes.Length);
-            for (Int32 i = byteIndex; i < byteIndex + byteCount; i++)
+            for (Int32 i = byteIndex; i < byteIndex + byteCount; ++i)
                 bytesCopy[i] = this.FindIndexInList(bytesCopy[i]);
             // call parent method with adapted copy
             Int32 retval = this.m_BaseEncoding.GetChars(bytesCopy, byteIndex, byteCount, chars, charIndex);
@@ -103,7 +103,7 @@ namespace WWFontEditor.Domain
         {
             if (value == 0x20)
                 return 0x20;
-            for (Int32 i = 0; i < this.m_RemapTable.Length; i++)
+            for (Int32 i = 0; i < this.m_RemapTable.Length; ++i)
                 if (this.m_RemapTable[i] == value)
                     return (Byte)i;
             return 0x20;

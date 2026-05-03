@@ -50,15 +50,15 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[] characterYOffsets = new Byte[NrOfSymbols];
             Array.Copy(fileData, NrOfSymbols, characterYOffsets, 0, NrOfSymbols);
             Byte[][] characterData = new Byte[NrOfSymbols][];
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Byte[] charData = new Byte[this.m_FontHeight];
                 Array.Copy(fileData, NrOfSymbols * 2 + i * this.m_FontHeight, charData, 0, this.m_FontHeight);
                 characterData[i] = charData;
             }
-            for (Int32 i = 0; i < StartSymbol; i++)
+            for (Int32 i = 0; i < StartSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Byte[] curData8bit;
                 try
@@ -79,7 +79,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[] characterWidths = new Byte[NrOfSymbols];
             Byte[] characterYOffsets = new Byte[NrOfSymbols];
             Byte[][] imageData = new Byte[NrOfSymbols][];
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i+StartSymbol];
                 imageData[i] = ImageUtils.ConvertFrom8Bit(ffs.ByteData, ffs.Width, this.m_FontHeight, this.BitsPerPixel, true);
@@ -94,7 +94,7 @@ namespace WWFontEditor.Domain.FontTypes
             fontDataOffset += NrOfSymbols;
             Array.Copy(characterYOffsets, 0, fullData, fontDataOffset, NrOfSymbols);
             fontDataOffset += NrOfSymbols;
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Array.Copy(imageData[i], 0, fullData, fontDataOffset, this.m_FontHeight);
                 fontDataOffset += this.m_FontHeight;

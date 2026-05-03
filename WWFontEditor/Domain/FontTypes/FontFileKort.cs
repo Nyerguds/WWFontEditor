@@ -51,15 +51,15 @@ namespace WWFontEditor.Domain.FontTypes
 
             Byte[][] symbolData = new Byte[NrOfSymbols][];
             Int32 charSize = this.m_FontHeight * fontWidthBytes;
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Byte[] charData = new Byte[charSize];
                 Array.Copy(fileData, NrOfSymbols * 2 + 2 + i * charSize, charData, 0, charSize);
                 symbolData[i] = charData;
             }
-            for (Int32 i = 0; i < StartSymbol; i++)
+            for (Int32 i = 0; i < StartSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Byte[] curData8bit;
                 try
@@ -83,7 +83,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[] characterWidths = new Byte[NrOfSymbols];
             Byte[] characterYOffsets = new Byte[NrOfSymbols];
             Byte[][] imageData = new Byte[NrOfSymbols][];
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i+StartSymbol];
                 Byte[] ffsBytes = ImageUtils.ConvertFrom8Bit(ffs.ByteData, ffs.Width, this.m_FontHeight, this.BitsPerPixel, true);
@@ -105,7 +105,7 @@ namespace WWFontEditor.Domain.FontTypes
             fontDataOffset += NrOfSymbols;
             Array.Copy(characterYOffsets, 0, fullData, fontDataOffset, NrOfSymbols);
             fontDataOffset += NrOfSymbols;
-            for (Int32 i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; ++i)
             {
                 Array.Copy(imageData[i], 0, fullData, fontDataOffset, charSize);
                 fontDataOffset += charSize;

@@ -59,11 +59,10 @@ namespace Nyerguds.Util.UI
             this.KeyDown += this.CheckKeyPress;
             foreach (Control control in this.Controls)
             {
-                if (control is TextBox)
-                {
-                    this.textBox = control as TextBox;
-                    break;
-                }
+                if (!(control is TextBox))
+                    continue;
+                this.textBox = control as TextBox;
+                break;
             }
         }
 
@@ -79,7 +78,7 @@ namespace Nyerguds.Util.UI
             StringBuilder text = new StringBuilder();
             String txt = this.Text;
             Int32 firstIllegalChar = 0;
-            for (Int32 i = 0; i < txt.Length; i++)
+            for (Int32 i = 0; i < txt.Length; ++i)
             {
                 Char c = txt[i];
                 if ((c < '0' || c > '9') && (!allowminus || i > 0 || c != '-'))

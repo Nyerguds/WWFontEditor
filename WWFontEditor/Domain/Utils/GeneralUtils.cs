@@ -15,12 +15,16 @@ namespace Nyerguds.Util
     {
         public static Boolean IsNumeric(String str)
         {
-            foreach (Char c in str)
+            Int32 strLen = str.Length;
+            for (Int32 i = 0; i < strLen; ++i)
+            {
+                Char c = str[i];
                 if (c < '0' || c > '9')
                     return false;
+            }
             return true;
         }
-        
+
         /// <summary>
         /// Checks if the given value starts with T, J, Y, O (TRUE, JA, YES, OUI) or is 1
         /// If the value is null or the parse fails, the default is False.
@@ -31,8 +35,9 @@ namespace Nyerguds.Util
         {
             return IsTrueValue(value, false);
         }
+
         /// <summary>
-        /// Checks if the given value starts with T, J, Y, O (TRUE, JA, YES, OUI) or is 1
+        /// Checks if the given value starts with T, J, Y, O (TRUE, JA, YES, OUI) or is a non-zero number.
         /// </summary>
         /// <param name="value">String to parse</param>
         /// <param name="defaultVal">Default value to return in case parse fails</param>
@@ -41,7 +46,9 @@ namespace Nyerguds.Util
         {
             if (String.IsNullOrEmpty(value))
                 return defaultVal;
-            return Regex.IsMatch(value, "^(([TJYO].*)|(0*1))$", RegexOptions.IgnoreCase);
+            // Either it starts with the start letter of "True", "Ja", "Yes", "Oui", or the whole thing is a non-zero number.
+            // Number is checked as: any amount of leading zeroes, then one non-zero number, then any amount of trailing numbers.
+            return Regex.IsMatch(value.Trim(), "^(([TJYO].*)|(0*[1-9]\\d*))$", RegexOptions.IgnoreCase);
         }
 
         public static Boolean IsHexadecimal(String str)

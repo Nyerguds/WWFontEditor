@@ -136,7 +136,7 @@ namespace Nyerguds.ImageManipulation
             using (Graphics gr = Graphics.FromImage(bp))
             {
                 if (transparencyColor.HasValue)
-                    using (System.Drawing.SolidBrush myBrush = new System.Drawing.SolidBrush(transparencyColor.Value))
+                    using (SolidBrush myBrush = new SolidBrush(transparencyColor.Value))
                         gr.FillRectangle(myBrush, new Rectangle(0, 0, image1.Width, image1.Height));
                 gr.DrawImage(image1, new Rectangle(0, 0, image1.Width, image1.Height));
                 gr.DrawImage(image2, new Rectangle(0, 0, image2.Width, image2.Height));
@@ -152,11 +152,11 @@ namespace Nyerguds.ImageManipulation
             Byte[] newImageData = new Byte[width * height];
             Int32 inputOffsetLine = 0;
             Int32 outputOffsetLine = 0;
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 inputOffs = inputOffsetLine;
                 Int32 outputOffs = outputOffsetLine;
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     Color c = Color.FromArgb(imageData[inputOffs + 3], imageData[inputOffs + 2], imageData[inputOffs + 1], imageData[inputOffs]);
                     if (c.A < 128)
@@ -191,14 +191,14 @@ namespace Nyerguds.ImageManipulation
             Int32 byteSize = Image.GetPixelFormatSize(pf) / 8;
             Int32 index1 = 0;
             Int32 index2 = 0;
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 offset1 = index1;
                 Int32 offset2 = index2;
 
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
-                    for (Int32 n = 0; n > byteSize; n++)
+                    for (Int32 n = 0; n > byteSize; ++n)
                         if (imageData1[offset1 + n] != imageData2[offset2 + n])
                             return false;
                     offset1 += byteSize;
@@ -214,18 +214,17 @@ namespace Nyerguds.ImageManipulation
         /// MAtches the data from an 8-bit image to a different palette. This handles the full stride.
         /// </summary>
         /// <param name="imageData">Image data.</param>
-        /// <param name="stride">Image stride.</param>
-        /// <param name="height">Image height.</param>
         /// <param name="sourcePalette">Palette of the source data.</param>
         /// <param name="targetPalette">Target palette to convert to.</param>
         /// <returns>The converted image data.</returns>
-        public static Byte[] Match8BitDataToPalette(Byte[] imageData, Int32 stride, Int32 height, Color[] sourcePalette, Color[] targetPalette)
+        public static Byte[] Match8BitDataToPalette(Byte[] imageData, Color[] sourcePalette, Color[] targetPalette)
         {
-            Byte[] newImageData = new Byte[stride * height];
-            for (Int32 i = 0; i < imageData.Length; i++)
+            Int32 imageDataLength = imageData.Length;
+            Byte[] newImageData = new Byte[imageDataLength];
+            for (Int32 i = 0; i < imageDataLength; ++i)
             {
                 Int32 currentVal = imageData[i];
-                Color c = currentVal < sourcePalette.Length ? sourcePalette[imageData[i]] : Color.Black;
+                Color c = currentVal < sourcePalette.Length ? sourcePalette[currentVal] : Color.Black;
                 newImageData[i] = (Byte) ColorUtils.GetClosestPaletteIndexMatch(c, targetPalette, null);
             }
             return newImageData;
@@ -272,17 +271,17 @@ namespace Nyerguds.ImageManipulation
             Byte[] newImageData = new Byte[width * height];
             List<Int32> transparentIndices = new List<Int32>();
             Int32 maxLen = Math.Min(0x100, palette.Length);
-            for (Int32 i = 0; i < maxLen; i++)
+            for (Int32 i = 0; i < maxLen; ++i)
                 if (palette[i].A == 0)
                     transparentIndices.Add(i);
             Int32 firstTransIndex = transparentIndices.Count > 0 ? transparentIndices[0] : -1;
             // Mapping table. Takes more memory, but it's way faster, especially on sprites with clear backgrounds.
             Dictionary<UInt32, Byte> colorMapping = new Dictionary<UInt32, Byte>();
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 inputOffs = y * stride;
                 Int32 outputOffs = y * width;
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     Color c = Color.FromArgb(imageData[inputOffs + 3], imageData[inputOffs + 2], imageData[inputOffs + 1], imageData[inputOffs]);
                     UInt32 colKey = (UInt32)c.ToArgb();
@@ -349,6 +348,7 @@ namespace Nyerguds.ImageManipulation
         {
             return GetImageData(sourceImage, out stride, sourceImage.PixelFormat, collapseStride);
         }
+
         /// <summary>
         /// Gets the raw bytes from an image, in the desired <see cref="System.Drawing.Imaging.PixelFormat">PixelFormat</see>.
         /// </summary>
@@ -404,7 +404,7 @@ namespace Nyerguds.ImageManipulation
             Int64 sourcePos = sourceData.Scan0.ToInt64();
             Int64 destPos = targetData.Scan0.ToInt64();
             // Copy line by line, skipping by stride but copying actual data width
-            for (Int32 y = 0; y < h; y++)
+            for (Int32 y = 0; y < h; ++y)
             {
                 Marshal.Copy(new IntPtr(sourcePos), imageData, 0, actualDataWidth);
                 Marshal.Copy(imageData, 0, new IntPtr(destPos), actualDataWidth);
@@ -440,7 +440,7 @@ namespace Nyerguds.ImageManipulation
             Int32 newDataWidth = ((Image.GetPixelFormatSize(pixelFormat) * width) + 7) / 8;
             Int32 targetStride = targetData.Stride;
             Int64 scan0 = targetData.Scan0.ToInt64();
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
                 Marshal.Copy(sourceData, y * stride, new IntPtr(scan0 + y * targetStride), newDataWidth);
             newImage.UnlockBits(targetData);
             // For indexed images, set the palette.
@@ -449,9 +449,11 @@ namespace Nyerguds.ImageManipulation
                 if (palette == null)
                     palette = new Color[0];
                 ColorPalette pal = newImage.Palette;
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                Int32 palLen = pal.Entries.Length;
+                Int32 paletteLength = palette.Length;
+                for (Int32 i = 0; i < palLen; ++i)
                 {
-                    if (i < palette.Length)
+                    if (i < paletteLength)
                         pal.Entries[i] = palette[i];
                     else if (defaultColor.HasValue)
                         pal.Entries[i] = defaultColor.Value;
@@ -494,7 +496,7 @@ namespace Nyerguds.ImageManipulation
             Color[] pal = new Color[0x100];
             Int32 minSize = Math.Min(colors.Length, 0x100);
             Array.Copy(colors, 0, pal, 0, minSize);
-            for (Int32 i = minSize; i < 0x100; i++)
+            for (Int32 i = minSize; i < 0x100; ++i)
                 pal[i] = def;
             return pal;
         }
@@ -504,9 +506,10 @@ namespace Nyerguds.ImageManipulation
             if (width == 0 || height == 0)
                 return null;
             Color[] pal = GeneratePalette(colors, Color.Empty);
-            Byte[] blankArray = new Byte[width * height];
+            Int32 blankLen = width * height;
+            Byte[] blankArray = new Byte[blankLen];
             if (paintColor != 0)
-                for (Int32 i = 0; i < blankArray.Length; i++)
+                for (Int32 i = 0; i < blankLen; ++i)
                     blankArray[i] = paintColor;
             return BuildImage(blankArray, width, height, width, PixelFormat.Format8bppIndexed, pal, Color.Empty);
         }
@@ -516,10 +519,10 @@ namespace Nyerguds.ImageManipulation
             if (width == 0 || height == 0)
                 return null;
             Byte[] patternArray = new Byte[width * height];
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 offset = width * y;
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     patternArray[offset] = (Byte)(((x + y) % 2 == 0) ? 1 : 0);
                     offset++;
@@ -552,11 +555,11 @@ namespace Nyerguds.ImageManipulation
                 return null;
             Byte[] patternArray = new Byte[width * height];
             if (bgColor != 0)
-                for (Int32 i = 0; i < patternArray.Length; i++)
+                for (Int32 i = 0; i < patternArray.Length; ++i)
                     patternArray[i] = bgColor;
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     Int32 offset = x + y * width;
                     if (x == 0 || x == width1 || y == 0 || y == height1)
@@ -583,7 +586,7 @@ namespace Nyerguds.ImageManipulation
             Int64 scan0 = sourceData.Scan0.ToInt64();
             Int32 dataWidth = ((Image.GetPixelFormatSize(source.PixelFormat) * source.Width) + 7) / 8;
             Byte[] picData = new Byte[dataWidth * sourceData.Height];
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 line = isFlipped ? height - 1 - y : y;
                 Marshal.Copy(new IntPtr(scan0 + line * sourceStride), picData, y * dataWidth, dataWidth);
@@ -597,7 +600,7 @@ namespace Nyerguds.ImageManipulation
             Int32 destStride = Math.Abs(destData.Stride);
             isFlipped = sourceData.Stride < 0;
             scan0 = destData.Scan0.ToInt64();
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 line = isFlipped ? height - 1 - y : y;
                 Marshal.Copy(picData, y * dataWidth, new IntPtr(scan0 + line * destStride), dataWidth);
@@ -638,17 +641,17 @@ namespace Nyerguds.ImageManipulation
             endX = Math.Min(maxw, Math.Max(0, endX));
             startY = Math.Min(maxh, Math.Max(0, startY));
             endY = Math.Min(maxh, Math.Max(0, endY));
-            for (Int32 y = startY; y <= endY; y++)
+            for (Int32 y = startY; y <= endY; ++y)
             {
                 if (fill)
                 {
-                    for (Int32 x = startX; x <= endX; x++)
+                    for (Int32 x = startX; x <= endX; ++x)
                         dataArray[x + y * stride] = colorIndex;
                 }
                 else
                 {
                     if (y == startY || y == endY)
-                        for (Int32 x = startX; x <= endX; x++)
+                        for (Int32 x = startX; x <= endX; ++x)
                             dataArray[x + y * stride] = colorIndex;
                     else
                     {
@@ -664,7 +667,7 @@ namespace Nyerguds.ImageManipulation
             Byte[] newSource = source.ToArray();
             Byte[] emptyRow = new Byte[stride];
             if (backColor != 0 && !wrap)
-                for (Int32 i = 0; i < stride; i++)
+                for (Int32 i = 0; i < stride; ++i)
                     emptyRow[i] = backColor;
             Int32 length = source.Length - stride;
             Int32 srcStart = up ? stride : 0;
@@ -706,9 +709,9 @@ namespace Nyerguds.ImageManipulation
             Int32 maxY = Math.Min(height - copyArea.Y, copyArea.Height);
             Int32 maxX = Math.Min(width - copyArea.X, copyArea.Width);
 
-            for (Int32 y = 0; y < maxY; y++)
+            for (Int32 y = 0; y < maxY; ++y)
             {
-                for (Int32 x = 0; x < maxX; x++)
+                for (Int32 x = 0; x < maxX; ++x)
                 {
                     // This will hit the same byte multiple times
                     Int32 indexSource = (copyArea.Y + y) * stride + copyArea.X + x;
@@ -732,14 +735,14 @@ namespace Nyerguds.ImageManipulation
         /// <param name="pasteHeight">Height of the image to paste.</param>
         /// <param name="pasteStride">Stride of the image to paste.</param>
         /// <param name="targetPos">Position at which to paste the image.</param>
-        /// <param name="transparencyGuide">Boolean array determining which offsets on the colour palette will be treated as transparent. Use null for no transparency.</param>
+        /// <param name="palTransparencyMask">Boolean array determining which offsets on the colour palette will be treated as transparent. Use null for no transparency.</param>
         /// <param name="modifyOrig">True to modify the original array rather than returning a copy.</param>
         /// <returns>A new Byte array with the combined data, and the same stride as the source image.</returns>
         public static Byte[] PasteOn8bpp(Byte[] destData, Int32 destWidth, Int32 destHeight, Int32 destStride,
             Byte[] pasteData, Int32 pasteWidth, Int32 pasteHeight, Int32 pasteStride,
-            Rectangle targetPos, Boolean[] transparencyGuide, Boolean modifyOrig)
+            Rectangle targetPos, Boolean[] palTransparencyMask, Boolean modifyOrig)
         {
-            return PasteOn8bpp(destData, destWidth, destHeight, destStride, pasteData, pasteWidth, pasteHeight, pasteStride, targetPos, transparencyGuide, modifyOrig, null);
+            return PasteOn8bpp(destData, destWidth, destHeight, destStride, pasteData, pasteWidth, pasteHeight, pasteStride, targetPos, palTransparencyMask, modifyOrig, null);
         }
 
         /// <summary>
@@ -754,14 +757,14 @@ namespace Nyerguds.ImageManipulation
         /// <param name="pasteHeight">Height of the image to paste.</param>
         /// <param name="pasteStride">Stride of the image to paste.</param>
         /// <param name="targetPos">Position at which to paste the image.</param>
-        /// <param name="transparencyGuide">Boolean array determining which offsets on the colour palette will be treated as transparent. Use null for no transparency.</param>
+        /// <param name="palTransparencyMask">Boolean array determining which offsets on the colour palette will be treated as transparent. Use null for no transparency.</param>
         /// <param name="modifyOrig">True to modify the original array rather than returning a copy.</param>
         /// <param name="transparencyMask">For image-based transparency masking rather than palette based. Values in the array set to true are treated as transparent.
         /// If given, should have a size of exactly <see cref="pasteWidth"/> * <see cref="pasteHeight"/>.</param>
         /// <returns>A new Byte array with the combined data, and the same stride as the source image.</returns>
         public static Byte[] PasteOn8bpp(Byte[] destData, Int32 destWidth, Int32 destHeight, Int32 destStride,
             Byte[] pasteData, Int32 pasteWidth, Int32 pasteHeight, Int32 pasteStride,
-            Rectangle targetPos, Boolean[] transparencyGuide, Boolean modifyOrig, Boolean[] transparencyMask)
+            Rectangle targetPos, Boolean[] palTransparencyMask, Boolean modifyOrig, Boolean[] transparencyMask)
         {
             if (targetPos.Width != pasteWidth || targetPos.Height != pasteHeight)
                 pasteData = CopyFrom8bpp(pasteData, pasteWidth, pasteHeight, pasteStride, new Rectangle(0, 0, targetPos.Width, targetPos.Height));
@@ -776,18 +779,18 @@ namespace Nyerguds.ImageManipulation
                 Array.Copy(destData, finalFileData, destData.Length);
             }
             Boolean[] isTransparent = new Boolean[256];
-            if (transparencyGuide != null)
+            if (palTransparencyMask != null)
             {
-                Int32 len = Math.Min(isTransparent.Length, transparencyGuide.Length);
-                for (Int32 i = 0; i < len; i++)
-                    isTransparent[i] = transparencyGuide[i];
+                Int32 len = Math.Min(isTransparent.Length, palTransparencyMask.Length);
+                for (Int32 i = 0; i < len; ++i)
+                    isTransparent[i] = palTransparencyMask[i];
             }
             Boolean transMaskGiven = transparencyMask != null && transparencyMask.Length == pasteWidth * pasteHeight;
             Int32 maxY = Math.Min(destHeight - targetPos.Y, targetPos.Height);
             Int32 maxX = Math.Min(destWidth - targetPos.X, targetPos.Width);
-            for (Int32 y = 0; y < maxY; y++)
+            for (Int32 y = 0; y < maxY; ++y)
             {
-                for (Int32 x = 0; x < maxX; x++)
+                for (Int32 x = 0; x < maxX; ++x)
                 {
                     Int32 indexSource = y * pasteStride + x;
                     Int32 indexTrans = transMaskGiven ? y * pasteWidth + x : 0;
@@ -839,11 +842,11 @@ namespace Nyerguds.ImageManipulation
                 Array.Copy(data, newData, data.Length);
                 return newData;
             }
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 oldOffs = stride * y;
                 Int32 offs = newStride * y;
-                for (Int32 s = 0; s < newStride; s++)
+                for (Int32 s = 0; s < newStride; ++s)
                 {
                     newData[offs] = data[oldOffs];
                     offs++;
@@ -899,10 +902,10 @@ namespace Nyerguds.ImageManipulation
             // File check, and getting actual data.
             if (start + size > fileData.Length)
                 throw new IndexOutOfRangeException("Data exceeds array bounds!");
-            // Actual conversion porcess.
-            for (Int32 y = 0; y < height; y++)
+            // Actual conversion process.
+            for (Int32 y = 0; y < height; ++y)
             {
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     // This will hit the same byte multiple times
                     Int32 indexXbit = start + y * stride + x / parts;
@@ -956,10 +959,10 @@ namespace Nyerguds.ImageManipulation
             // Should not be needed if data is correct, but eh.
             Int32 bitmask = (1 << bitsLength) - 1;
             Byte[] dataXbit = new Byte[newStride * height];
-            // Actual conversion porcess.
-            for (Int32 y = 0; y < height; y++)
+            // Actual conversion process.
+            for (Int32 y = 0; y < height; ++y)
             {
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     // This will hit the same byte multiple times
                     Int32 indexXbit = y * newStride + x / parts;
@@ -971,7 +974,7 @@ namespace Nyerguds.ImageManipulation
                     if (bigEndian)
                         shift = 8 - shift - bitsLength;
                     // Get data, reduce to bit rate, shift it and store it.
-                    dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
+                    dataXbit[indexXbit] |= (Byte) ((data8bit[index8bit] & bitmask) << shift);
                 }
             }
             stride = newStride;
@@ -1002,16 +1005,16 @@ namespace Nyerguds.ImageManipulation
             Byte[] pixelImage = new Byte[width * height];
             // Combine the bits into the new array.
             Int32 lineOffset = 0;
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 realOffset = lineOffset;
                 Int32 firstPlaneOffset = planeLinesStride * y;
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     Int32 offset = firstPlaneOffset;
                     // Take [X] bits by skipping [width] bytes for each next one.
                     Byte bits = 0;
-                    for (Int32 p = 0; p < planes; p++)
+                    for (Int32 p = 0; p < planes; ++p)
                     {
                         bits |= (Byte) (oneBitQuadImage[offset + x] << p);
                         offset += width;
@@ -1046,14 +1049,14 @@ namespace Nyerguds.ImageManipulation
             Byte[] newImageData = new Byte[outStride * height];
             Int32 offsetIn = start;
             Int32 offsetOutY = 0;
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 offsetOutX = offsetOutY;
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     Int32 offsetOut = offsetOutX + numPlanes - 1;
                     Int32 planeOffs = 0;
-                    for (Int32 p = 0; p < numPlanes; p++)
+                    for (Int32 p = 0; p < numPlanes; ++p)
                     {
                         newImageData[offsetOut] = dataPlanar[offsetIn + planeOffs + x];
                         planeOffs += planeStride;
@@ -1081,14 +1084,14 @@ namespace Nyerguds.ImageManipulation
             if (alignedWidth > width)
                 eightbitImage = ChangeStride(eightbitImage, stride, height, alignedWidth, false, 0);
             Byte[] oneBitQuadImage = new Byte[eightBitWidth * height];
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 Int32 offset = alignedWidth * y;
                 Int32 finalOffset = eightBitWidth * y;
-                for (Int32 x = 0; x < alignedWidth; x++)
+                for (Int32 x = 0; x < alignedWidth; ++x)
                 {
                     // Split up and write the 4 bits.
-                    for (Int32 i = 0; i < 4; i++)
+                    for (Int32 i = 0; i < 4; ++i)
                         oneBitQuadImage[finalOffset + width * i + x] = (Byte)((eightbitImage[offset + x] >> i) & 1);
                 }
             }
@@ -1103,10 +1106,10 @@ namespace Nyerguds.ImageManipulation
             Int32 fullImageWidth = tilesX * tileWidth;
             Int32 fullImageHeight = yDim * tileHeight;
             Byte[] fullImageData = new Byte[fullImageWidth * fullImageHeight];
-            Boolean[] transGuide = PaletteUtils.MakeTransparencyGuide(8, palette);
-            for (Int32 y = 0; y < yDim; y++)
+            Boolean[] transGuide = PaletteUtils.MakePalTransparencyMask(8, palette);
+            for (Int32 y = 0; y < yDim; ++y)
             {
-                for (Int32 x = 0; x < tilesX; x++)
+                for (Int32 x = 0; x < tilesX; ++x)
                 {
                     Int32 index = y * tilesX + x;
                     if (index == nrOftiles)
@@ -1133,7 +1136,7 @@ namespace Nyerguds.ImageManipulation
         {
             List<Bitmap> images = new List<Bitmap>();
             Int32 length = image.GetFrameCount(FrameDimension.Time);
-            for (Int32 i = 0; i < length; i++)
+            for (Int32 i = 0; i < length; ++i)
             {
                 image.SelectActiveFrame(FrameDimension.Time, i);
                 using (Bitmap frame = new Bitmap(image))
@@ -1143,7 +1146,7 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>Trims empty lines off the bottom of an image buffer.</summary>
-        /// <param name="buffer">Image data buffer</param>
+        /// <param name="buffer">Image data buffer.</param>
         /// <param name="width">Image width (technically stride).</param>
         /// <param name="height">Image height. Will be adjusted by this function.</param>
         /// <param name="valueToTrim">Value to trim.</param>
@@ -1202,7 +1205,7 @@ namespace Nyerguds.ImageManipulation
             Int32 trimmedYTop;
             Int32 trimmedYBottom = height;
             Byte[] tempArray = new Byte[width];
-            for (trimmedYTop = 0; trimmedYTop < trimYMax; trimmedYTop++)
+            for (trimmedYTop = 0; trimmedYTop < trimYMax; ++trimmedYTop)
             {
                 Array.Copy(buffer, width * trimmedYTop, tempArray, 0, width);
                 if (!tempArray.All(x => x == valueToTrim))
@@ -1264,7 +1267,7 @@ namespace Nyerguds.ImageManipulation
             for (Int32 x = width - 1; x >= 0; x--)
             {
                 Boolean empty = true;
-                for (Int32 y = 0; y < height; y++)
+                for (Int32 y = 0; y < height; ++y)
                 {
                     if (buffer[y * width + x] != valueToTrim)
                     {
@@ -1309,10 +1312,10 @@ namespace Nyerguds.ImageManipulation
             Int32 trimXMax = maxOffset != 0 ? Math.Min(maxOffset - xOffset, width) : width;
             Int32 trimmedXLeft = 0;
             Int32 trimmedXRight = 0;
-            for (Int32 x = 0; x < trimXMax; x++)
+            for (Int32 x = 0; x < trimXMax; ++x)
             {
                 Boolean empty = true;
-                for (Int32 y = 0; y < height; y++)
+                for (Int32 y = 0; y < height; ++y)
                 {
                     if (buffer[y * width + x] != valueToTrim)
                     {
@@ -1335,7 +1338,7 @@ namespace Nyerguds.ImageManipulation
                 for (Int32 x = width - 1; x >= 0; x--)
                 {
                     Boolean empty = true;
-                    for (Int32 y = 0; y < height; y++)
+                    for (Int32 y = 0; y < height; ++y)
                     {
                         if (buffer[y * width + x] != valueToTrim)
                         {
@@ -1379,7 +1382,7 @@ namespace Nyerguds.ImageManipulation
             Int32 targetSize = height * targetStride;
             Byte[] target = new Byte[targetSize];
             if (fillValue != 0)
-                for (Int32 i = 0; i < targetSize; i++)
+                for (Int32 i = 0; i < targetSize; ++i)
                     target[i] = fillValue;
             Int32 diff = origStride - targetStride;
             while (length >= origStride && length > 0)
@@ -1420,7 +1423,7 @@ namespace Nyerguds.ImageManipulation
             Int32 newSize = stride * targetHeight;
             Byte[] newData = new Byte[newSize];
             if (fillValue != 0)
-                for (Int32 i = stride * origHeight; i < newSize; i++)
+                for (Int32 i = stride * origHeight; i < newSize; ++i)
                     newData[i] = fillValue;
             Int32 readOffset = 0;
             Int32 writeOffset = 0;
@@ -1453,13 +1456,13 @@ namespace Nyerguds.ImageManipulation
                 imageData = GetImageData(bm, out stride);
             // Store colour frequencies in a dictionary.
             Dictionary<Color, Int32> colorFreq = new Dictionary<Color, Int32>();
-            for (Int32 y = 0; y < height; y++)
+            for (Int32 y = 0; y < height; ++y)
             {
                 // Reset offset on every line, since stride is not guaranteed to always be width * pixel size.
                 Int32 inputOffs = y * stride;
                 //Final offset = y * line length in bytes + x * pixel length in bytes.
                 //To avoid recalculating that offset each time we just increase it with the pixel size at the end of each x iteration.
-                for (Int32 x = 0; x < width; x++)
+                for (Int32 x = 0; x < width; ++x)
                 {
                     //Get colour components out. "ARGB" is actually the order in the final integer which is read as little-endian, so the real order is BGRA.
                     Color col = Color.FromArgb(imageData[inputOffs + 3], imageData[inputOffs + 2], imageData[inputOffs + 1], imageData[inputOffs]);
@@ -1524,7 +1527,7 @@ namespace Nyerguds.ImageManipulation
             }
             // ============= Y =============
             // Top = first found row which contains data
-            for (top = yStart; top < yEnd; top++)
+            for (top = yStart; top < yEnd; ++top)
             {
                 Int32 index = top * stride;
                 if (!RowClear(data, index, 4, xStart, xEnd, blankPixel))
@@ -1544,7 +1547,7 @@ namespace Nyerguds.ImageManipulation
             bottom++;
             // ============= X =============
             // Left = first found column which contains data
-            for (left = xStart; left < xEnd; left++)
+            for (left = xStart; left < xEnd; ++left)
             {
                 Int32 index = left * 4;
                 if (!ColClear(data, index, stride, yStart, yEnd, blankPixel))
@@ -1620,10 +1623,10 @@ namespace Nyerguds.ImageManipulation
             if (inputFormat.BitsAmounts.SequenceEqual(outputFormat.BitsAmounts))
             {
                 // Actually has same bit amounts : simply reorder the raw data.
-                for (Int32 y = 0; y < height; y++)
+                for (Int32 y = 0; y < height; ++y)
                 {
                     Int32 offset = y * stride;
-                    for (Int32 x = 0; x < width; x++)
+                    for (Int32 x = 0; x < width; ++x)
                     {
                         UInt32[] argbValues = inputFormat.GetRawComponents(imageData, offset);
                         outputFormat.WriteRawComponents(imageData, offset, argbValues);
@@ -1634,10 +1637,10 @@ namespace Nyerguds.ImageManipulation
             else
             {
                 // Bits differ: convert through Color.
-                for (Int32 y = 0; y < height; y++)
+                for (Int32 y = 0; y < height; ++y)
                 {
                     Int32 offset = y * stride;
-                    for (Int32 x = 0; x < width; x++)
+                    for (Int32 x = 0; x < width; ++x)
                     {
                         Color col = inputFormat.GetColor(imageData, offset);
                         outputFormat.WriteColor(imageData, offset, col);
@@ -1692,7 +1695,7 @@ namespace Nyerguds.ImageManipulation
                     Int32 palLen = 1 << matchBpp;
                     remapTable = new Byte[palLen];
                     Color[] orig = origPalette.Entries;
-                    for (Int32 i = 0; i < palLen; i++)
+                    for (Int32 i = 0; i < palLen; ++i)
                     {
                         if (i >= orig.Length)
                             break;
@@ -1704,7 +1707,7 @@ namespace Nyerguds.ImageManipulation
             {
                 edImage = convertTo32 ? new Bitmap(image) : image;
             }
-            for (Int32 frameNr = min; frameNr <= max; frameNr++)
+            for (Int32 frameNr = min; frameNr <= max; ++frameNr)
             {
                 Int32 rectY = frameNr / framesX;
                 Int32 rectX = frameNr % framesX;
@@ -1743,7 +1746,7 @@ namespace Nyerguds.ImageManipulation
                 Color[] palette = origPalette.Entries;
                 if (doMatching)
                 {
-                    for (Int32 i = 0; i < frameImageData.Length; i++)
+                    for (Int32 i = 0; i < frameImageData.Length; ++i)
                         frameImageData[i] = remapTable[frameImageData[i]];
                     origBpp = matchBpp;
                     palette = matchPalette;
@@ -1797,8 +1800,10 @@ namespace Nyerguds.ImageManipulation
             Int32 highestBpp = 0;
             Color[] palette = null;
             ColorPalette paletteRaw = null;
-            foreach (Bitmap img in images)
+            Int32 numImages = images.Length;
+            for (Int32 i = 0; i < numImages; ++i)
             {
+                Bitmap img = images[i];
                 if (img == null)
                     continue;
                 framesWidth = Math.Max(img.Width, framesWidth);
@@ -1832,7 +1837,7 @@ namespace Nyerguds.ImageManipulation
                     if (backFillColor.ToArgb() != 0)
                         using (SolidBrush myBrush = new SolidBrush(Color.FromArgb(255, backFillColor)))
                             g.FillRectangle(myBrush, new Rectangle(0, 0, fullWidth, fullHeight));
-                    for (Int32 i = 0; i < frames; i++)
+                    for (Int32 i = 0; i < frames; ++i)
                     {
                         Bitmap cur = images[i];
                         if (cur == null)
@@ -1840,8 +1845,6 @@ namespace Nyerguds.ImageManipulation
                         Int32 rectY = i / framesPerLine;
                         Int32 rectX = i % framesPerLine;
                         Rectangle section = new Rectangle(rectX * framesWidth, rectY * framesHeight, cur.Width, cur.Height);
-                        
-
                         using (Bitmap tempImg = new Bitmap(cur))
                             g.DrawImage(tempImg, section);
                     }
@@ -1858,9 +1861,9 @@ namespace Nyerguds.ImageManipulation
             {
                 Byte[] bpData = new Byte[fullWidth * fullHeight];
                 if (backFillPalIndex > 0)
-                    for (Int32 i = 0; i < bpData.Length; i++)
+                    for (Int32 i = 0; i < bpData.Length; ++i)
                         bpData[i] = backFillPalIndex;
-                for (Int32 i = 0; i < frames; i++)
+                for (Int32 i = 0; i < frames; ++i)
                 {
                     Bitmap cur = images[i];
                     if (cur == null)
@@ -1878,7 +1881,6 @@ namespace Nyerguds.ImageManipulation
                     PasteOn8bpp(bpData, fullWidth, fullHeight, fullWidth, frameData, frWidth, frHeight, frStride, section, null, true);
                 }
                 Int32 stride = fullWidth;
-
                 if (highestBpp < 8)
                     bpData = ConvertFrom8Bit(bpData, fullWidth, fullHeight, highestBpp, true, ref stride);
                 bp = BuildImage(bpData, fullWidth, fullHeight, stride, highestPf, palette, null);

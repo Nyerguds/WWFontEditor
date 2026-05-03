@@ -18,10 +18,10 @@ namespace Nyerguds.Util
             Int32 origWidth = original[0].Length;
 
             T[][] swapped = new T[origWidth][];
-            for (Int32 newHeight = 0; newHeight < origWidth; newHeight++)
+            for (Int32 newHeight = 0; newHeight < origWidth; ++newHeight)
             {
                 swapped[newHeight] = new T[origHeight];
-                for (Int32 newWidth = 0; newWidth < origHeight; newWidth++)
+                for (Int32 newWidth = 0; newWidth < origHeight; ++newWidth)
                     swapped[newHeight][newWidth] = original[newWidth][newHeight];
             }
             return swapped;
@@ -37,7 +37,7 @@ namespace Nyerguds.Util
                 return false;
             if (row1.Length != row2.Length)
                 return false;
-            for (Int32 i = 0; i < row1.Length; i++)
+            for (Int32 i = 0; i < row1.Length; ++i)
                 if (row1[i].Equals(row2[i]))
                     return false;
             return true;
@@ -52,20 +52,22 @@ namespace Nyerguds.Util
         public static T[] MergeArrays<T>(params T[][] arrays)
         {
             Int32 length = 0;
-            foreach (T[] array in arrays)
+            Int32 nrOfArrays = arrays.Length;
+            for (Int32 i = 0; i < nrOfArrays; ++i)
             {
+                T[] array = arrays[i];
                 if (array != null)
                     length += array.Length;
             }
             T[] result = new T[length];
             Int32 copyIndex = 0;
-            foreach (T[] array in arrays)
+            for (Int32 i = 0; i < nrOfArrays; ++i)
             {
-                if (array != null)
-                {
-                    array.CopyTo(result, copyIndex);
-                    copyIndex += array.Length;
-                }
+                T[] array = arrays[i];
+                if (array == null)
+                    continue;
+                array.CopyTo(result, copyIndex);
+                copyIndex += array.Length;
             }
             return result;
         }
@@ -75,10 +77,10 @@ namespace Nyerguds.Util
             Int32 lastByte = bytes - 1;
             if (data.Length < startIndex + bytes)
                 throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset " + startIndex + ".");
-            for (Int32 index = 0; index < bytes; index++)
+            for (Int32 index = 0; index < bytes; ++index)
             {
                 Int32 offs = startIndex + (littleEndian ? index : lastByte - index);
-                data[offs] = (Byte)(value >> (8 * index) & 0xFF);
+                data[offs] = (Byte) (value >> (8 * index) & 0xFF);
             }
         }
 
@@ -88,10 +90,10 @@ namespace Nyerguds.Util
             if (data.Length < startIndex + bytes)
                 throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to read a " + bytes + "-byte value at offset " + startIndex + ".");
             UInt64 value = 0;
-            for (Int32 index = 0; index < bytes; index++)
+            for (Int32 index = 0; index < bytes; ++index)
             {
                 Int32 offs = startIndex + (littleEndian ? index : lastByte - index);
-                value += (UInt64)(data[offs] << (8 * index));
+                value += (UInt64) (data[offs] << (8 * index));
             }
             return value;
         }
@@ -129,7 +131,7 @@ namespace Nyerguds.Util
             {
                 Int32 codeToWrite = (intCode & ((1 << bitsToWriteAtIndex) - 1)) << usedBitsAtIndex;
                 intCode = intCode >> bitsToWriteAtIndex;
-                dataArr[byteIndex] |= (Byte)codeToWrite;
+                dataArr[byteIndex] |= (Byte) codeToWrite;
                 codeLen -= bitsToWriteAtIndex;
                 bitsToWriteAtIndex = Math.Min(codeLen, 8);
                 usedBitsAtIndex = 0;
@@ -149,7 +151,7 @@ namespace Nyerguds.Util
 
         public static Byte[] StructToByteArray<T>(T obj) where T : struct
         {
-            Int32 size = Marshal.SizeOf(typeof(T));
+            Int32 size = Marshal.SizeOf(typeof (T));
             Byte[] target = new Byte[size];
             WriteStructToByteArray(obj, target, 0);
             return target;
@@ -157,7 +159,7 @@ namespace Nyerguds.Util
 
         public static T ReadStructFromByteArray<T>(Byte[] bytes, Int32 offset) where T : struct
         {
-            Int32 size = Marshal.SizeOf(typeof(T));
+            Int32 size = Marshal.SizeOf(typeof (T));
             if (size + offset > bytes.Length)
                 throw new IndexOutOfRangeException("Array is too small to get the requested struct!");
             IntPtr ptr = IntPtr.Zero;
@@ -165,8 +167,8 @@ namespace Nyerguds.Util
             {
                 ptr = Marshal.AllocHGlobal(size);
                 Marshal.Copy(bytes, offset, ptr, size);
-                Object obj = Marshal.PtrToStructure(ptr, typeof(T));
-                return (T)obj;
+                Object obj = Marshal.PtrToStructure(ptr, typeof (T));
+                return (T) obj;
             }
             finally
             {
@@ -177,7 +179,7 @@ namespace Nyerguds.Util
 
         public static void WriteStructToByteArray<T>(T obj, Byte[] target, Int32 index) where T : struct
         {
-            Type tType = typeof(T);
+            Type tType = typeof (T);
             Int32 size = Marshal.SizeOf(tType);
             if (!BitConverter.IsLittleEndian)
             {
@@ -201,42 +203,46 @@ namespace Nyerguds.Util
 
         private static Byte[] GetStructBytes<T>(T obj, Boolean littleEndian)
         {
-            Type tType = typeof(T);
+            Type tType = typeof (T);
             if (!tType.IsValueType)
                 return new Byte[0];
             if (tType.IsPrimitive)
-                return GetValueTypeBytes((IConvertible)obj, littleEndian);
+                return GetValueTypeBytes((IConvertible) obj, littleEndian);
 
             PropertyInfo[] pi = tType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic).OrderBy(f => f.MetadataToken).ToArray();
             Dictionary<Int32, Byte[]> allValuesDict = new Dictionary<Int32, Byte[]>();
-            foreach (PropertyInfo info in pi)
+            Int32 piLen = pi.Length;
+            for (Int32 i = 0; i < piLen; ++i)
             {
+                PropertyInfo info = pi[i];
                 Byte[] b = null;
                 Type propertyType = info.PropertyType;
                 if (tType.IsPrimitive)
-                    b = GetValueTypeBytes((IConvertible)info.GetValue(obj, null), littleEndian);
+                    b = GetValueTypeBytes((IConvertible) info.GetValue(obj, null), littleEndian);
                 else if (propertyType.IsValueType)
                     b = GetStructBytes(info.GetValue(obj, null), littleEndian);
                 allValuesDict.Add(info.MetadataToken, b);
             }
             FieldInfo[] fi = tType.GetFields(BindingFlags.Public | BindingFlags.NonPublic).OrderBy(f => f.MetadataToken).ToArray();
-            foreach (FieldInfo info in fi)
+            Int32 nrOfFields = fi.Length;
+            for (Int32 i = 0; i < nrOfFields; ++i)
             {
+                FieldInfo info = fi[i];
                 Byte[] b = null;
                 Type propertyType = info.FieldType;
                 if (tType.IsPrimitive)
-                    b = GetValueTypeBytes((IConvertible)info.GetValue(obj), littleEndian);
+                    b = GetValueTypeBytes((IConvertible) info.GetValue(obj), littleEndian);
                 else if (propertyType.IsValueType)
                     b = GetStructBytes(info.GetValue(obj), littleEndian);
                 allValuesDict.Add(info.MetadataToken, b);
             }
             Byte[][] allValues = new Byte[allValuesDict.Count][];
-            for (Int32 i = 0; i < fi.Length; i++)
+            for (Int32 i = 0; i < nrOfFields; ++i)
             {
                 FieldInfo info = fi[i];
                 Type fieldType = info.FieldType;
                 if (fieldType.IsValueType)
-                    allValues[i] = GetValueTypeBytes((IConvertible)info.GetValue(obj), littleEndian);
+                    allValues[i] = GetValueTypeBytes((IConvertible) info.GetValue(obj), littleEndian);
                 else
                     allValues[i] = GetStructBytes(info.GetValue(obj), littleEndian);
             }
@@ -245,37 +251,37 @@ namespace Nyerguds.Util
 
         private static Byte[] GetValueTypeBytes<T>(T obj, Boolean littleEndian) where T : IConvertible
         {
-            Type tType = typeof(T);
-            if (tType == typeof(SByte)
-                || tType == typeof(UInt16)
-                || tType == typeof(Int16)
-                || tType == typeof(UInt32)
-                || tType == typeof(Int32)
-                || tType == typeof(UInt64)
-                || tType == typeof(Int64))
+            Type tType = typeof (T);
+            if (tType == typeof (SByte)
+                || tType == typeof (UInt16)
+                || tType == typeof (Int16)
+                || tType == typeof (UInt32)
+                || tType == typeof (Int32)
+                || tType == typeof (UInt64)
+                || tType == typeof (Int64))
             {
                 Int32 len = Marshal.SizeOf(tType);
                 Byte[] ret = new Byte[len];
-                WriteIntToByteArray(ret, 0, len, littleEndian, ((IConvertible)obj).ToUInt64(null));
+                WriteIntToByteArray(ret, 0, len, littleEndian, ((IConvertible) obj).ToUInt64(null));
                 return ret;
             }
             Boolean le = BitConverter.IsLittleEndian;
-            if (tType == typeof(Single))
+            if (tType == typeof (Single))
             {
-                Byte[] sBytes = BitConverter.GetBytes(((IConvertible)obj).ToSingle(null));
+                Byte[] sBytes = BitConverter.GetBytes(((IConvertible) obj).ToSingle(null));
                 if (!le && littleEndian || !littleEndian)
                     Array.Reverse(sBytes);
                 return sBytes;
             }
-            if (tType == typeof(Double))
+            if (tType == typeof (Double))
             {
-                Byte[] dBytes = BitConverter.GetBytes(((IConvertible)obj).ToDouble(null));
+                Byte[] dBytes = BitConverter.GetBytes(((IConvertible) obj).ToDouble(null));
                 if (!le && littleEndian || !littleEndian)
                     Array.Reverse(dBytes);
                 return dBytes;
             }
-            if (tType == typeof(Boolean))
-                return new Byte[] { (Byte)((obj as Boolean?).GetValueOrDefault(false) ? 1 : 0) };
+            if (tType == typeof (Boolean))
+                return new Byte[] {(Byte) ((obj as Boolean?).GetValueOrDefault(false) ? 1 : 0)};
             return new Byte[0];
         }
     }

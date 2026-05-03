@@ -43,7 +43,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
             Int16[] fontDataOffsetsList = new Int16[this.SymbolsTypeMax];
-            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
+            for (Int32 i = 0; i < this.SymbolsTypeMax; ++i)
                 fontDataOffsetsList[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 2 + i * 2, 2, true);
             // Detect modified type
             if (fontDataOffsetsList[0] == 0x204 && !extendedFormat)
@@ -52,7 +52,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontHeight = fileData[this.SymbolsTypeMax * 2 + 2];
             // the width of a symbol in pixel
             this.m_FontWidth = fileData[this.SymbolsTypeMax * 2 + 3];
-            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
+            for (Int32 i = 0; i < this.SymbolsTypeMax; ++i)
             {
                 Int32 start = fontDataOffsetsList[i];
                 Byte[] curData8bit;
@@ -76,14 +76,15 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            Byte[][] imageData = new Byte[this.SymbolsTypeMax][];
-            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
+            Int32 symbols = this.SymbolsTypeMax;
+            Byte[][] imageData = new Byte[symbols][];
+            for (Int32 i = 0; i < symbols; ++i)
             {
                 FontFileSymbol fc = this.m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
                 imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
-            Int32 afterIndex = this.SymbolsTypeMax * 2;
+            Int32 afterIndex = symbols << 1;
             Int32 fontDataOffset = afterIndex + 4;
             Int32 dataOffset = fontDataOffset;
             // Not sure if this is legal; the original fonts seem unoptimised.
@@ -95,8 +96,9 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(fontDataOffsetsList, 0, fullData, 0x02, fontDataOffsetsList.Length);
             fullData[afterIndex + 2] = (Byte) this.m_FontHeight;          // Byte FontHeight
             fullData[afterIndex + 3] = (Byte) this.m_FontWidth;           // Byte FontWidth
-            foreach (Byte[] symbolImgData in imageData)
+            for (Int32 i = 0; i < symbols; ++i)
             {
+                Byte[] symbolImgData = imageData[i];
                 if (symbolImgData == null || symbolImgData.Length == 0)
                     continue;
                 Array.Copy(symbolImgData, 0, fullData, fontDataOffset, symbolImgData.Length);

@@ -40,9 +40,11 @@ namespace WWFontEditor.Domain.FontTypes
         /// </summary>
         protected override void PostConvertCleanup()
         {
+
             // Y-optimization.
-            foreach (FontFileSymbol ffs in this.m_ImageDataList)
-                ffs.OptimizeYHeight(this.YOffsetTypeMax);
+            Int32 imagesCount = this.m_ImageDataList.Count;
+            for (Int32 i = 0; i < imagesCount; ++i)
+                this.m_ImageDataList[i].OptimizeYHeight(this.YOffsetTypeMax);
         }
 
     }

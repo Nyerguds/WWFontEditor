@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 // Disabled for now. Check the project properties for this file, and set them back to "Compile" to enable.
-namespace Nyerguds.GameData.Westwood
+namespace Nyerguds.FileData.Westwood
 {
     public class WestwoodCompression
     {
@@ -21,7 +21,7 @@ namespace Nyerguds.GameData.Westwood
                 if (a >= buffer.Length - 1)
                     return null;
                 byte[] nibbles = new byte[3];
-                for (int n = 0; n != 3; n++)
+                for (int n = 0; n != 3; ++n)
                 {
                     if (low == false)
                     {

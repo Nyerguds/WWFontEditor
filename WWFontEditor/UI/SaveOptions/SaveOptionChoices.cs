@@ -41,7 +41,7 @@ namespace Nyerguds.Util.Ui.SaveOptions
             String[] options = this.m_Info.InitValue.Split(',');
             Int32 select;
             Int32.TryParse(this.m_Info.SaveData, out select);
-            for (Int32 i = 0; i < options.Length; i++)
+            for (Int32 i = 0; i < options.Length; ++i)
                 options[i] = options[i].Trim(" \t\r\n".ToCharArray());
             this.cmbChoices.DataSource = options;
             if (options.Length > select)

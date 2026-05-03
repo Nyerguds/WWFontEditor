@@ -29,8 +29,10 @@ namespace Nyerguds.Util
 
         public static String GetSaveOptionValue(SaveOption[] list, String code)
         {
-            foreach (SaveOption option in list)
+            Int32 listLen = list.Length;
+            for (Int32 i = 0; i < listLen; i++)
             {
+                SaveOption option = list[i];
                 if (String.Equals(option.Code, code, StringComparison.InvariantCultureIgnoreCase))
                     return option.SaveData;
             }

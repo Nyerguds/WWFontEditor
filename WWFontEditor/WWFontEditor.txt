@@ -15,7 +15,7 @@ Have fun with it!
 
 
 If you like what I'm doing, and you have too much money, feel free to donate:
-https://www.paypal.com/donate/?token=ATYlH9LdfgV3n-LXbIKxJh20H9NUwt85u3TECWCY-rvrECEGZ26wqf6sREWk9Cejao9-pG
+https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=nyerguds@gmail.com&currency_code=EUR
 
 
 =================
@@ -319,11 +319,14 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.13.4: (2020/03/04 18:35)
+-Fixed bug: preview image ignored empty lines at the end of the text.
+
 v1.13.3: (2019/03/21 16:28)
 -Optimised saving of WW Unicode BitFont to make it roughly four times faster.
 -Fixed bug: not all of the UI got unlocked if an error occurred while saving.
 -Start of the unicode range can now be substituted with a different encoding.
--Added setting to show/hide DOS symbols
+-Added setting to show/hide DOS symbols.
 -Added setting to control unicode 00-FF range encoding substitution.
 -Added setting to change the symbol preview font.
 -Fixed descriptions of symbols that were only defined as range start and end.

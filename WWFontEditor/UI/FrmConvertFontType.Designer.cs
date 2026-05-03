@@ -61,17 +61,20 @@
             // 
             // lblTypeInfo
             // 
+            this.lblTypeInfo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.lblTypeInfo.Location = new System.Drawing.Point(112, 37);
             this.lblTypeInfo.Margin = new System.Windows.Forms.Padding(3);
             this.lblTypeInfo.Name = "lblTypeInfo";
-            this.lblTypeInfo.Size = new System.Drawing.Size(321, 58);
+            this.lblTypeInfo.Size = new System.Drawing.Size(321, 70);
             this.lblTypeInfo.TabIndex = 2;
-            this.lblTypeInfo.Text = "info\r\ninfo\r\ninfo\r\ninfo";
+            this.lblTypeInfo.Text = "info\r\ninfo\r\ninfo\r\ninfo\r\ninfo";
             // 
             // lblNeedsConversionVal
             // 
+            this.lblNeedsConversionVal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblNeedsConversionVal.AutoSize = true;
-            this.lblNeedsConversionVal.Location = new System.Drawing.Point(112, 101);
+            this.lblNeedsConversionVal.Location = new System.Drawing.Point(112, 113);
             this.lblNeedsConversionVal.Margin = new System.Windows.Forms.Padding(3);
             this.lblNeedsConversionVal.Name = "lblNeedsConversionVal";
             this.lblNeedsConversionVal.Size = new System.Drawing.Size(44, 13);
@@ -80,8 +83,9 @@
             // 
             // lblNeedsConversion
             // 
+            this.lblNeedsConversion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblNeedsConversion.AutoSize = true;
-            this.lblNeedsConversion.Location = new System.Drawing.Point(13, 101);
+            this.lblNeedsConversion.Location = new System.Drawing.Point(13, 113);
             this.lblNeedsConversion.Name = "lblNeedsConversion";
             this.lblNeedsConversion.Size = new System.Drawing.Size(89, 13);
             this.lblNeedsConversion.TabIndex = 3;
@@ -104,7 +108,7 @@
             // 
             this.btnConvert.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnConvert.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConvert.Location = new System.Drawing.Point(12, 175);
+            this.btnConvert.Location = new System.Drawing.Point(12, 187);
             this.btnConvert.Name = "btnConvert";
             this.btnConvert.Size = new System.Drawing.Size(75, 23);
             this.btnConvert.TabIndex = 4;
@@ -115,7 +119,7 @@
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(93, 175);
+            this.btnCancel.Location = new System.Drawing.Point(93, 187);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 5;
@@ -124,7 +128,8 @@
             // 
             // lblNote
             // 
-            this.lblNote.Location = new System.Drawing.Point(112, 120);
+            this.lblNote.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblNote.Location = new System.Drawing.Point(112, 132);
             this.lblNote.Margin = new System.Windows.Forms.Padding(3);
             this.lblNote.Name = "lblNote";
             this.lblNote.Size = new System.Drawing.Size(321, 49);
@@ -148,7 +153,7 @@
             this.rtbGamesList.Name = "rtbGamesList";
             this.rtbGamesList.ReadOnly = true;
             this.rtbGamesList.Selectable = false;
-            this.rtbGamesList.Size = new System.Drawing.Size(268, 170);
+            this.rtbGamesList.Size = new System.Drawing.Size(333, 182);
             this.rtbGamesList.TabIndex = 8;
             this.rtbGamesList.Text = "";
             this.rtbGamesList.WordWrap = false;
@@ -159,7 +164,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(719, 210);
+            this.ClientSize = new System.Drawing.Size(784, 222);
             this.Controls.Add(this.rtbGamesList);
             this.Controls.Add(this.lblNote);
             this.Controls.Add(this.btnCancel);
@@ -171,7 +176,7 @@
             this.Controls.Add(this.lblNewType);
             this.Controls.Add(this.cmbTypes);
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
-            this.MinimumSize = new System.Drawing.Size(735, 248);
+            this.MinimumSize = new System.Drawing.Size(550, 204);
             this.Name = "FrmConvertFontType";
             this.Text = "Change font type";
             this.ResumeLayout(false);

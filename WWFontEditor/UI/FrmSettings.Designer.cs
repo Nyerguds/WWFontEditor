@@ -67,15 +67,15 @@
             this.lblPalOneBit = new System.Windows.Forms.Label();
             this.lblGenerateDefaultPalettes = new System.Windows.Forms.Label();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.btnSelectFont = new System.Windows.Forms.Button();
+            this.lblSymbolFontVal = new System.Windows.Forms.Label();
+            this.lblsymbolfont = new System.Windows.Forms.Label();
             this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.chkSubstUnicodeStart = new System.Windows.Forms.CheckBox();
             this.chkShowDosSymbols = new System.Windows.Forms.CheckBox();
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
-            this.lblsymbolfont = new System.Windows.Forms.Label();
-            this.lblSymbolFontVal = new System.Windows.Forms.Label();
-            this.btnSelectFont = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
@@ -576,9 +576,36 @@
             this.tabPage3.Text = "Symbols";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // btnSelectFont
+            // 
+            this.btnSelectFont.Location = new System.Drawing.Point(358, 107);
+            this.btnSelectFont.Name = "btnSelectFont";
+            this.btnSelectFont.Size = new System.Drawing.Size(28, 23);
+            this.btnSelectFont.TabIndex = 24;
+            this.btnSelectFont.Text = "...";
+            this.btnSelectFont.UseVisualStyleBackColor = true;
+            this.btnSelectFont.Click += new System.EventHandler(this.btnSelectFont_Click);
+            // 
+            // lblSymbolFontVal
+            // 
+            this.lblSymbolFontVal.Location = new System.Drawing.Point(114, 107);
+            this.lblSymbolFontVal.Name = "lblSymbolFontVal";
+            this.lblSymbolFontVal.Size = new System.Drawing.Size(238, 23);
+            this.lblSymbolFontVal.TabIndex = 23;
+            this.lblSymbolFontVal.Text = "-";
+            this.lblSymbolFontVal.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblsymbolfont
+            // 
+            this.lblsymbolfont.Location = new System.Drawing.Point(8, 107);
+            this.lblsymbolfont.Name = "lblsymbolfont";
+            this.lblsymbolfont.Size = new System.Drawing.Size(100, 23);
+            this.lblsymbolfont.TabIndex = 23;
+            this.lblsymbolfont.Text = "Symbol display font:";
+            this.lblsymbolfont.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // cmbEncodings
             // 
-            this.cmbEncodings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cmbEncodings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbEncodings.Enabled = false;
             this.cmbEncodings.FormattingEnabled = true;
@@ -593,8 +620,7 @@
             this.chkSubstUnicodeStart.Name = "chkSubstUnicodeStart";
             this.chkSubstUnicodeStart.Size = new System.Drawing.Size(378, 36);
             this.chkSubstUnicodeStart.TabIndex = 1;
-            this.chkSubstUnicodeStart.Text = "In unicode fonts, substitute the 80-FF character range with a different encoding:" +
-    "";
+            this.chkSubstUnicodeStart.Text = "In unicode fonts, substitute the 80-FF symbol range with a different encoding:";
             this.chkSubstUnicodeStart.UseVisualStyleBackColor = true;
             this.chkSubstUnicodeStart.CheckedChanged += new System.EventHandler(this.chkSubstUnicodeStart_CheckedChanged);
             // 
@@ -603,9 +629,9 @@
             this.chkShowDosSymbols.AutoSize = true;
             this.chkShowDosSymbols.Location = new System.Drawing.Point(8, 10);
             this.chkShowDosSymbols.Name = "chkShowDosSymbols";
-            this.chkShowDosSymbols.Size = new System.Drawing.Size(291, 17);
+            this.chkShowDosSymbols.Size = new System.Drawing.Size(274, 17);
             this.chkShowDosSymbols.TabIndex = 0;
-            this.chkShowDosSymbols.Text = "Show DOS symbols for the characters before the space.";
+            this.chkShowDosSymbols.Text = "Show DOS symbols for the indices before the space.";
             this.chkShowDosSymbols.UseVisualStyleBackColor = true;
             // 
             // btnReset
@@ -641,34 +667,6 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
-            // lblsymbolfont
-            // 
-            this.lblsymbolfont.Location = new System.Drawing.Point(8, 107);
-            this.lblsymbolfont.Name = "lblsymbolfont";
-            this.lblsymbolfont.Size = new System.Drawing.Size(100, 23);
-            this.lblsymbolfont.TabIndex = 23;
-            this.lblsymbolfont.Text = "Symbol display font:";
-            this.lblsymbolfont.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // lblsymbolfontVal
-            // 
-            this.lblSymbolFontVal.Location = new System.Drawing.Point(114, 107);
-            this.lblSymbolFontVal.Name = "lblSymbolFontVal";
-            this.lblSymbolFontVal.Size = new System.Drawing.Size(238, 23);
-            this.lblSymbolFontVal.TabIndex = 23;
-            this.lblSymbolFontVal.Text = "-";
-            this.lblSymbolFontVal.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // btnSelectFont
-            // 
-            this.btnSelectFont.Location = new System.Drawing.Point(358, 107);
-            this.btnSelectFont.Name = "btnSelectFont";
-            this.btnSelectFont.Size = new System.Drawing.Size(28, 23);
-            this.btnSelectFont.TabIndex = 24;
-            this.btnSelectFont.Text = "...";
-            this.btnSelectFont.UseVisualStyleBackColor = true;
-            this.btnSelectFont.Click += new System.EventHandler(this.btnSelectFont_Click);
-            // 
             // FrmSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -681,6 +679,8 @@
             this.Controls.Add(this.tabControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "FrmSettings";
             this.Text = "Font Editor Settings";
             this.tabControl1.ResumeLayout(false);

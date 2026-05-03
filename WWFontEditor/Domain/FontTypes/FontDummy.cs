@@ -37,7 +37,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontHeight = 8;
             // Byte data inside a FontFileSymbol gets copied, so we only need to define this array once.
             Byte[] byteData = new Byte[this.m_FontWidth * this.m_FontHeight];
-            for (Int32 i = 0; i < 0x80; i++)
+            for (Int32 i = 0; i < 0x80; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(byteData, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
         }
 

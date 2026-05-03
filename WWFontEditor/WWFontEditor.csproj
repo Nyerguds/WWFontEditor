@@ -50,10 +50,12 @@
   <ItemGroup>
     <Compile Include="Domain\Compression\DynamixLzHuffDecoder.cs" />
     <Compile Include="Domain\Compression\MythosCompression.cs" />
+    <Compile Include="Domain\Compression\PppCompression.cs" />
     <Compile Include="Domain\Compression\RleCompression.cs" />
     <Compile Include="Domain\Csv\CsvColumnAttribute .cs" />
     <Compile Include="Domain\Csv\CsvConverter.cs" />
     <Compile Include="Domain\Csv\CsvParser.cs" />
+    <Compile Include="Domain\FontTypes\FontFileEmo.cs" />
     <Compile Include="Domain\Utils\EncodingSupport.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
@@ -83,7 +85,7 @@
     <Compile Include="Domain\Utils\ImageUtils\ColorUtils.cs" />
     <Compile Include="Domain\Utils\ImageUtils\ColorSixBit.cs" />
     <Compile Include="Domain\D2KEncoding.cs" />
-    <Compile Include="Domain\FileTypeBroadcaster.cs" />
+    <Compile Include="Domain\IFileTypeBroadcaster.cs" />
     <Compile Include="Domain\FontFile.cs" />
     <Compile Include="Domain\FontFileSymbol.cs" />
     <Compile Include="Domain\FontTypes\FontFileD2K.cs" />
@@ -187,6 +189,7 @@
     <Compile Include="UI\SaveOptions\SaveOptionString.Designer.cs">
       <DependentUpon>SaveOptionString.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\Tools\ClipboardBackup.cs" />
     <Compile Include="UI\Tools\ControlsList\ControlsList.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -203,12 +206,6 @@
     </Compile>
     <Compile Include="UI\Tools\EnhNumericUpDown.cs">
       <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="UI\Tools\FrmPalette.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UI\Tools\FrmPalette.designer.cs">
-      <DependentUpon>FrmPalette.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Tools\ComboBoxSmartWidth.cs">
       <SubType>Component</SubType>
@@ -289,14 +286,8 @@
     <EmbeddedResource Include="UI\Tools\ControlsList\ControlsList.resx">
       <DependentUpon>ControlsList.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="UI\Tools\FrmPalette.resx">
-      <DependentUpon>FrmPalette.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="UI\Tools\InputBox.resx">
       <DependentUpon>InputBox.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UI\Tools\PalettePanel.resx">
-      <DependentUpon>PalettePanel.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="td.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

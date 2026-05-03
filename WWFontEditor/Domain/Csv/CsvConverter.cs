@@ -13,11 +13,10 @@ namespace Nyerguds.Util.Csv
         {
             if (separator == '"')
                 throw new ArgumentException("Separator can't be a double quote character!", "separator");
-
             StringBuilder sb = new StringBuilder();
             Int32 len = values.Length;
             Int32 last = len - 1;
-            for (Int32 i = 0; i < len; i++)
+            for (Int32 i = 0; i < len; ++i)
             {
                 String col = values[i] ?? String.Empty;
                 Boolean needsEscaping = col.Contains(separator) || col.Contains("\"") || col.Contains("\r") || col.Contains("\n");
@@ -30,14 +29,15 @@ namespace Nyerguds.Util.Csv
             return sb.ToString();
         }
 
-        public static String[] CreateCsvFile(IEnumerable<String[]> fileLines, Char separator)
+        public static String[] CreateCsvFile(String[][] fileLines, Char separator)
         {
             if (separator == '"')
                 throw new ArgumentException("Separator can't be a double quote character!", "separator");
-            List<String> csvLines = new List<String>();
-            foreach (String[] lineParts in fileLines)
-                csvLines.Add(CreateCSVRow(lineParts, separator));
-            return csvLines.ToArray();
+            Int32 lines = fileLines.Length;
+            String[] csvLines = new String[lines];
+            for (Int32 i = 0; i < lines; ++i)
+                csvLines[i] = CreateCSVRow(fileLines[i], separator);
+            return csvLines;
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace Nyerguds.Util.Csv
         public static List<String[]> SplitCsvFile(String[] fileLines, Char separator, Boolean ignoreIllegalLines, Boolean ignoreEmptyLines)
         {
             List<String[]> splitLines = new List<String[]>();
-            for (Int32 i = 0; i < fileLines.Length; i++)
+            for (Int32 i = 0; i < fileLines.Length; ++i)
             {
                 try
                 {

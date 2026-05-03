@@ -31,14 +31,20 @@ namespace Nyerguds.Util.Ui
                 return;
             this.SuspendLayout();
             this.lblTypeName.Text = customControlInfo.Name;
-            foreach (TInfoObject controlInfo in customControlInfo.Properties)
+            TInfoObject[] props = customControlInfo.Properties;
+            Int32 nrOfProps = props.Length;
+            for (Int32 i = 0; i < nrOfProps; ++i)
             {
+                TInfoObject controlInfo = props[i];
                 try
                 {
                     TControl control = customControlInfo.MakeControl(controlInfo, controller);
                     this.AddControl(control, false);
                 }
-                catch (NotImplementedException) { /* ignore */ }
+                catch (NotImplementedException)
+                {
+                    /* ignore */
+                }
             }
             this.PerformLayout();
         }
@@ -88,8 +94,10 @@ namespace Nyerguds.Util.Ui
         {
             this.SuspendLayout();
             this.lblTypeName.Text = String.Empty;
-            foreach (TControl c in m_Contents)
+            Int32 contentCount = this.m_Contents.Count;
+            for (Int32 i = 0; i < contentCount; ++i)
             {
+                TControl c = this.m_Contents[i];
                 this.Controls.Remove(c);
                 c.Dispose();
             }
@@ -97,11 +105,15 @@ namespace Nyerguds.Util.Ui
             this.PerformLayout();
         }
 
-        protected void EffectBarList_Resize(object sender, EventArgs e)
+        protected void EffectBarList_Resize(Object sender, EventArgs e)
         {
             this.SuspendLayout();
-            foreach (TControl c in m_Contents)
+            Int32 contentCount = this.m_Contents.Count;
+            for (Int32 i = 0; i < contentCount; i++)
+            {
+                TControl c = this.m_Contents[i];
                 c.Size = new Size(this.DisplayRectangle.Width, c.Size.Height);
+            }
             this.PerformLayout();
         }
     }

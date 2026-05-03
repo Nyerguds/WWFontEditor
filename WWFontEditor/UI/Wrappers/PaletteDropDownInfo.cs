@@ -30,7 +30,7 @@ namespace Nyerguds.Util.UI.Wrappers
             Color[] palette = new Color[expectedcolors];
             Int32 copiedColors = Math.Min(colors.Length, expectedcolors);
             Array.Copy(colors, palette, copiedColors);
-            for (Int32 i = copiedColors; i < expectedcolors; i++)
+            for (Int32 i = copiedColors; i < expectedcolors; ++i)
                 palette[i] = Color.Black;
             this.Colors = palette;
             this.ColorBackup = palette.ToArray();
@@ -46,7 +46,7 @@ namespace Nyerguds.Util.UI.Wrappers
                 return false;
             if (this.ColorBackup.Length != this.Colors.Length)
                 return true;
-            for (Int32 i = 0; i < this.Colors.Length; i++)
+            for (Int32 i = 0; i < this.Colors.Length; ++i)
             {
                 if (this.ColorBackup[i].ToArgb() != this.Colors[i].ToArgb())
                     return true;
@@ -91,7 +91,7 @@ namespace Nyerguds.Util.UI.Wrappers
                 if (File.Exists(inipath))
                 {
                     IniFile paletteConfig = new IniFile(inipath);
-                    for (Int32 i = 0; i < 16; i++)
+                    for (Int32 i = 0; i < 16; ++i)
                     {
                         String name = paletteConfig.GetStringValue(INI_SECTION, i.ToString(), null);
                         Boolean hasName = !String.IsNullOrEmpty(name);

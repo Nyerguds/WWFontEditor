@@ -40,7 +40,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontWidth = 8;
             this.m_FontHeight = 8;
 
-            for (Int32 i = 0; i < this.SymbolsTypeFirst; i++)
+            for (Int32 i = 0; i < this.SymbolsTypeFirst; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight *this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             for (Int32 i = 4; i + 4 < m_FontSize; i += 8)
             {
@@ -62,7 +62,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             Byte[] fileData = new Byte[m_FontSize];
             Int32 imagesCount = Math.Min(128, this.m_ImageDataList.Count);
-            for (Int32 i = 0; i < imagesCount; i++)
+            for (Int32 i = 0; i < imagesCount; ++i)
             {
                 if (this.Length <= i)
                     break;

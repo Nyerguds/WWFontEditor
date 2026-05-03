@@ -81,6 +81,7 @@
             this.chkWrapPreview = new System.Windows.Forms.CheckBox();
             this.lblZoomPreview = new System.Windows.Forms.Label();
             this.btnSetShadow = new System.Windows.Forms.Button();
+            this.cmbRange = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.pnlImagePreview = new Nyerguds.Util.UI.SelectablePanel();
             this.pxbPreview = new Nyerguds.Util.UI.PixelBox();
             this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
@@ -89,7 +90,7 @@
             this.numSymbols = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.dgrvSymbolsList = new Nyerguds.Util.UI.DataGridViewScrollSupport();
-            this.palColorSelector = new Nyerguds.Util.UI.PalettePanel();
+            this.palColorPalette = new Nyerguds.Util.UI.PalettePanel();
             this.numZoomPreview = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.pnlImageScroll = new Nyerguds.Util.UI.SelectablePanel();
@@ -97,7 +98,6 @@
             this.pxbImage = new Nyerguds.Util.UI.PixelBox();
             this.pxbEditGridBehind = new Nyerguds.Util.UI.PixelBox();
             this.pxbFullSize = new Nyerguds.Util.UI.PixelBox();
-            this.cmbRange = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             ((System.ComponentModel.ISupportInitialize)(this.numYOffset)).BeginInit();
             this.grbSymbolInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
@@ -192,6 +192,7 @@
             this.lblSymbolYOffset.TabIndex = 65;
             this.lblSymbolYOffset.Text = "Y-offset:";
             this.lblSymbolYOffset.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.toolTip1.SetToolTip(this.lblSymbolYOffset, "Change Y-offset (Ctrl+PgUp/PgDown)\r\nHold [Shift] to apply to all images");
             // 
             // lblPaintColor1
             // 
@@ -602,7 +603,7 @@
             this.tsmiOptimizeWidths.Name = "tsmiOptimizeWidths";
             this.tsmiOptimizeWidths.Size = new System.Drawing.Size(269, 22);
             this.tsmiOptimizeWidths.Text = "Optimize widths of all symbols";
-            this.tsmiOptimizeWidths.Click += new System.EventHandler(this.tsmiOptimizeWidths_Click);
+            this.tsmiOptimizeWidths.Click += new System.EventHandler(this.TsmiOptimizeWidths_Click);
             // 
             // tsmiManagePalettes
             // 
@@ -715,7 +716,19 @@
             this.btnSetShadow.TabIndex = 307;
             this.btnSetShadow.Text = "Set drop shadow...";
             this.btnSetShadow.UseVisualStyleBackColor = true;
-            this.btnSetShadow.Click += new System.EventHandler(this.btnSetShadow_Click);
+            this.btnSetShadow.Click += new System.EventHandler(this.BtnSetShadow_Click);
+            // 
+            // cmbRange
+            // 
+            this.cmbRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.cmbRange.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbRange.FormattingEnabled = true;
+            this.cmbRange.Location = new System.Drawing.Point(213, 440);
+            this.cmbRange.Name = "cmbRange";
+            this.cmbRange.Size = new System.Drawing.Size(196, 21);
+            this.cmbRange.TabIndex = 21;
+            this.cmbRange.Visible = false;
+            this.cmbRange.SelectedIndexChanged += new System.EventHandler(this.CmbRange_SelectedIndexChanged);
             // 
             // pnlImagePreview
             // 
@@ -868,28 +881,28 @@
             this.dgrvSymbolsList.CellMouseLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgrvSymbolsList_CellMouseLeave);
             this.dgrvSymbolsList.SelectionChanged += new System.EventHandler(this.DgrvSymbolsList_SelectionChanged);
             // 
-            // palColorSelector
+            // palColorPalette
             // 
-            this.palColorSelector.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.palColorSelector.AutoSize = true;
-            this.palColorSelector.ColorSelectMode = Nyerguds.Util.UI.ColorSelMode.None;
-            this.palColorSelector.ColorTableWidth = 4;
-            this.palColorSelector.LabelSize = new System.Drawing.Size(36, 36);
-            this.palColorSelector.Location = new System.Drawing.Point(616, 240);
-            this.palColorSelector.MaxColors = 16;
-            this.palColorSelector.Name = "palColorSelector";
-            this.palColorSelector.PadBetween = new System.Drawing.Point(5, 5);
-            this.palColorSelector.Padding = new System.Windows.Forms.Padding(0);
-            this.palColorSelector.Palette = null;
-            this.palColorSelector.Remap = null;
-            this.palColorSelector.SelectedIndices = new int[0];
-            this.palColorSelector.ShowRemappedPalette = true;
-            this.palColorSelector.Size = new System.Drawing.Size(159, 159);
-            this.palColorSelector.TabIndex = 91;
-            this.palColorSelector.TabStop = false;
-            this.palColorSelector.TransItemBackColor = System.Drawing.Color.Empty;
-            this.palColorSelector.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.PalColorSelector_ColorLabelMouseDoubleClick);
-            this.palColorSelector.ColorLabelMouseClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palColorSelector_ColorLabelMouseClick);
+            this.palColorPalette.AlphaItemCharColor = System.Drawing.Color.Empty;
+            this.palColorPalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.palColorPalette.AutoSize = true;
+            this.palColorPalette.ColorSelectMode = Nyerguds.Util.UI.ColorSelMode.None;
+            this.palColorPalette.ColorTableWidth = 4;
+            this.palColorPalette.LabelSize = new System.Drawing.Size(36, 36);
+            this.palColorPalette.Location = new System.Drawing.Point(616, 240);
+            this.palColorPalette.MaxColors = 16;
+            this.palColorPalette.Name = "palColorPalette";
+            this.palColorPalette.PadBetween = new System.Drawing.Point(5, 5);
+            this.palColorPalette.Padding = new System.Windows.Forms.Padding(0);
+            this.palColorPalette.Palette = null;
+            this.palColorPalette.Remap = null;
+            this.palColorPalette.SelectedIndices = new int[0];
+            this.palColorPalette.ShowColorToolTipsAlpha = true;
+            this.palColorPalette.Size = new System.Drawing.Size(159, 159);
+            this.palColorPalette.TabIndex = 91;
+            this.palColorPalette.TransItemBackColor = System.Drawing.Color.Empty;
+            this.palColorPalette.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.PalColorSelector_ColorLabelMouseDoubleClick);
+            this.palColorPalette.ColorLabelMouseClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palColorSelector_ColorLabelMouseClick);
             // 
             // numZoomPreview
             // 
@@ -1025,18 +1038,6 @@
             this.pxbFullSize.Visible = false;
             this.pxbFullSize.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ImageBox_Click);
             // 
-            // cmbRange
-            // 
-            this.cmbRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.cmbRange.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbRange.FormattingEnabled = true;
-            this.cmbRange.Location = new System.Drawing.Point(213, 440);
-            this.cmbRange.Name = "cmbRange";
-            this.cmbRange.Size = new System.Drawing.Size(196, 21);
-            this.cmbRange.TabIndex = 21;
-            this.cmbRange.Visible = false;
-            this.cmbRange.SelectedIndexChanged += new System.EventHandler(this.CmbRange_SelectedIndexChanged);
-            // 
             // FrmFontEditor
             // 
             this.AllowDrop = true;
@@ -1065,7 +1066,7 @@
             this.Controls.Add(this.dgrvSymbolsList);
             this.Controls.Add(this.lblPaintColor1);
             this.Controls.Add(this.lblPaintColor2);
-            this.Controls.Add(this.palColorSelector);
+            this.Controls.Add(this.palColorPalette);
             this.Controls.Add(this.lblType);
             this.Controls.Add(this.lblSymbols);
             this.Controls.Add(this.lblFontMax);
@@ -1129,7 +1130,7 @@
         private Nyerguds.Util.UI.PixelBox pxbImage;
         private Nyerguds.Util.UI.PixelBox pxbEditGridFront;
         private System.Windows.Forms.Label lblPaintColor1;
-        private Nyerguds.Util.UI.PalettePanel palColorSelector;
+        private Nyerguds.Util.UI.PalettePanel palColorPalette;
         private System.Windows.Forms.Label lblPaintColor2;
         private System.Windows.Forms.ToolTip toolTip1;
         private Nyerguds.Util.UI.ImageButtonCheckBox chkGrid;

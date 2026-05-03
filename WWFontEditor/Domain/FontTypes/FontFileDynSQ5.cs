@@ -47,7 +47,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontWidth = 0;
             Int32 indexOffset = offset + 6;
 
-            for (Int32 i = 0; i < numSymbols; i++)
+            for (Int32 i = 0; i < numSymbols; ++i)
             {
                 Int32 symbolOffset = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, indexOffset + (i * 2), 2, true) + offset;
                 if (fileData.Length < symbolOffset + 2)
@@ -91,7 +91,7 @@ namespace WWFontEditor.Domain.FontTypes
 
             Int32 len = this.m_ImageDataList.Count;
             Byte[][] symbolData = new Byte[len][];
-            for (Int32 i = 0; i < len; i++)
+            for (Int32 i = 0; i < len; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i];
                 Byte[] curData1bit = ImageUtils.ConvertFrom8Bit(ffs.ByteData, ffs.Width, ffs.Height, 1, true);
@@ -120,8 +120,9 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(header, 0, fontData, 0x02, 0x20);
             Array.Copy(header, 0, fontData, 0x22, header.Length);
             Int32 imageDataOffs = offset + 0x22;
-            foreach (Byte[] symbolImgData in symbolData)
+            for (Int32 i = 0; i < len; ++i)
             {
+                Byte[] symbolImgData = symbolData[i];
                 if (symbolImgData == null || symbolImgData.Length == 0)
                     continue;
                 Array.Copy(symbolImgData, 0, fontData, imageDataOffs, symbolImgData.Length);

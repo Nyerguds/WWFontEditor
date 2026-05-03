@@ -56,7 +56,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             Byte[] fileData = new Byte[m_FontSize];
             Int32 imagesCount = Math.Min(128, this.m_ImageDataList.Count);
-            for (Int32 i = 0; i < imagesCount; i++)
+            for (Int32 i = 0; i < imagesCount; ++i)
             {
                 if (this.Length <= i)
                     break;

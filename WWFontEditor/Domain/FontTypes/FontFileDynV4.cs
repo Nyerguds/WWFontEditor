@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Nyerguds.GameData.Dynamix;
+using Nyerguds.FileData.Dynamix;
 using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain.FontTypes
@@ -70,12 +70,12 @@ namespace WWFontEditor.Domain.FontTypes
             if (asV5)
             {
                 if (fileData[dataOffset] != 0xFD)
-                    throw new FileTypeLoadException("Not a v5 Dynamix font!");
+                    throw new FileTypeLoadException(ERR_BADHEADER);
             }
             else
             {
                 if (fileData[dataOffset] != 0xFF)
-                    throw new FileTypeLoadException("Not a v4 Dynamix font!");
+                    throw new FileTypeLoadException(ERR_BADHEADER);
             }
             this.m_FontWidth = fileData[dataOffset + 1];
             this.m_FontHeight = fileData[dataOffset + 2];
@@ -87,7 +87,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 compressionMethod = fileData[dataOffset + 8];
             UInt32 uncompressedSize = (UInt32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 9, 2, true); // 0x11
             if (uncompressedSize != symbolDataSize)
-                throw new FileTypeLoadException("Error in complex-type Dynamix font: font data size doesn't match uncompressed data size!");
+                throw new FileTypeLoadException(ERR_BADHEADERDATA);
 
             Int32 dataStart = dataOffset + 13;
             Byte[] compressedData = new Byte[fileData.Length - dataStart];
@@ -98,7 +98,7 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 case 0:
                     if (symbolDataSize > compressedData.Length)
-                        throw new IndexOutOfRangeException("Data length does not match actual data!");
+                        throw new IndexOutOfRangeException(ERR_SIZEHEADER);
                     data = compressedData;
                     break;
                 case 1:
@@ -112,7 +112,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             Int16[] offsets = new Int16[nrOfSymbols];
             //File.WriteAllBytes("fontdump.fnt", data);
-            for (Int32 i = 0; i < nrOfSymbols; i++)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
                 offsets[i] = (Int16)ArrayUtils.ReadIntFromByteArray(data, i * 2, 2, true);
             Int32 readStart = nrOfSymbols * 2;
 
@@ -120,20 +120,23 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(data, readStart, widths, 0, nrOfSymbols);
             readStart += nrOfSymbols;
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
-            for (Int32 i = 0; i < startSymbol; i++)
+            for (Int32 i = 0; i < startSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i < offsets.Length; i++)
+            for (Int32 i = 0; i < offsets.Length; ++i)
             {
+                Byte symbWidth = widths[i];
+                if (symbWidth > this.m_FontWidth)
+                    throw new FileTypeLoadException(ERR_MAXWIDTH);
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(data, widths[i], this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(data, symbWidth, this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
                     throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", this.ShortTypeName, i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, symbWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -178,7 +181,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fullNrOfSymbols = this.m_ImageDataList.Count;
             Byte[] symbolWidths = new Byte[fullNrOfSymbols];
             Byte[][] symbolData = new Byte[fullNrOfSymbols][];
-            for (Int32 i = 0; i < fullNrOfSymbols; i++)
+            for (Int32 i = 0; i < fullNrOfSymbols; ++i)
             {
                 FontFileSymbol ffs = this.m_ImageDataList[i];
                 if (!foundStart)
@@ -208,7 +211,7 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(symbolWidths, startSymbol, fullData, dataOffset, nrOfSymbols);
             dataOffset += nrOfSymbols;
             // Third: actual font data.
-            for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
+            for (Int32 i = startSymbol; i < fullNrOfSymbols; ++i)
             {
                 Byte[] image = symbolData[i];
                 if (image == null || image.Length == 0)
@@ -228,7 +231,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
             }
             /*/
-            // Not implemented
+            // Not implemented: 2 (LZW) and 3 (Huffman).
             else if (compressionType == 2)
             {
                 Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
@@ -264,14 +267,19 @@ namespace WWFontEditor.Domain.FontTypes
         public static Int32 CalculateLineHeight(List<FontFileSymbol> imageDataList, Int32 bitsPerPixel, Int32 yOffsetMax, Byte transparencyColor)
         {
             Int32 checkColor = -1;
+            Int32 images = imageDataList.Count;
             // This check has no use on 1-bpp; there are only two values.
             if (bitsPerPixel > 1)
             {
                 Dictionary<Byte, Int32> colFrequencies = new Dictionary<Byte, Int32>();
-                foreach (FontFileSymbol symbol in imageDataList)
+                for (Int32 i = 0; i < images; ++i)
                 {
-                    foreach (Byte c in symbol.ByteData)
+                    FontFileSymbol symbol = imageDataList[i];
+                    Byte[] symbolData = symbol.ByteData;
+                    Int32 symbolDataLen = symbolData.Length;
+                    for (Int32 j = 0; j < symbolDataLen; ++j)
                     {
+                        Byte c = symbol.ByteData[j];
                         if (c == transparencyColor)
                             continue;
                         Int32 curVal;
@@ -290,8 +298,9 @@ namespace WWFontEditor.Domain.FontTypes
                 }
             }
             Dictionary<Int32, Int32> frequencies = new Dictionary<Int32, Int32>();
-            foreach (FontFileSymbol symbol in imageDataList)
+            for (Int32 i = 0; i < images; ++i)
             {
+                FontFileSymbol symbol = imageDataList[i];
                 if (symbol.ByteData.Length == 0)
                     continue;
                 FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel, transparencyColor);

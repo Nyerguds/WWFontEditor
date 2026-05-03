@@ -36,15 +36,15 @@ namespace WWFontEditor.Domain.FontTypes
             Byte startSymbol = 32;
             Byte nrOfSymbols = 0x60;
             // fill in dummy symbols. Will need to be trimmed on save.
-            for (Int32 i = 0; i < startSymbol; i++)
+            for (Int32 i = 0; i < startSymbol; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight * this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
             Int32 symbolsize = this.m_FontHeight * this.InternalBpp;
             // Caching to avoid unnecessary calls and calculations
             Byte maxVal = this.MaxValue;
-            for (Int32 i = 0; i < nrOfSymbols; i++)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, this.m_FontWidth, this.m_FontHeight, symbolsize * i, this.InternalBpp, true);
-                for (Int32 b = 0; b < curData8bit.Length; b++)
+                for (Int32 b = 0; b < curData8bit.Length; ++b)
                 {
                     Byte val = curData8bit[b];
                     if (val == 0)
@@ -63,10 +63,10 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[][] imageData = new Byte[0x60][];
             // Caching to avoid unnecessary calls and calculations
             Byte maxVal = this.MaxValue;
-            for (Int32 i = 0; i < 0x60; i++)
+            for (Int32 i = 0; i < 0x60; ++i)
             {
                 Byte[] eightBitData = this.m_ImageDataList[i + 0x20].ByteData;
-                for (Int32 b = 0; b < eightBitData.Length; b++)
+                for (Int32 b = 0; b < eightBitData.Length; ++b)
                 {
                     if (eightBitData[b] != 0)
                         eightBitData[b] = maxVal;
@@ -75,7 +75,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             Int32 symbolsize = this.m_FontWidth *this.InternalBpp;
             Byte[] fullData = new Byte[symbolsize * 0x60];
-            for (Int32 i = 0; i < 0x60; i++)
+            for (Int32 i = 0; i < 0x60; ++i)
                 Array.Copy(imageData[i], 0, fullData, i * symbolsize, symbolsize);
             return fullData;
         }

@@ -1,7 +1,7 @@
 ﻿using Nyerguds.Util;
 using System;
 using System.Linq;
-using Nyerguds.GameData.Mythos;
+using Nyerguds.FileData.Mythos;
 using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain.FontTypes
@@ -52,7 +52,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.m_FontWidth = 1;
 
             // fill in dummy symbols.
-            for (Int32 i = 0; i < 0x20; i++)
+            for (Int32 i = 0; i < 0x20; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[] { 0xFF }, 0, 0, 0, this.BitsPerPixel, this.TransparencyColor));
             // Add space
             this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel, this.TransparencyColor));
@@ -133,13 +133,14 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            Int32 actualLen = this.m_ImageDataList.Count - this.SymbolsTypeFirst;
+            Int32 len = this.m_ImageDataList.Count;
+            Int32 actualLen = len - this.SymbolsTypeFirst;
             Int32 saveLen = this._skip127 ? actualLen - 1 : actualLen;
             Byte[][] symbolData = new Byte[actualLen][];
             Int32[] widths = new Int32[actualLen];
             Int32[] heighths = new Int32[actualLen];
             Byte[] yOffsets = new Byte[actualLen];
-            for (Int32 i = this.SymbolsTypeFirst; i < this.m_ImageDataList.Count; i++)
+            for (Int32 i = this.SymbolsTypeFirst; i < len; ++i)
             {
                 Int32 writeIndex = i - this.SymbolsTypeFirst;
                 FontFileSymbol ffs = this.m_ImageDataList[i];
@@ -169,7 +170,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte[] finalData = new Byte[(saveLen) * 8 + symbolData.Sum(sd => sd.Length)];
             Int32 offset = 0;
             Int32 skipIndex = 127 - this.SymbolsTypeFirst;
-            for (Int32 i = 0; i < actualLen; i++)
+            for (Int32 i = 0; i < actualLen; ++i)
             {
                 // Skip 127. It does not get written to the file.
                 if (this._skip127 && i == skipIndex)

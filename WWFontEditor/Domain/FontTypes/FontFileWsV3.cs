@@ -105,10 +105,10 @@ namespace WWFontEditor.Domain.FontTypes
 
             //FontDataOffset
             Int32[] fontDataOffsetsList = new Int32[length];
-            for (Int32 i = 0; i < length; i++)
+            for (Int32 i = 0; i < length; ++i)
                 fontDataOffsetsList[i] = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, fontDataOffsetsListOffset + i * 2, 2, true) + (isV4 ? fontDataOffset : 0);
             List<Byte> widthsList = new List<Byte>();
-            for (Int32 i = 0; i < length; i++)
+            for (Int32 i = 0; i < length; ++i)
             {
                 Byte width = fileData[widthsListOffset + i];
                 if (width > this.FontWidth)
@@ -117,7 +117,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             List<Byte> yOffsetsList = new List<Byte>();
             List<Byte> heightsList = new List<Byte>();
-            for (Int32 i = 0; i < length; i++)
+            for (Int32 i = 0; i < length; ++i)
             {
                 yOffsetsList.Add(fileData[heightsListOffset + i * 2]);
                 Byte height = fileData[heightsListOffset + i * 2 + 1];
@@ -128,7 +128,7 @@ namespace WWFontEditor.Domain.FontTypes
             // End of FileTypeLoadExceptions. After this, assume the type is identified.
             this.m_ImageDataList = new List<FontFileSymbol>();
             Int32 bitsLength = this.BitsPerPixel;
-            for (Int32 i = 0; i < length; i++)
+            for (Int32 i = 0; i < length; ++i)
             {
                 Int32 start = fontDataOffsetsList[i];
                 Byte width = widthsList[i];
@@ -150,9 +150,9 @@ namespace WWFontEditor.Domain.FontTypes
         protected Byte[] SaveV3V4Font(Boolean forV4)
         {
             // Y-optimization.
-            foreach (FontFileSymbol ffs in this.m_ImageDataList)
-                ffs.OptimizeYHeight(this.YOffsetTypeMax);
             Int32 imagesCount = this.m_ImageDataList.Count;
+            for (Int32 i = 0; i < imagesCount; ++i)
+                this.m_ImageDataList[i].OptimizeYHeight(this.YOffsetTypeMax);
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
             Byte[] heightsList = new Byte[imagesCount * 2];
@@ -165,7 +165,7 @@ namespace WWFontEditor.Domain.FontTypes
                 heightsListOffset = widthsListOffset + imagesCount;
             Int32 fontOffsetStart = (!forV4) ? widthsListOffset + imagesCount : heightsListOffset + imagesCount * 2;
             Int32 bitsLength = this.BitsPerPixel;
-            for (Int32 i = 0; i < imagesCount; i++)
+            for (Int32 i = 0; i < imagesCount; ++i)
             {
                 FontFileSymbol fc = this.m_ImageDataList[i];
                 Byte[] imgData8bit = fc.ByteData;
@@ -208,8 +208,9 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(fontDataOffsetsList, 0, fullData, offsetsListOffset, fontDataOffsetsList.Length);
             Array.Copy(widthsList, 0, fullData, widthsListOffset, widthsList.Length);
             Int32 imageDataOffs = fontOffsetStart;
-            foreach (Byte[] symbolImgData in imageData)
+            for (Int32 i = 0; i < imagesCount; ++i)
             {
+                Byte[] symbolImgData = imageData[i];
                 if (symbolImgData == null || symbolImgData.Length == 0)
                     continue;
                 Array.Copy(symbolImgData, 0, fullData, imageDataOffs, symbolImgData.Length);
@@ -229,8 +230,9 @@ namespace WWFontEditor.Domain.FontTypes
         protected override void PostConvertCleanup()
         {
             // Y-optimization.
-            foreach (FontFileSymbol ffs in this.m_ImageDataList)
-                ffs.OptimizeYHeight(this.YOffsetTypeMax);
+            Int32 imagesCount = this.m_ImageDataList.Count;
+            for (Int32 i = 0; i < imagesCount; ++i)
+                this.m_ImageDataList[i].OptimizeYHeight(this.YOffsetTypeMax);
         }
     }
 }

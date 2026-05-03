@@ -15,7 +15,8 @@ namespace Nyerguds.ImageManipulation
             ColorPalette cp;
             using (Bitmap bm = new Bitmap(1, 1, pf))
                 cp = bm.Palette;
-            for (Int32 i = 0; i < colors.Length && i < cp.Entries.Length; i++)
+            Int32 len = Math.Min(cp.Entries.Length, colors.Length);
+            for (Int32 i = 0; i < len; ++i)
                 cp.Entries[i] = colors[i];
             return cp;
         }
@@ -83,7 +84,7 @@ namespace Nyerguds.ImageManipulation
             Int32 paletteNr = colorBurst ? (palette ? 1 : 0) : 2;
             Byte[] colors = CgaPalettes[paletteNr];
             Int32 intensityAdd = intensity ? 8 : 0;
-            for (Int32 i = 0; i < 3; i++)
+            for (Int32 i = 0; i < 3; ++i)
             {
                 Int32 cgacol = colors[i] | intensityAdd;
                 pal[i + 1] = EgaPalette[cgacol];
@@ -107,12 +108,12 @@ namespace Nyerguds.ImageManipulation
                 return palEntries[1].R == 0 && palEntries[1].G == 0 && palEntries[1].B == 0;
             if (colors != 4)
                 return false;
-            for (Int32 opts = 0; opts < 6; opts++)
+            for (Int32 opts = 0; opts < 6; ++opts)
             {
                 Boolean palMatch = true;
                 // Switched colorburst so it would come last.
                 Color[] cgaPal = GetCgaPalette(backgroundColor, (opts & 4) == 0, (opts & 2) == 1, (opts & 1) == 1, 2);
-                for (Int32 i = 1; i < 4; i++)
+                for (Int32 i = 1; i < 4; ++i)
                 {
                     if (Color.FromArgb(palEntries[i].R, palEntries[i].G, palEntries[i].B) == cgaPal[i])
                         continue;
@@ -132,7 +133,7 @@ namespace Nyerguds.ImageManipulation
         public static Byte GetEgaIndex(Color col)
         {
             Color c = Color.FromArgb(col.R, col.G, col.B);
-            for (Byte i = 0; i < 16; i++)
+            for (Byte i = 0; i < 16; ++i)
             {
                 if (EgaPalette[i].R != c.R || EgaPalette[i].G != c.G || EgaPalette[i].B != c.B)
                     continue;
@@ -141,50 +142,55 @@ namespace Nyerguds.ImageManipulation
             return 0xFF;
         }
 
-        public static Boolean[] MakeTransparencyGuide(Int32 bpp, Int32[] transparentIndices)
+        public static Boolean[] MakePalTransparencyMask(Int32 bpp, Int32[] transparentIndices)
         {
             Int32 palLen = bpp > 8 ? 0 : 1 << bpp;
-            Boolean[] tranGuide = new Boolean[palLen];
-            foreach (Int32 b in transparentIndices)
-                if (b < tranGuide.Length)
-                    tranGuide[b] = true;
-            return tranGuide;
+            Boolean[] transMask = new Boolean[palLen];
+            Int32 transLen = transparentIndices.Length;
+            for (Int32 i = 0; i < transLen; ++i)
+            {
+                Int32 b = transparentIndices[i];
+                if (b < palLen)
+                    transMask[b] = true;
+            }
+            return transMask;
         }
 
-        public static Boolean[] MakeTransparencyGuide(Int32 bpp, Int32 transparentColor)
+        public static Boolean[] MakePalTransparencyMask(Int32 bpp, Int32 transparentColor)
         {
             Int32 palLen = bpp > 8 ? 0 : 1 << bpp;
-            Boolean[] tranGuide = new Boolean[palLen];
-            if (transparentColor < tranGuide.Length)
-                tranGuide[transparentColor] = true;
-            return tranGuide;
+            Boolean[] transMask = new Boolean[palLen];
+            if (transparentColor < palLen)
+                transMask[transparentColor] = true;
+            return transMask;
         }
 
-        public static Boolean[] MakeTransparencyGuide(Int32 bpp, Color[] palette)
+        public static Boolean[] MakePalTransparencyMask(Int32 bpp, Color[] palette)
         {
             Int32 palLen = bpp > 8 ? 0 : 1 << bpp;
-            Boolean[] tranGuide = new Boolean[palLen];
+            Boolean[] transMask = new Boolean[palLen];
             if (palette == null)
-                return tranGuide;
+                return transMask;
             Int32 len = Math.Min(palLen, palette.Length);
-            for (Int32 i = 0; i < len; i++)
-                tranGuide[i] = palette[i].A < 128;
-            return tranGuide;
+            for (Int32 i = 0; i < len; ++i)
+                transMask[i] = palette[i].A < 128;
+            return transMask;
         }
 
-        private static Boolean[] PrepareTransparencyGuide(Boolean[] transparencyGuide, Int32 targetPalLen)
+        private static Boolean[] PreparePalTransparencyMask(Boolean[] palTransparencyMask, Int32 targetPalLen)
         {
-            Boolean[] newTransparencyGuide = new Boolean[targetPalLen];
-            if (transparencyGuide != null)
-                Array.Copy(transparencyGuide, 0, newTransparencyGuide, 0, Math.Min(transparencyGuide.Length, targetPalLen));
-            return newTransparencyGuide;
+            Boolean[] newPalTransMask = new Boolean[targetPalLen];
+            if (palTransparencyMask != null)
+                Array.Copy(palTransparencyMask, 0, newPalTransMask, 0, Math.Min(palTransparencyMask.Length, targetPalLen));
+            return newPalTransMask;
         }
 
-        public static Color[] ApplyTransparencyGuide(Color[] palette, Boolean[] transparencyGuide)
+        public static Color[] ApplyPalTransparencyMask(Color[] palette, Boolean[] palTransMask)
         {
-            transparencyGuide = PrepareTransparencyGuide(transparencyGuide, palette.Length);
-            for (Int32 i = 0; i < palette.Length; i++)
-                palette[i] = Color.FromArgb(transparencyGuide[i] ? 0x00 : 0xFF, palette[i]);
+            Int32 palLen = palette.Length;
+            palTransMask = PreparePalTransparencyMask(palTransMask, palLen);
+            for (Int32 i = 0; i < palLen; ++i)
+                palette[i] = Color.FromArgb(palTransMask[i] ? 0x00 : 0xFF, palette[i]);
             return palette;
         }
 
@@ -193,11 +199,11 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="sourcePalette">Source colours.</param>
         /// <param name="pixelFormat">Pixel format for which to generate the new palette.</param>
-        /// <param name="transparencyGuide">Array of booleans specifying which indices to make transparent.</param>
+        /// <param name="palTransparencyMask">Array of booleans specifying which indices to make transparent.</param>
         /// <returns>The new palette.</returns>
-        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean[] transparencyGuide)
+        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean[] palTransparencyMask)
         {
-            return MakePalette(sourcePalette, pixelFormat, transparencyGuide, null);
+            return MakePalette(sourcePalette, pixelFormat, palTransparencyMask, null);
         }
 
         /// <summary>
@@ -205,13 +211,13 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="sourcePalette">Source colours.</param>
         /// <param name="pixelFormat">Pixel format for which to generate the new palette.</param>
-        /// <param name="transparencyGuide">Array of booleans specifying which indices to make transparent.</param>
+        /// <param name="palTransparencyMask">Array of booleans specifying which indices to make transparent.</param>
         /// <param name="defaultColor">Default colour if the source palette is smaller than the returned palette. If not filled in, leftover colors will be Color.Empty.</param>
         /// <returns>The new palette.</returns>
-        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean[] transparencyGuide, Color? defaultColor)
+        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean[] palTransparencyMask, Color? defaultColor)
         {
             Int32 bpp = Image.GetPixelFormatSize(pixelFormat);
-            return MakePalette(sourcePalette, bpp, transparencyGuide, defaultColor);
+            return MakePalette(sourcePalette, bpp, palTransparencyMask, defaultColor);
         }
 
         /// <summary>
@@ -219,11 +225,11 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="sourcePalette">Source colours.</param>
         /// <param name="bpp">Bits per pixel for which to generate the new palette.</param>
-        /// <param name="transparencyGuide">Array of booleans specifying which indices to make transparent.</param>
+        /// <param name="palTransparencyMask">Array of booleans specifying which indices to make transparent.</param>
         /// <returns>The new palette.</returns>
-        public static Color[] MakePalette(Color[] sourcePalette, Int32 bpp, Boolean[] transparencyGuide)
+        public static Color[] MakePalette(Color[] sourcePalette, Int32 bpp, Boolean[] palTransparencyMask)
         {
-            return MakePalette(sourcePalette, bpp, transparencyGuide, null);
+            return MakePalette(sourcePalette, bpp, palTransparencyMask, null);
         }
 
         /// <summary>
@@ -231,15 +237,15 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="sourcePalette">Source colours.</param>
         /// <param name="bpp">Bits per pixel for which to generate the new palette.</param>
-        /// <param name="transparencyGuide">Array of booleans specifying which indices to make transparent.</param>
+        /// <param name="palTransparencyMask">Array of booleans specifying which indices to make transparent.</param>
         /// <param name="defaultColor">Default colour if the source palette is smaller than the returned palette. If not filled in, leftover colors will be Color.Empty.</param>
         /// <returns>The new palette.</returns>
-        public static Color[] MakePalette(Color[] sourcePalette, Int32 bpp, Boolean[] transparencyGuide, Color? defaultColor)
+        public static Color[] MakePalette(Color[] sourcePalette, Int32 bpp, Boolean[] palTransparencyMask, Color? defaultColor)
         {
             Int32 palLen = bpp > 8 ? 0 : 1 << bpp;
             Color[] pal = new Color[palLen];
-            transparencyGuide = PrepareTransparencyGuide(transparencyGuide, palLen);
-            for (Int32 i = 0; i < palLen; i++)
+            palTransparencyMask = PreparePalTransparencyMask(palTransparencyMask, palLen);
+            for (Int32 i = 0; i < palLen; ++i)
             {
                 Color col;
                 if (sourcePalette != null && i < sourcePalette.Length)
@@ -248,59 +254,61 @@ namespace Nyerguds.ImageManipulation
                     col = defaultColor.Value;
                 else
                     col = Color.Empty;
-                pal[i] = Color.FromArgb(transparencyGuide[i] ? 0x00 : 0xFF, col);
+                pal[i] = Color.FromArgb(palTransparencyMask[i] ? 0x00 : 0xFF, col);
             }
             return pal;
         }
 
-        public static Color[] GenerateGrayPalette(Int32 bpp, Boolean[] transparencyGuide, Boolean reverseGenerated)
+        public static Color[] GenerateGrayPalette(Int32 bpp, Boolean[] palTransparencyMask, Boolean reverseGenerated)
         {
             Int32 palLen = 1 << bpp;
             Color[] pal = new Color[palLen];
-            transparencyGuide = PrepareTransparencyGuide(transparencyGuide, palLen);
+            palTransparencyMask = PreparePalTransparencyMask(palTransparencyMask, palLen);
             // generate greyscale palette.
             Int32 steps = 255 / (palLen - 1);
-            for (Int32 i = 0; i < pal.Length; i++)
+            for (Int32 i = 0; i < palLen; ++i)
             {
-                Double curval = reverseGenerated ? pal.Length - 1 - i : i;
+                Double curval = reverseGenerated ? palLen - 1 - i : i;
                 Byte grayval = (Byte)Math.Min(255, Math.Round(curval * steps, MidpointRounding.AwayFromZero));
-                pal[i] = Color.FromArgb(transparencyGuide == null ? 255 : transparencyGuide[i] ? 0x00 : 0xFF, grayval, grayval, grayval);
+                pal[i] = Color.FromArgb(palTransparencyMask == null ? 255 : palTransparencyMask[i] ? 0x00 : 0xFF, grayval, grayval, grayval);
             }
             return pal;
         }
 
-        public static Color[] GenerateDefWindowsPalette(Int32 bpp, Boolean[] transparencyGuide, Boolean reverseGenerated)
+        public static Color[] GenerateDefWindowsPalette(Int32 bpp, Boolean[] palTransparencyMask, Boolean reverseGenerated)
         {
             Color[] pal;
             using (Bitmap bm = new Bitmap(1, 1, PixelFormat.Format8bppIndexed))
                 pal = bm.Palette.Entries;
-            for (Int32 i = 0; i < pal.Length; i++)
+            Int32 palLen = pal.Length;
+            for (Int32 i = 0; i < palLen; ++i)
                 if (pal[i].A < 0xFF)
                     pal[i] = Color.FromArgb(0xFF, pal[i]);
             // Cut down to requested size
             pal = MakePalette(pal, bpp, null, Color.Black);
+            palLen = pal.Length;
             // Reverse after cutting since otherwise we won't get the default 16 color palette.
             if (reverseGenerated)
             {
                 Color[] entries = pal.Reverse().ToArray();
-                for (Int32 i = 0; i < pal.Length; i++)
+                for (Int32 i = 0; i < palLen; ++i)
                     pal[i] = entries[i];
             }
             // Apply transparency and return
-            return ApplyTransparencyGuide(pal, transparencyGuide);
+            return ApplyPalTransparencyMask(pal, palTransparencyMask);
         }
 
-        public static Color[] GenerateDoubleRainbow(Int32 blackIndex, Boolean[] transparencyGuide, Boolean reverseGenerated)
+        public static Color[] GenerateDoubleRainbow(Int32 blackIndex, Boolean[] palTransparencyMask, Boolean reverseGenerated)
         {
             Color[] smallPal = GenerateRainbowPalette(4, blackIndex, null, reverseGenerated);
             Color[] bigPal = GenerateRainbowPalette(8, blackIndex, null, reverseGenerated);
             Array.Copy(smallPal, 0, bigPal, 0, smallPal.Length);
-            return ApplyTransparencyGuide(bigPal, transparencyGuide);
+            return ApplyPalTransparencyMask(bigPal, palTransparencyMask);
         }
 
-        public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] transparencyGuide, Boolean reverseGenerated)
+        public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] palTransparencyMask, Boolean reverseGenerated)
         {
-            return GenerateRainbowPalette(bpp, blackIndex, transparencyGuide, reverseGenerated, 0, (Int32)ColorHSL.SCALE, false);
+            return GenerateRainbowPalette(bpp, blackIndex, palTransparencyMask, reverseGenerated, 0, (Int32)ColorHSL.SCALE, false);
         }
 
         /// <summary>
@@ -308,13 +316,13 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="bpp">Bits per pixel of the image the palette is for.</param>
         /// <param name="blackIndex">Index on the palette to replace with black.</param>
-        /// <param name="transparencyGuide">Array with booleans indicating which indices should become transparent.</param>
+        /// <param name="palTransparencyMask">Array with booleans indicating which indices should become transparent.</param>
         /// <param name="reverseGenerated">Reverse the generated range. This happens after the generating, and before the operations on the first index/.</param>
         /// <param name="startHue">Start hue range. Value from 0 to 240.</param>
         /// <param name="endHue">End hue range. Value from 0 to 240. Must be higher then startHue.</param>
         /// <param name="inclusiveEnd">True to include the end hue in the palette. If you generate a full hue range, this can be set to False to avoid getting a duplicate red colour on it.</param>
         /// <returns>The generated palette, as array of System.Drawing.Color objects.</returns>
-        public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] transparencyGuide, Boolean reverseGenerated, Int32 startHue, Int32 endHue, Boolean inclusiveEnd)
+        public static Color[] GenerateRainbowPalette(Int32 bpp, Int32 blackIndex, Boolean[] palTransparencyMask, Boolean reverseGenerated, Int32 startHue, Int32 endHue, Boolean inclusiveEnd)
         {
             Int32 colors = 1 << bpp;
             Color[] pal = new Color[colors];
@@ -322,26 +330,17 @@ namespace Nyerguds.ImageManipulation
             Double start = startHue;
             Double satValue = ColorHSL.SCALE;
             Double lumValue = 0.5 * ColorHSL.SCALE;
-            for (Int32 i = 0; i < colors; i++)
+            for (Int32 i = 0; i < colors; ++i)
             {
-                if (i + 1 == colors)
-                {
-                    i++;
-                    i--;
-                }
                 Double curStep = start + step * i;
                 pal[i] = new ColorHSL(curStep, satValue, lumValue);
             }
             if (reverseGenerated)
-            {
-                Color[] entries = pal.Reverse().ToArray();
-                for (Int32 i = 0; i < pal.Length; i++)
-                    pal[i] = entries[i];
-            }
+                pal = pal.Reverse().ToArray();
             if (blackIndex >= 0 && blackIndex < colors)
                 pal[blackIndex] = Color.Black;
             // Apply transparency
-            return ApplyTransparencyGuide(pal, transparencyGuide);
+            return ApplyPalTransparencyMask(pal, palTransparencyMask);
         }
     }
 }
