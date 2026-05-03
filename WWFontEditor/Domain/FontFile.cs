@@ -153,6 +153,7 @@ namespace WWFontEditor.Domain
         {
             // Dynamix fonts have a very specific "FNT:" header start so I prefer putting them first.
             typeof(FontFileDynV1),
+            typeof(FontFileDynV2),
             typeof(FontFileV4),
             typeof(FontFileV3),
             typeof(FontFileV2),
@@ -160,7 +161,6 @@ namespace WWFontEditor.Domain
             typeof(FontFileV1),
             // Can safely be put behind V1, since its minimum size is more than V1's fixed size.
             typeof(FontFileD2K),
-            typeof(FontFileDynV2),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
         };
 

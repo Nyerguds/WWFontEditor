@@ -45,23 +45,23 @@ namespace Compression
             this.bitsSize = 0;
         }
 
-        public static Byte[] DynamixLZWDecode(Byte[] buffer, Int32 decompressedSize)
+        public static Byte[] LzwDecode(Byte[] buffer, Int32 decompressedSize)
         {
             DynamixCompression decompr = new DynamixCompression();
             Byte[] outputBuffer = new Byte[decompressedSize];
-            decompr.LZWDecode(buffer, outputBuffer);
+            decompr.DynamixLzwDecode(buffer, outputBuffer);
             return outputBuffer;
         }
-
-        public static Byte[] DynamixRLEDecode(Byte[] buffer, Int32 decompressedSize)
+        
+        public static Byte[] RleDecode(Byte[] buffer, Int32 decompressedSize)
         {
             DynamixCompression decompr = new DynamixCompression();
             Byte[] outputBuffer = new Byte[decompressedSize];
-            decompr.RLEDecode(buffer, outputBuffer);
+            decompr.DynamixRleDecode(buffer, outputBuffer);
             return outputBuffer;
         }
 
-        public void LZWDecode(Byte[] buffer, Byte[] bufferOut)
+        public void DynamixLzwDecode(Byte[] buffer, Byte[] bufferOut)
         {
             Int32 inPtr = 0;
             Int32 outPtr = 0;
@@ -105,60 +105,64 @@ namespace Compression
                 }
                 // add to dictionary (2+ bytes only)
                 Boolean hit = this.codeLen < 2;
+                if (hit)
+                    continue;
                 // add to dictionary
-                if (hit == false)
+                if (!this.dictFull)
                 {
-                    if (this.dictFull == false)
+                    // check full condition
+                    if (this.dictSize == this.dictMax && this.codeSize == 12)
                     {
-                        // check full condition
-                        if (this.dictSize == this.dictMax && this.codeSize == 12)
-                        {
-                            this.dictFull = true;
-                            lcv = this.dictSize;
-                        }
-                        else
-                        {
-                            lcv = this.dictSize++;
-                            this.cacheBits = 0;
-                        }
-                        // expand dictionary (adaptive LZW)
-                        if (this.dictSize == this.dictMax && this.codeSize < 12)
-                        {
-                            this.dictMax *= 2;
-                            this.codeSize++;
-                        }
-                        // add new entry
-                        for (UInt32 lcv2 = 0; lcv2 < this.codeLen; lcv2++)
-                        {
-                            this.dictTableStr[lcv][lcv2] = this.codeCur[lcv2];
-                            this.dictTableLen[lcv]++;
-                        }
+                        this.dictFull = true;
+                        lcv = this.dictSize;
                     }
-                    // reset running code!
-                    for (lcv = 0; lcv < this.dictTableLen[code]; lcv++)
-                        this.codeCur[lcv] = this.dictTableStr[code][lcv];
-
-                    this.codeLen = this.dictTableLen[code];
+                    else
+                    {
+                        lcv = this.dictSize++;
+                        this.cacheBits = 0;
+                    }
+                    // expand dictionary (adaptive LZW)
+                    if (this.dictSize == this.dictMax && this.codeSize < 12)
+                    {
+                        this.dictMax *= 2;
+                        this.codeSize++;
+                    }
+                    // add new entry
+                    for (UInt32 lcv2 = 0; lcv2 < this.codeLen; lcv2++)
+                    {
+                        this.dictTableStr[lcv][lcv2] = this.codeCur[lcv2];
+                        this.dictTableLen[lcv]++;
+                    }
                 }
+                // reset running code!
+                for (lcv = 0; lcv < this.dictTableLen[code]; lcv++)
+                    this.codeCur[lcv] = this.dictTableStr[code][lcv];
+
+                this.codeLen = this.dictTableLen[code];
             }
         }
 
-        private void RLEDecode(Byte[] buffer, Byte[] bufferOut)
+        public void DynamixRleDecode(Byte[] buffer, Byte[] bufferOut)
         {
             Int32 inPtr = 0;
             Int32 outPtr = 0;
 
+            // RLE implementation:
+            // highest bit set = followed by range of repeating bytes
+            // highest bit not set = followed by range of non-repeating bytes
+            // In both cases, the "code" specifies the amount of bytes; either to write, or to skip.
+
             while (outPtr < bufferOut.Length)
             {
                 // get next code
-                Int32 code = this.GetBitsRight(8, buffer, ref inPtr);
+                Int32 code = buffer[inPtr++];
                 if (code == -1)
                     return;
                 // RLE run
                 if ((code & 0x80) != 0)
                 {
                     Int32 run = code & 0x7f;
-                    Int32 rle = GetBitsRight(8, buffer, ref inPtr);
+                    Int32 rle = buffer[inPtr++];
 
                     for (UInt32 lcv = 0; lcv < run; lcv++)
                         bufferOut[outPtr++] = (Byte)rle;
@@ -169,14 +173,85 @@ namespace Compression
                     Int32 run = code & 0x7f;
                     for (UInt32 lcv = 0; lcv < run; lcv++)
                     {
-                        Int32 data = this.GetBitsRight(8, buffer, ref inPtr);
+                        Int32 data = buffer[inPtr++];
                         bufferOut[outPtr++] = (Byte)data;
                     }
                 }
             }
         }
 
-        
+        /// <summary>
+        /// Applies Run-length encoding (RLE) to the given data.
+        /// </summary>
+        /// <param name="buffer">Input buffer</param>
+        /// <param name="minimumRepeating">Minimum amount of repeating bytes before compression is applied.</param>
+        /// <returns>The run-length encoded data</returns>
+        public static Byte[] RleEncode(Byte[] buffer, Int32 minimumRepeating)
+        {
+            if (minimumRepeating < 2)
+                minimumRepeating = 2;
+            Int32 inPtr = 0;
+            Int32 outPtr = 0;
+            // Ensure big enough buffer. Sanity check will be done afterwards.
+            Byte[] bufferOut = new Byte[(buffer.Length * 3) / 2];
+
+            // RLE implementation:
+            // highest bit set = followed by range of repeating bytes
+            // highest bit not set = followed by range of non-repeating bytes
+            // In both cases, the "code" specifies the amount of bytes; either to write, or to skip.
+            Int32 len = buffer.Length;
+            Boolean repeatDetected = false;
+            while (inPtr < len)
+            {
+                if (repeatDetected || HasRepeatingAhead(buffer, len, inPtr, minimumRepeating))
+                {
+                    repeatDetected = false;
+                    // Found more than 2 bytes. Worth compressing. Apply run-length encoding.
+                    Int32 start = inPtr;
+                    Int32 end = Math.Min(inPtr + 0x7F, len);
+                    inPtr += 2;
+                    Byte cur = buffer[inPtr];
+                    for (; inPtr < end && buffer[inPtr] == cur; inPtr++) {}
+                    bufferOut[outPtr++] = (Byte)((inPtr - start) | 0x80);
+                    bufferOut[outPtr++] = cur;
+                }
+                else
+                {
+                    while (!repeatDetected)
+                    {
+                        Int32 start = inPtr;
+                        Int32 end = Math.Min(inPtr + 0x7F, len);
+                        for (; inPtr < end; inPtr++)
+                        {
+                            // detected bytes to compress after this one: abort.
+                            if (!HasRepeatingAhead(buffer, len, inPtr, minimumRepeating))
+                                continue;
+                            repeatDetected = true;
+                            break;
+
+                        }
+                        bufferOut[outPtr++] = (Byte)(inPtr - start);
+                        for (Int32 i = start; i < inPtr; i++)
+                            bufferOut[outPtr++] = buffer[i];
+                    }
+                }
+            }
+            Byte[] finalOut = new Byte[outPtr];
+            Array.Copy(bufferOut, 0, finalOut, 0, outPtr);
+            return finalOut;
+        }
+
+        public static Boolean HasRepeatingAhead(Byte[] buffer, Int32 max, Int32 ptr, Int32 minAmount)
+        {
+            if (ptr + minAmount - 1 >= max)
+                return false;
+            Byte cur = buffer[ptr];
+            for (Int32 i = 1; i < minAmount; i++)
+                if (buffer[ptr + i] != cur)
+                    return false;
+            return true;
+        }
+
         private Int32 GetBitsRight(Int32 total_bits, Byte[] bufferIn, ref Int32 bufferPtr)
         {
             Byte[] bits_mask = {

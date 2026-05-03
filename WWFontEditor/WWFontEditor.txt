@@ -232,6 +232,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.9.1: (2017/07/12 14:16)
+-Added RLE compression to Dynamix v2 font saving.
+
 v1.9: (2017/07/12 12:05)
 -Removed extension filter on drag-and-drop. You can try to load any file.
 -Hovering over the chosen colors highlights them on the palette.

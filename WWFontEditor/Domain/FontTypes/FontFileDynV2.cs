@@ -70,10 +70,10 @@ namespace WWFontEditor.Domain.FontTypes
                     data = compressedData;
                     break;
                 case 1:
-                    data = DynamixCompression.DynamixRLEDecode(compressedData, uncompressedSize);
+                    data = DynamixCompression.RleDecode(compressedData, uncompressedSize);
                     break;
                 case 2:
-                    data = DynamixCompression.DynamixLZWDecode(compressedData, uncompressedSize);
+                    data = DynamixCompression.LzwDecode(compressedData, uncompressedSize);
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unknown compression type \"{0}\"", compressionMethod));
@@ -133,40 +133,60 @@ namespace WWFontEditor.Domain.FontTypes
             }
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
             Int32 fullDataSize = fontDataSize + nrOfSymbols * 3;
-            // offset to start writing data. Initialized on header length.
-            Int32 writeOffset = 0x15;
-            Byte[] fullData = new Byte[writeOffset + fullDataSize];
-            Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fullData, 0, 4);
-            ArrayUtils.WriteIntToByteArray(fullData, 4, 4, false, (UInt32)(fullData.Length - 8));
-            // Indicator for v2 format
-            fullData[0x08] = 0xFF;
-            fullData[0x09] = (Byte)this.m_FontWidth;
-            fullData[0x0A] = (Byte)this.m_FontHeight;
-            // Line height value. Not sure what to do with it tbh... my editor doesn't really support setting this.
-            fullData[0x0B] = (Byte)this.lineHeight;
-            fullData[0x0C] = (Byte)startSymbol;
-            fullData[0x0D] = (Byte)nrOfSymbols;
-            // Full added size: font size + symbols index + symbol widths.
-            ArrayUtils.WriteIntToByteArray(fullData, 0x0E, 2, false, (UInt32)fullDataSize);
-            // Compression method For now, let's leave that.
-            fullData[0x10] = 0x00;
-            ArrayUtils.WriteIntToByteArray(fullData, 0x11, 4, false, (UInt32)fullDataSize);
+            Byte[] fullData = new Byte[fullDataSize];
             // Reserve space for index, and skip it.
-            Int32 indexOffset = writeOffset;
-            writeOffset += nrOfSymbols * 2;
+            Int32 dataOffset = nrOfSymbols * 2;
+            Int32 indexOffset = 0;
             // Write image widths
-            Array.Copy(imageWidths, startSymbol, fullData, writeOffset, nrOfSymbols);
-            writeOffset += nrOfSymbols;
+            Array.Copy(imageWidths, startSymbol, fullData, dataOffset, nrOfSymbols);
+            dataOffset += nrOfSymbols;
             UInt32 offset = 0;
             for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
             {
                 Byte[] image = imageData[i];
-                Array.Copy(image, 0, fullData, writeOffset + offset, image.Length);
+                Array.Copy(image, 0, fullData, dataOffset + offset, image.Length);
                 ArrayUtils.WriteIntToByteArray(fullData, indexOffset, 2, false, offset);
                 indexOffset += 2;
                 offset += (UInt32)image.Length;
             }
-            return fullData;
+            // COMPRESSION ADDITION EXPERIMENT
+            Byte compression = 0;
+            Byte[] writeData = fullData;
+            Byte[] compressRle = DynamixCompression.RleEncode(fullData, 3);
+            if (compressRle != null && compressRle.Length < writeData.Length)
+            {
+                compression = 1;
+                writeData = compressRle;
+            }
+            /*/
+            // Not implemented
+            Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
+            if (compressLzw != null && compressLzw.Length < writeData.Length)
+            {
+                compression = 2;
+                writeData = compressLzw;
+            }
+            //*/
+            // offset to start writing data. Initialized on header length.
+            Int32 writeOffset = 0x15;
+            Byte[] fileData = new Byte[writeOffset + writeData.Length];
+            Array.Copy(Encoding.ASCII.GetBytes("FNT:"), 0, fileData, 0, 4);
+            ArrayUtils.WriteIntToByteArray(fileData, 4, 4, false, (UInt32)(fileData.Length - 8));
+            // Indicator for v2 format
+            fileData[0x08] = 0xFF;
+            fileData[0x09] = (Byte)this.m_FontWidth;
+            fileData[0x0A] = (Byte)this.m_FontHeight;
+            // Line height value. Not sure what to do with it tbh... my editor doesn't really support setting this.
+            fileData[0x0B] = (Byte)this.lineHeight;
+            fileData[0x0C] = (Byte)startSymbol;
+            fileData[0x0D] = (Byte)nrOfSymbols;
+            // Full added size: font size + symbols index + symbol widths.
+            ArrayUtils.WriteIntToByteArray(fileData, 0x0E, 2, false, (UInt32)fullDataSize);
+            // Compression method For now, let's leave that.
+            fileData[0x10] = compression;
+            ArrayUtils.WriteIntToByteArray(fileData, 0x11, 4, false, (UInt32)fullDataSize);
+            Array.Copy(writeData, 0, fileData, writeOffset, writeData.Length);
+            return fileData;
         }
 
         private Int32 CalculateLineHeight()
