@@ -139,12 +139,21 @@ namespace WWFontEditor.Domain
             return newByteData;
         }
 
-        public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont)
+        /// <summary>
+        /// Gets a bitmap of the symbol at full font height.
+        /// </summary>
+        /// <param name="palette"></param>
+        /// <param name="baseFont"></param>
+        /// <param name="expandToY"></param>
+        /// <returns></returns>
+        public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont, Boolean expandToY)
         {
             FontFileSymbol ffs = this.Clone();
             ffs.ChangeHeight(baseFont.FontHeight + ffs.YOffset);
             for (Int32 i = 0; i < ffs.YOffset; i++)
                 ffs.ShiftImageData(ShiftDirection.Down, false);
+            ffs.YOffset = 0;
+            ffs.ChangeHeight(expandToY ? Math.Max(baseFont.FontHeight, this.Height + this.YOffset) : baseFont.FontHeight);
             return ffs.GetBitmap(palette);
         }
 
@@ -329,6 +338,9 @@ namespace WWFontEditor.Domain
         /// </summary>
         public void OptimizeYHeight()
         {
+            // nothing to optimize.
+            if (this.Height == 0)
+                return;
             Int32 addedY = 0;
             Int32 cutHeightBottom = 0;
             Byte[] tempArray = new Byte[Width];

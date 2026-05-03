@@ -143,7 +143,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rtbGamesList.BackColor = System.Drawing.SystemColors.Control;
             this.rtbGamesList.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.rtbGamesList.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.rtbGamesList.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.rtbGamesList.Location = new System.Drawing.Point(442, 31);
             this.rtbGamesList.Name = "rtbGamesList";
             this.rtbGamesList.ReadOnly = true;

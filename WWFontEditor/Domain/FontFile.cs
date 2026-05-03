@@ -161,6 +161,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileDyn96),
             typeof(FontFileCent),
             typeof(FontFileKort),
+            typeof(FontFileMythos),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
         };
 
@@ -188,6 +189,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileDynV1b),
             typeof(FontFileDynV1a),
             typeof(FontFileTran),
+            typeof(FontFileMythos),
             // File size only; leave it at the end.
             typeof(FontFileWsV1),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
@@ -400,19 +402,26 @@ namespace WWFontEditor.Domain
                     fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                     continue;
                 }
-                Byte[] val = enc.GetBytes(new Char[]{c});
+                Byte[] val = enc.GetBytes(new Char[] { c });
                 if (val.Length != 1 || val[0] >= this.Length)
                     continue;
                 FontFileSymbol ffs = this.GetSymbol(val[0]);
-                symbols.Add(ffs);
                 if (wrapAt != -1 && curWidth + ffs.Width > wrapAt)
                 {
                     fullWidth = Math.Max(fullWidth, curWidth);
                     curWidth = 0;
                     fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
+                    symbols.Add(null);
                 }
+                symbols.Add(ffs);
                 curWidth += ffs.Width + this.FontTypePaddingRight;
             }
+            Int32 lastBreak = symbols.LastIndexOf(null);
+            Int32 addedHeight = 0;
+            for (Int32 i = lastBreak+1; i < symbols.Count; i++)
+                addedHeight = Math.Max(addedHeight, symbols[i].Height + symbols[i].YOffset - this.FontHeight);
+            fullHeight += addedHeight;
+            
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
             fullHeight = Math.Max(1, fullHeight);
@@ -441,7 +450,7 @@ namespace WWFontEditor.Domain
                     }
                     if (ffs.Width != 0)
                     {
-                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
+                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this, true);
                         g.DrawImage(symbol, new Point(curWidth, curHeight));
                         curWidth += ffs.Width;
                     }

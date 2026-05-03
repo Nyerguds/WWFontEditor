@@ -24,6 +24,7 @@ Table of Contents
 > Note on Dune 2000 support
 > Special thanks to
 > Source code licenses
+> Acknowledgements
 > Version history
 
 
@@ -213,6 +214,9 @@ Centurion Font
 KORT font
 -King Arthur's Knights of the Round Table
 
+Mythos font
+-Sherlock Holmes: The Case of Serrated Scalpel
+
 
 --------------------------
 Notes on Dune 2000 support
@@ -275,7 +279,11 @@ code in something, go ahead. I just made this font editor so it would exist.
 Just, do please adhere to Wheaton's Law: don't be a dick :)
 
 
-Further attribution, for the sake of completeness:
+----------------
+Acknowledgements
+----------------
+
+The C&C1 and RA1 font format were figured out by Gordan Ugarkovic.
 
 The Dynamix v4 format was figured out thanks to code from ScummVM. ScummVM is
 licensed under the GNU General Public License, but I only used it as reference
@@ -291,8 +299,18 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.10.1: (2017/08/08 22:45)
+-Fixed errors in copied symbol height for fonts with Y-offsets.
+-Preview no longer cuts off symbols with Y that makes them exceed font height.
+-The grid will now ensure its rows are high enough to show the full symbols.
+-Symbols with Y that makes them exceed font height will be cut off in the grid.
+-[Ctrl] + scroll wheel will now zoom the preview pane (if it's selected).
+-The grid no longer jumps to the default index when refreshing from index 0.
+-Fixed bugs and crashes related to fonts with a limited start symbol.
+-Added support for the font from the Sherlock Holmes: Serrated Scalpel game.
+
 v1.10: (2017/08/04 21:46)
--[Ctrl] + scroll wheel will now zoom the editor.
+-[Ctrl] + scroll wheel will now zoom the editor (if it's selected).
 -Fixed a bug where the symbol heights did not always adapt to the font height.
 -Added support for the font from "King Arthur's Knights of the Round Table".
 -Added older Dynamix font types, and and shifted the version numbers.

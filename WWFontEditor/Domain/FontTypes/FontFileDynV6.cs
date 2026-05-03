@@ -51,8 +51,8 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 widthsIndex = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 4, 4, true) + dataOffset;
             if (widthsIndex  < 0 || widthsIndex > fileData.Length)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
-            Int32 dataIndex = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 8, 4, true) + dataOffset;
-            if (dataIndex < 0 || dataIndex > fileData.Length)
+            Int32 symbolDataStartOffset = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 8, 4, true) + dataOffset;
+            if (symbolDataStartOffset < 0 || symbolDataStartOffset > fileData.Length)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
             m_unkn1 = fileData[dataOffset + 0x0C];
             m_lineHeight = fileData[dataOffset + 0x0D];
@@ -80,7 +80,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, widths[i], this.m_FontHeight, dataIndex + offsets[i], this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, widths[i], this.m_FontHeight, symbolDataStartOffset + offsets[i], this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -127,7 +127,7 @@ namespace WWFontEditor.Domain.FontTypes
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x00, 4, true, (UInt32)(offsetsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x04, 4, true, (UInt32)(widthsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x08, 4, true, (UInt32)(dataIndex));
-            fileData[chunkOffset + 0x0C] = m_unkn1;
+            fileData[chunkOffset + 0x0C] = (Byte)(m_FontWidth-m_lineHeight);
             fileData[chunkOffset + 0x0D] = m_lineHeight;
             fileData[chunkOffset + 0x0E] = (Byte)startSymbol;
             fileData[chunkOffset + 0x0F] = (Byte)(actualSymbols);

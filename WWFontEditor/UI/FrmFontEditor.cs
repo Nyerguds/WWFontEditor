@@ -34,6 +34,7 @@ namespace WWFontEditor
 
         private Boolean m_Loading;
         private Boolean m_Clicking;
+        private Int32 m_GridRowTemplateHeight;
         private Boolean m_TempColActive;
         private Boolean m_TempColPickerSelected;
         private String m_FileName;
@@ -68,6 +69,7 @@ namespace WWFontEditor
         {
             this.m_Loading = true;
             InitializeComponent();
+            m_GridRowTemplateHeight = this.dgrvSymbolsList.RowTemplate.Height;
             // Load settings
             m_Settings = new FontEditSettings();
             this.numZoom.EnteredValue = this.m_Settings.Zoom;
@@ -245,7 +247,7 @@ namespace WWFontEditor
                 this.m_LoadedFontBackup = this.m_LoadedFont != null ? this.m_LoadedFont.Clone() : null;
                 if (m_LoadedFont != null && this.m_LoadedFont.BitsPerPixel > GetEditBpp(m_LoadedFont))
                     AdjustFontSymbolsBpp(this.m_LoadedFont);
-                Boolean loadOk = ReloadUi();
+                Boolean loadOk = ReloadUi(true);
                 if (!loadOk)
                     MessageBox.Show(this, "Font loading failed" + (error == null ? "." : ": " + error), GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
@@ -255,7 +257,7 @@ namespace WWFontEditor
             }
         }
 
-        private Boolean ReloadUi()
+        private Boolean ReloadUi(Boolean newFontLoaded)
         {
             Boolean wasloading = this.m_Loading;
             this.m_Loading = true;
@@ -320,19 +322,24 @@ namespace WWFontEditor
                 this.numYOffset.Value = 0;
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(newFontLoaded);
             if (loadOk)
             {
                 // to allow index changed events on the following piece
                 this.m_Loading = false;
-                Int32 firstSelected = Math.Max(this.m_LoadedFont.SymbolsTypeFirst, this.m_Settings.SelectedSymbol);
-                if (this.m_LoadedFont.Length <= firstSelected)
-                    firstSelected = 0;
-                if (this.m_LoadedFont.Length > firstSelected)
+                if (newFontLoaded)
                 {
-                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[firstSelected - this.m_LoadedFont.SymbolsTypeFirst].Cells[0];
-                    this.dgrvSymbolsList.Rows[firstSelected - this.m_LoadedFont.SymbolsTypeFirst].Cells[0].Selected = true;
-                    this.dgrvSymbolsList.Focus();
+                    Int32 firstSelected = Math.Max(this.m_LoadedFont.SymbolsTypeFirst, this.m_Settings.SelectedSymbol);
+                    if (this.m_LoadedFont.Length <= firstSelected)
+                        firstSelected = Math.Max(this.m_LoadedFont.SymbolsTypeFirst, 0);
+                    if (this.m_LoadedFont.Length > firstSelected)
+                    {
+                        Int32 newIndex = firstSelected - this.m_LoadedFont.SymbolsTypeFirst;
+                        this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[newIndex].Cells[0];
+                        this.dgrvSymbolsList.FirstDisplayedCell.Selected = true;
+                        this.dgrvSymbolsList.Focus();
+                    }
+                    ReloadImageInfo(true);
                 }
             }
             this.m_Loading = wasloading;
@@ -438,7 +445,7 @@ namespace WWFontEditor
             return allPalettes;
         }
         
-        private void ReloadDataGrid()
+        private void ReloadDataGrid(Boolean ignoreScroll)
         {
             Boolean wasLoading = this.m_Loading;
             this.m_Loading = true;
@@ -454,12 +461,13 @@ namespace WWFontEditor
                 Color[] palette = m_CurrentPalette.ToArray();
                 palette[0] = Color.FromArgb(0xFF, palette[0]);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
-                Int32 selectedIndex = 0;
-                Int32 scrollOffset = 0;
+                Int32 selectedIndex = -1;
+                Int32 scrollOffset = -1;
                 if (this.dgrvSymbolsList.Rows.Count > 0 && this.dgrvSymbolsList.CurrentCell != null)
                 {
                     selectedIndex = this.dgrvSymbolsList.CurrentCell.RowIndex;
-                    scrollOffset = this.dgrvSymbolsList.VerticalScrollbarOffset;
+                    if (!ignoreScroll)
+                        scrollOffset = this.dgrvSymbolsList.VerticalScrollbarOffset;
                 }
                 DataTable symbolsTable = new DataTable("Symbols");
                 symbolsTable.Columns.Add(new DataColumn("Hex", typeof(String)));
@@ -474,7 +482,7 @@ namespace WWFontEditor
                     row[0] = "0x" + i.ToString("X2");
                     row[1] = i;
                     row[2] = enc.GetString(new Byte[] { (Byte)i });
-                    Bitmap bm = symbol.GetBitmapFullSize(palette, m_LoadedFont);
+                    Bitmap bm = symbol.GetBitmapFullSize(palette, m_LoadedFont, false);
                     if (bm == null)
                         bm = dummyImage;
                     row[3] = bm;
@@ -483,14 +491,14 @@ namespace WWFontEditor
                 DataGridViewCellStyle style = new DataGridViewCellStyle();
                 style.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[0]);
                 style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-
+                this.dgrvSymbolsList.RowTemplate.Height = Math.Max(m_GridRowTemplateHeight, this.m_LoadedFont.FontHeight);
                 this.dgrvSymbolsList.DataSource = symbolsTable;
                 this.dgrvSymbolsList.Columns[3].DefaultCellStyle = style;
-                if (selectedIndex < symbolsTable.Rows.Count)
+                if (selectedIndex < symbolsTable.Rows.Count && selectedIndex >= 0)
                 {
-                    if (selectedIndex > 0)
-                        this.dgrvSymbolsList.VerticalScrollbarOffset = scrollOffset;
                     this.dgrvSymbolsList.Rows[selectedIndex].Cells[0].Selected = true;
+                    if (scrollOffset >= 0)
+                        this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Max(0, scrollOffset);
                 }
             }
             finally
@@ -588,6 +596,18 @@ namespace WWFontEditor
             if ((k & Keys.Control) != 0)
             {
                 this.numZoom.EnteredValue = this.numZoom.LimitRange(this.numZoom.EnteredValue + (e.Delta / 120));
+                HandledMouseEventArgs args = e as HandledMouseEventArgs;
+                if (args != null)
+                    args.Handled = true;
+            }
+        }
+
+        private void PnlImagePreview_MouseScroll(object sender, MouseEventArgs e)
+        {
+            Keys k = Control.ModifierKeys;
+            if ((k & Keys.Control) != 0)
+            {
+                this.numZoomPreview.EnteredValue = this.numZoomPreview.LimitRange(this.numZoomPreview.EnteredValue + (e.Delta / 120));
                 HandledMouseEventArgs args = e as HandledMouseEventArgs;
                 if (args != null)
                     args.Handled = true;
@@ -728,7 +748,7 @@ namespace WWFontEditor
             m_Clicking = false;
             if ((e.Button & MouseButtons.Left) != 0 || (e.Button & MouseButtons.Right) != 0)
             {
-                ReloadDataGrid();
+                ReloadDataGrid(false);
                 this.RepaintPreview();
                 this.AdjustRevertButton();
             }
@@ -935,7 +955,7 @@ namespace WWFontEditor
                 return;
             this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup, GetEditBpp(m_LoadedFont));
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
             this.pnlImageScroll.Focus();
         }
 
@@ -945,14 +965,14 @@ namespace WWFontEditor
                 return;
             this.m_LoadedFont.GetSymbol(GetSelectedIndex()).YOffset = (Byte)this.numYOffset.Value;
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
         }
 
         private void CmbEncodings_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (m_Loading)
                 return;
-            ReloadDataGrid();
+            ReloadDataGrid(false);
             RepaintPreview();
         }
 
@@ -1005,7 +1025,7 @@ namespace WWFontEditor
                     lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColor1]);
                 if (colindex == m_CurrentPaintColor2)
                     lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColor2]);
-                ReloadDataGrid();
+                ReloadDataGrid(false);
                 ReloadImageInfo(true);
                 PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
                 this.btnResetPalette.Enabled = currentPal != null && currentPal.IsChanged();
@@ -1084,7 +1104,7 @@ namespace WWFontEditor
                 symbol.YOffset = Math.Min(this.m_LoadedFont.YOffsetTypeMax, Math.Max(0, symbol.YOffset + shift));
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
         }
         
         private void ShiftCurrentImage(ShiftDirection shiftDirection, Boolean all, Boolean expand)
@@ -1117,7 +1137,7 @@ namespace WWFontEditor
                     symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
         }
 
         private void ToggleTempColorSelect(Boolean enabled)
@@ -1176,6 +1196,7 @@ namespace WWFontEditor
             if (this.m_LoadedFont == null)
                 return;
             Int32 curIndex = GetSelectedIndex();
+            Int32 oldHeight = m_LoadedFont.FontHeight;
             FontFileSymbol symbol = this.m_LoadedFont.GetSymbol(curIndex);
             if (symbol == null)
                 return;
@@ -1184,7 +1205,7 @@ namespace WWFontEditor
             else
                 symbol.ChangeWidth(newDimension);
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(isHeight && (newDimension > m_GridRowTemplateHeight || oldHeight > m_GridRowTemplateHeight));
         }
 
         private void NumWidth_ValueChanged(object sender, EventArgs e)
@@ -1322,7 +1343,7 @@ namespace WWFontEditor
             //Color[] palette = PaletteUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
             //palette[0] = Color.FromArgb(0xFF, palette[0]);
             data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex].Cells[2].Value);
-            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont));
+            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true));
             data.SetData(ffs.Clone());
             Clipboard.SetDataObject(data);
         }
@@ -1405,7 +1426,7 @@ namespace WWFontEditor
                 MessageBox.Show(ex.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
         }
 
         private void NumSymbols_ValueChanged(object sender, EventArgs e)
@@ -1421,11 +1442,12 @@ namespace WWFontEditor
                 this.m_LoadedFont.Length = newLen;
                 newLen = this.m_LoadedFont.Length;
                 this.numSymbols.Value = newLen;
-                this.ReloadDataGrid();
+                this.ReloadDataGrid(false);
                 if (newLen > 0)
                 {
-                    this.dgrvSymbolsList.Rows[newLen - 1].Cells[0].Selected = true;
-                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[newLen - 1].Cells[0];
+                    Int32 newIndex = newLen - 1 - m_LoadedFont.SymbolsTypeFirst;
+                    this.dgrvSymbolsList.Rows[newIndex].Cells[0].Selected = true;
+                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[newIndex].Cells[0];
                 }
                 this.ReloadImageInfo(true);
             }
@@ -1443,7 +1465,7 @@ namespace WWFontEditor
                 return;
             Byte newVal = (Byte)Math.Min(this.numFontWidth.Value, 0xFF);
             m_LoadedFont.FontWidth = newVal;
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
             this.ReloadImageInfo(true);
         }
 
@@ -1455,7 +1477,7 @@ namespace WWFontEditor
                 return;
             Byte newVal = (Byte)Math.Min(this.numFontHeight.Value, 0xFF);
             m_LoadedFont.FontHeight = newVal;
-            this.ReloadDataGrid();
+            this.ReloadDataGrid(false);
             this.ReloadImageInfo(true);
         }
 
@@ -1498,7 +1520,7 @@ namespace WWFontEditor
                     scrollOffset = this.dgrvSymbolsList.VerticalScrollbarOffset;
                 }
                 m_Loading = false;
-                ReloadUi();
+                ReloadUi(false);
                 if (m_LoadedFont != null && oldFontSymbolLimit.HasValue)
                 {
                     Int32 diff = oldFontSymbolLimit.Value - this.m_LoadedFont.SymbolsTypeFirst;
@@ -1601,7 +1623,7 @@ namespace WWFontEditor
             if (!this.m_Loading)
             {
                 this.ReloadImageInfo(true);
-                this.ReloadDataGrid();
+                this.ReloadDataGrid(false);
             }
         }
 
@@ -1656,7 +1678,7 @@ namespace WWFontEditor
                     ffs.ReplaceColor((Byte)convertPopup.SelectedIndexSource, (Byte)convertPopup.SelectedIndexTarget);
                 }
                 this.ReloadImageInfo(true);
-                this.ReloadDataGrid();
+                this.ReloadDataGrid(false);
             }
         }
 

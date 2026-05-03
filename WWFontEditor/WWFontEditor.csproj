@@ -68,6 +68,7 @@
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
     <None Include="Domain\Compression\WestwoodCompression.cs" />
     <Compile Include="Domain\Compression\DynamixLzwDecoder.cs" />
+    <Compile Include="Domain\FontTypes\FontFileMythos.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV6.cs" />
     <Compile Include="Domain\FontTypes\FontFileTran.cs" />
     <Compile Include="Domain\FontTypes\FontFileDyn96.cs" />
