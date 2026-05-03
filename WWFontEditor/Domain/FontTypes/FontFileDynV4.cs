@@ -102,10 +102,10 @@ namespace WWFontEditor.Domain.FontTypes
                     data = compressedData;
                     break;
                 case 1:
-                    data = DynamixCompression.RleDecode(compressedData, uncompressedSize);
+                    data = DynamixCompression.RleDecode(compressedData, null, null, uncompressedSize, true);
                     break;
                 case 2:
-                    data = DynamixCompression.LzwDecode(compressedData, uncompressedSize);
+                    data = DynamixCompression.LzwDecode(compressedData, null, null, uncompressedSize);
                     break;
                 default:
                     throw new FileTypeLoadException(String.Format("Unknown compression type \"{0}\"", compressionMethod));
@@ -137,17 +137,36 @@ namespace WWFontEditor.Domain.FontTypes
                 this.m_ImageDataList.Add(fc);
             }
         }
-
-        public override Byte[] SaveFont(Boolean disableCompression)
+        
+        public override SaveOption[] GetSaveOptions(String targetFileName)
         {
-            return SaveFont(disableCompression, false);
+            // Line height. Default calculation uses the most commonly used lowest point in the font.
+            Int32 lHeight = this.lineHeight;
+            if (lHeight == 0)
+                lHeight = CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax);
+
+            return new SaveOption[]
+            {
+                new SaveOption("CMP", SaveOptionType.ChoicesList, "Compression type", "None,RLE", "1"),
+                new SaveOption("OPT", SaveOptionType.Boolean, "Optimise duplicate symbols", "1"),
+                new SaveOption("YOF", SaveOptionType.Number, "Font base line Y-offset", lHeight.ToString())
+                
+            };
+        }
+            
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
+        {
+            return SaveFont(saveOptions, false);
         }
 
-        public Byte[] SaveFont(Boolean disableCompression, Boolean asV5)
+        public Byte[] SaveFont(SaveOption[] saveOptions, Boolean asV5)
         {
-            // Not sure about this value; there is no support in the editor for indicating anything like this.
-            // But the most commonly used lowest point in the font seems like a logical value. It matches the existing fonts.
-            this.lineHeight = CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
+            Int32 compressionType;
+            Int32.TryParse(SaveOption.GetSaveOptionValue(saveOptions, "CMP"), out compressionType);
+            Int32 lineHeight;
+            Int32.TryParse(SaveOption.GetSaveOptionValue(saveOptions, "YOF"), out lineHeight);
+            this.lineHeight = lineHeight;
+            Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
             Boolean foundStart = false;
             Int32 startSymbol = 0;
             Int32 fullNrOfSymbols = m_ImageDataList.Count;
@@ -168,48 +187,51 @@ namespace WWFontEditor.Domain.FontTypes
                 imageWidths[i] = (Byte)ffs.Width;
             }
             Int32 fontOffset = 0;
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, startSymbol, ref fontOffset);
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, startSymbol, true, ref fontOffset, true, optimise);
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
-            //Int32 fullDataSize = fontDataSize + nrOfSymbols * 3;
-            Int32 fullDataSize = fontOffset + fontDataOffsetsList.Length * 3;
+            //fontOffset now contains the size of the actual font data.
+            Int32 fullDataSize = fontOffset + fontDataOffsetsList.Length + nrOfSymbols;
             Byte[] fullData = new Byte[fullDataSize];
             // Reserve space for index, and skip it.
-            //Int32 indexOffset = 0;
             Int32 dataOffset = 0;
+            // First: data index
             Array.Copy(fontDataOffsetsList, 0, fullData, dataOffset, fontDataOffsetsList.Length);
             dataOffset += fontDataOffsetsList.Length;
-            // Write image widths
+            // Second: image widths
             Array.Copy(imageWidths, startSymbol, fullData, dataOffset, nrOfSymbols);
             dataOffset += nrOfSymbols;
-            UInt32 offset = 0;
+            // Third: actual font data.
             for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
             {
                 Byte[] image = imageData[i];
                 if (image == null || image.Length == 0)
                     continue;
-                Array.Copy(image, 0, fullData, dataOffset + offset, image.Length);
-                offset += (UInt32)image.Length;
+                Array.Copy(image, 0, fullData, dataOffset, image.Length);
+                dataOffset += image.Length;
             }
             Byte compression = 0;
             Byte[] writeData = fullData;
-            if (!disableCompression)
+            if (compressionType == 1)
             {
-                /*/
-                // Not implemented
-                Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
-                if (compressLzw != null && compressLzw.Length < writeData.Length)
-                {
-                    compression = 2;
-                    writeData = compressLzw;
-                }
-                //*/
-                Byte[] compressRle = DynamixCompression.RleEncode(fullData, 3);
-                if (compressRle != null && compressRle.Length < writeData.Length)
+                Byte[] compressRle = DynamixCompression.RleEncode(fullData);
+                if (compressRle != null)
                 {
                     compression = 1;
                     writeData = compressRle;
                 }
             }
+            /*/
+            // Not implemented
+            else if (compressionType == 2)
+            {
+                Byte[] compressLzw = DynamixCompression.LzwEncode(fullData);
+                if (compressLzw != null)
+                {
+                    compression = 2;
+                    writeData = compressLzw;
+                }
+            }
+            //*/
             // offset to start writing data. Initialized on header length.
             Int32 writeOffset = 0x15;
             Byte[] fileData = new Byte[writeOffset + writeData.Length];
@@ -220,7 +242,7 @@ namespace WWFontEditor.Domain.FontTypes
             fileData[0x09] = (Byte)this.m_FontWidth;
             fileData[0x0A] = (Byte)this.m_FontHeight;
             // Line height value. Not sure what to do with it tbh... the editor doesn't really support setting this.
-            fileData[0x0B] = (Byte)this.lineHeight;
+            fileData[0x0B] = (Byte)lineHeight;
             fileData[0x0C] = (Byte)startSymbol;
             fileData[0x0D] = (Byte)nrOfSymbols;
             // Full added size: font size + symbols index + symbol widths.
@@ -239,7 +261,7 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel, 0);
                 ffs.OptimizeYHeight(yOffsetMax);
-                Int32 fullHeight = ffs.Height == 0? 0 : ffs.YOffset + ffs.Height;
+                Int32 fullHeight = ffs.Height == 0 ? 0 : ffs.YOffset + ffs.Height;
                 if (fullHeight == 0)
                     continue;
                 Int32 curVal;

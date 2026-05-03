@@ -128,7 +128,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException("Font load failed.");
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Int32 actualLen = m_ImageDataList.Count - SymbolsTypeFirst;
             Byte[][] symbolData = new Byte[actualLen][];

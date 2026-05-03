@@ -163,7 +163,7 @@ namespace Nyerguds.ImageManipulation
 
         public static Int32 GetClassicStride(Int32 width, Int32 bitsLength)
         {
-            return (((((bitsLength * width) + 7) / 8) + 3) / 4) * 4;
+            return ((GetMinimumStride(width, bitsLength) + 3) / 4) * 4;
         }
 
         public static Bitmap ConvertToPalettedGrayscale(Bitmap image)
@@ -261,10 +261,14 @@ namespace Nyerguds.ImageManipulation
         {
             switch (bpp)
             {
-                case 1: return PixelFormat.Format1bppIndexed;
-                case 4: return PixelFormat.Format4bppIndexed;
-                case 8: return PixelFormat.Format8bppIndexed;
-                default: throw new NotSupportedException("Unsupported indexed pixel format '" + bpp + "'!");
+                case 1:
+                    return PixelFormat.Format1bppIndexed;
+                case 4:
+                    return PixelFormat.Format4bppIndexed;
+                case 8:
+                    return PixelFormat.Format8bppIndexed;
+                default:
+                    throw new NotSupportedException("Unsupported indexed pixel format '" + bpp + "'!");
             }
         }
 
@@ -286,7 +290,7 @@ namespace Nyerguds.ImageManipulation
             Byte[] newImageData = new Byte[width * height];
             List<Int32> transparentIndices = new List<Int32>();
             for (Int32 i = 0; i < palette.Length; i++)
-                if (palette[i].A  < 128)
+                if (palette[i].A == 0)
                     transparentIndices.Add(i);
             for (Int32 y = 0; y < height; y++)
             {
@@ -672,24 +676,34 @@ namespace Nyerguds.ImageManipulation
             Int32 tarStart = left ? 0 : 1;
             for (Int32 i = 0; i < source.Length; i += stride)
             {
-                Byte fill = (Byte)(wrap ? newSource[i + (left ? 0 : length)] : backColor);
+                Byte fill = (wrap ? newSource[i + (left ? 0 : length)] : backColor);
                 Array.Copy(newSource, i + srcStart, source, i + tarStart, length);
                 // clear shifted pixel
                 source[i + length * srcStart] = fill;
             }
         }
 
-        public static Byte[] Change8BitStride(Byte[] source, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft, Byte backColor)
+        /// <summary>
+        /// Changes the stride of the given image data.
+        /// </summary>
+        /// <param name="buffer">Source byte array.</param>
+        /// <param name="origStride">Original stride</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="targetStride">Target stride</param>
+        /// <param name="fromLeft">True to add/remove bytes at the left side instead of the right.</param>
+        /// <param name="fillValue">Byte value used to fill any added space.</param>
+        /// <returns>The adjusted array, with the target stride.</returns>
+        public static Byte[] ChangeStride(Byte[] buffer, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft, Byte fillValue)
         {
             Int32 sourcePos = 0;
             Int32 destPos = 0;
             Int32 minStride = Math.Min(origStride, targetStride);
-            Int32 length = source.Length;
+            Int32 length = buffer.Length;
             Int32 targetSize = height * targetStride;
             Byte[] target = new Byte[targetSize];
-            if (backColor != 0)
+            if (fillValue != 0)
                 for (Int32 i = 0; i < targetSize; i++)
-                    target[i] = backColor;
+                    target[i] = fillValue;
             Int32 diff = origStride - targetStride;
             while (length >= origStride && length > 0)
             {
@@ -702,27 +716,26 @@ namespace Nyerguds.ImageManipulation
                     else
                         destPos1 -= diff;
                 }
-                Array.Copy(source, sourcePos1, target, destPos1, minStride);
+                Array.Copy(buffer, sourcePos1, target, destPos1, minStride);
                 length -= origStride;
                 sourcePos += origStride;
                 destPos += targetStride;
             }
             if (length > 0)
-                Array.Copy(source, sourcePos, target, destPos, length);
+                Array.Copy(buffer, sourcePos, target, destPos, length);
             return target;
         }
 
         /// <summary>
-        /// Copies a piece out of an 8-bit image.
+        /// Copies a piece out of an 8-bit image. The stride of the output will always equal the width.
         /// </summary>
         /// <param name="fileData">Byte data of the image.</param>
         /// <param name="width">Width of the image.</param>
         /// <param name="height">Height of the image.</param>
         /// <param name="stride">Stride of the image.</param>
-        /// <param name="copyStride">Outputs the stride of the copied data</param>
         /// <param name="copyArea">The area to copy.</param>
         /// <returns></returns>
-        public static Byte[] CopyFrom8bpp(Byte[] fileData, Int32 width, Int32 height, Int32 stride, out Int32 copyStride, Rectangle copyArea)
+        public static Byte[] CopyFrom8bpp(Byte[] fileData, Int32 width, Int32 height, Int32 stride, Rectangle copyArea)
         {
             Byte[] copiedPicture = new Byte[copyArea.Width * copyArea.Height];
             Int32 maxY = Math.Min(height - copyArea.Y, copyArea.Height);
@@ -739,7 +752,6 @@ namespace Nyerguds.ImageManipulation
                     copiedPicture[indexDest] = fileData[indexSource];
                 }
             }
-            copyStride = copyArea.Width;
             return copiedPicture;
         }
 
@@ -764,7 +776,7 @@ namespace Nyerguds.ImageManipulation
             Rectangle targetPos, Boolean[] transparentIndices, Boolean modifyOrig)
         {
             if (targetPos.Width != pasteWidth || targetPos.Height != pasteHeight)
-                pasteFileData = CopyFrom8bpp(pasteFileData, pasteWidth, pasteHeight, pasteStride, out pasteStride, new Rectangle(0, 0, targetPos.Width, targetPos.Height));
+                pasteFileData = CopyFrom8bpp(pasteFileData, pasteWidth, pasteHeight, pasteStride, new Rectangle(0, 0, targetPos.Width, targetPos.Height));
             Byte[] finalFileData;
             if (modifyOrig)
             {
@@ -791,6 +803,36 @@ namespace Nyerguds.ImageManipulation
                 }
             }
             return finalFileData;
+        }
+
+        /// <summary>
+        /// Collapse stride to the minimum required, for any image type.
+        /// </summary>
+        /// <param name="data">Image data</param>
+        /// <param name="width">Width of the image</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="bitsLength">Bits per pixel</param>
+        /// <param name="stride">Stride of the image</param>
+        /// <returns></returns>
+        public static Byte[] CollapseStride(Byte[] data, Int32 width, Int32 height, Int32 bitsLength, ref Int32 stride)
+        {
+            Int32 newStride = GetMinimumStride(width, bitsLength);
+            Byte[] newData = new Byte[newStride * height];
+            if (newStride == stride)
+                return data;
+            for (Int32 y = 0; y < height; y++)
+            {
+                Int32 oldOffs = stride * y;
+                Int32 offs = newStride * y;
+                for (Int32 s = 0; s < newStride; s++)
+                {
+                    newData[offs] = data[oldOffs];
+                    offs++;
+                    oldOffs++;
+                }
+            }
+            stride = newStride;
+            return newData;
         }
 
         /// <summary>
@@ -916,14 +958,14 @@ namespace Nyerguds.ImageManipulation
             return dataXbit;
         }
 
-        public static Bitmap Tile8BitImages(Byte[][] tiles, Int32 tileWidth, Int32 tileHeight, Int32 tileStride, Int32 nrOftiles, Color[] palette, Int32 tilesX)
+        public static Byte[] Tile8BitData(Byte[][] tiles, Int32 tileWidth, Int32 tileHeight, Int32 tileStride, Int32 nrOftiles, Color[] palette, Int32 tilesX)
         {
             Int32 yDim = nrOftiles / tilesX + (nrOftiles % tilesX == 0 ? 0 : 1);
 
             // Build image, set in m_LoadedImage
             Int32 fullImageWidth = tilesX * tileWidth;
             Int32 fullImageHeight = yDim * tileHeight;
-            byte[] fullImageData = new Byte[fullImageWidth * fullImageHeight];
+            Byte[] fullImageData = new Byte[fullImageWidth * fullImageHeight];
             Boolean[] isTrans = GetTransparencyGuide(palette);
             for (Int32 y = 0; y < yDim; y++)
             {
@@ -939,6 +981,15 @@ namespace Nyerguds.ImageManipulation
                         new Rectangle(x * tileWidth, y * tileHeight, tileWidth, tileHeight), isTrans, true);
                 }
             }
+            return fullImageData;
+        }
+
+        public static Bitmap Tile8BitImages(Byte[][] tiles, Int32 tileWidth, Int32 tileHeight, Int32 tileStride, Int32 nrOftiles, Color[] palette, Int32 tilesX)
+        {
+            Int32 yDim = nrOftiles / tilesX + (nrOftiles % tilesX == 0 ? 0 : 1);
+            Int32 fullImageWidth = tilesX * tileWidth;
+            Int32 fullImageHeight = yDim * tileHeight;
+            Byte[] fullImageData = Tile8BitData(tiles, tileWidth, tileHeight, tileStride, nrOftiles, palette, tilesX);
             return BuildImage(fullImageData, fullImageWidth, fullImageHeight, fullImageWidth, PixelFormat.Format8bppIndexed, palette, Color.Empty);
         }
 
@@ -955,20 +1006,29 @@ namespace Nyerguds.ImageManipulation
             return images.ToArray();
         }
 
-        /// <summary>Crop the image in Y-dimension and adjust the given Y offset to compensate.</summary>
-        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean AlsoTrimBottom, Int32 valueToTrim, Int32 maxOffset)
+        /// <summary>Calculate the amount an image can be cropped in Y-dimension, and adjust the given height and Y offset to compensate.</summary>
+        /// <param name="buffer">Image data buffer</param>
+        /// <param name="width">Image width (technically stride).</param>
+        /// <param name="height">Image height. Will be adjusted by this function.</param>
+        /// <param name="yOffset">Current Y-offset to increase.</param>
+        /// <param name="AlsoTrimBottom">Trim both top and bottom of the image.</param>
+        /// <param name="valueToTrim">Value to trim.</param>
+        /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
+        /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
+        /// <returns>The trimmed image, if adjustBuffer is true.</returns>
+        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean AlsoTrimBottom, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (height == 0)
-                return new Byte[0];
+                return adjustBuffer ? new Byte[0] : buffer;
             // Nothing to process
             if (width == 0)
             {
                 height = 0;
                 yOffset = 0;
-                return new Byte[0];
+                return adjustBuffer ? new Byte[0] : buffer;
             }
-            Int32 trimYMax = Math.Min(maxOffset - yOffset, height);
+            Int32 trimYMax = maxOffset != 0 ? Math.Min(maxOffset - yOffset, height) : height;
             Int32 trimmedYTop;
             Int32 trimmedYBottom = height;
             Byte[] tempArray = new Byte[width];
@@ -982,7 +1042,7 @@ namespace Nyerguds.ImageManipulation
             {
                 for (trimmedYBottom = height; trimmedYBottom > trimmedYTop; trimmedYBottom--)
                 {
-                    Array.Copy(buffer, width * (trimmedYBottom-1), tempArray, 0, width);
+                    Array.Copy(buffer, width * (trimmedYBottom - 1), tempArray, 0, width);
                     if (tempArray.All(x => x == valueToTrim))
                         continue;
                     break;
@@ -995,12 +1055,15 @@ namespace Nyerguds.ImageManipulation
                 // Full width was trimmed; image is empty.
                 height = 0;
                 yOffset = 0;
-                return new Byte[0];
+                return adjustBuffer ? new Byte[0] : buffer;
             }
-            // Vertical reduce is a simple array copy.
-            Byte[] buffer2 = new Byte[newHeight * width];
-            Array.Copy(buffer, trimmedYTop * width, buffer2, 0, newHeight * width);
-            buffer = buffer2;
+            if (adjustBuffer)
+            {
+                // Vertical reduce is a simple array copy.
+                Byte[] buffer2 = new Byte[newHeight * width];
+                Array.Copy(buffer, trimmedYTop * width, buffer2, 0, newHeight * width);
+                buffer = buffer2;
+            }
             height = newHeight;
             // Optimization: no need to keep Y if data is empty.
             if (height == 0)
@@ -1013,47 +1076,75 @@ namespace Nyerguds.ImageManipulation
         /// <summary>
         /// Crop the image in X-dimension and adjust the X offset to compensate.
         /// </summary>
-        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean AlsoTrimRight, Int32 valueToTrim, Int32 maxOffset)
+        /// <param name="buffer">Image data buffer.</param>
+        /// <param name="width">Image width (technically stride). Will be adjusted by this function.</param>
+        /// <param name="height">Image height.</param>
+        /// <param name="xOffset">Current X-offset to increase.</param>
+        /// <param name="AlsoTrimRight">Trim both left and right side of the image.</param>
+        /// <param name="valueToTrim">Value to trim.</param>
+        /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
+        /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
+        /// <returns>The trimmed image, if adjustBuffer is true.</returns>
+        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean AlsoTrimRight, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (width == 0)
-                return new Byte[0];
+                return adjustBuffer ? buffer : new Byte[0];
             // Nothing to process
             if (height == 0)
             {
                 width = 0;
                 xOffset = 0;
-                return new Byte[0];
+                return adjustBuffer ? buffer : new Byte[0];
             }
-            Int32 trimXMax = Math.Min(maxOffset - xOffset, width);
-            Int32 trimmedXLeft = Int32.MaxValue;
-            Int32 trimmedXRight = AlsoTrimRight ? 0 : width;
-            for (Int32 y = 0; y < height; y++)
+            Int32 trimXMax = maxOffset != 0 ? Math.Min(maxOffset - xOffset, width) : width;
+            Int32 trimmedXLeft = 0;
+            Int32 trimmedXRight = 0;
+            for (Int32 x = 0; x < trimXMax; x++)
             {
-                Int32 lineIndex = y * width;
-                Int32 emptyXStart;
-                for (emptyXStart = 0; emptyXStart < width && buffer[lineIndex + emptyXStart] == valueToTrim; emptyXStart++) { }
-                trimmedXLeft = Math.Min(trimmedXLeft, emptyXStart);
-                if (!AlsoTrimRight)
-                    continue;
-                Int32 emptyXEnd;
-                for (emptyXEnd = width; emptyXEnd >= 0 && buffer[lineIndex + emptyXEnd] == valueToTrim; emptyXEnd--) { }
-                trimmedXRight = Math.Max(trimmedXRight, emptyXStart);
+                Boolean empty = true;
+                for (Int32 y = 0; y < height; y++)
+                {
+                    if (buffer[y * width + x] != valueToTrim)
+                    {
+                        empty = false;
+                        break;
+                    }
+                }
+                if (!empty)
+                    break;
+                trimmedXLeft++;
             }
-            trimmedXLeft = Math.Min(trimmedXLeft, trimXMax);
-            Int32 newWidth = trimmedXRight - trimmedXLeft;
             if (trimmedXLeft == width)
             {
-                // Full width was trimmed; image is empty.
                 width = 0;
                 xOffset = 0;
                 return new Byte[0];
             }
-            buffer = Change8BitStride(buffer, width, height, width - trimmedXLeft, true, 0);
-            buffer = Change8BitStride(buffer, width, height, newWidth, false, 0);
+            if (AlsoTrimRight)
+            {
+                for (Int32 x = width - 1; x >= 0; x--)
+                {
+                    Boolean empty = true;
+                    for (Int32 y = 0; y < height; y++)
+                    {
+                        if (buffer[y * width + x] != valueToTrim)
+                        {
+                            empty = false;
+                            break;
+                        }
+                    }
+                    if (!empty)
+                        break;
+                    trimmedXRight++;
+                }
+            }
+            Int32 newWidth = width - trimmedXLeft - trimmedXRight;
+            if (adjustBuffer)
+                buffer = CopyFrom8bpp(buffer, width, height, width, new Rectangle(trimmedXLeft, 0, newWidth, height));
             width = newWidth;
             // Optimization: no need to keep Y if data is empty.
-            if (height == 0)
+            if (width == 0)
                 xOffset = 0;
             else
                 xOffset += trimmedXLeft;
@@ -1061,18 +1152,35 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Change the height of an array of bytes that represents an image.
+        /// Changes the height of the given image data.
         /// </summary>
-        public static Byte[] ChangeHeight(Byte[] buffer, Int32 stride, Int32 height, Int32 newHeight, Byte backColor)
+        /// <param name="buffer">Source byte array.</param>
+        /// <param name="stride">Stride of the image.</param>
+        /// <param name="origHeight">Original height of the image.</param>
+        /// <param name="targetHeight">Target height.</param>
+        /// <param name="fromTop">True to add/remove bytes at the top instead of the bottom.</param>
+        /// <param name="fillValue">Byte value used to fill any added space.</param>
+        /// <returns>The adjusted array, with the target height.</returns>
+        public static Byte[] ChangeHeight(Byte[] buffer, Int32 stride, Int32 origHeight, Int32 targetHeight, Boolean fromTop, Byte fillValue)
         {
-            if (height == newHeight)
+            if (origHeight == targetHeight)
                 return buffer;
-            Int32 newSize = stride * newHeight;
+            Int32 newSize = stride * targetHeight;
             Byte[] newData = new Byte[newSize];
-            if (backColor != 0)
-                for (Int32 i = stride * height; i < newSize; i++)
-                    newData[i] = backColor;
-            Array.Copy(buffer, 0, newData, 0, Math.Min(buffer.Length, newData.Length));
+            if (fillValue != 0)
+                for (Int32 i = stride * origHeight; i < newSize; i++)
+                    newData[i] = fillValue;
+            Int32 readOffset = 0;
+            Int32 writeOffset = 0;
+            if (fromTop)
+            {
+                Int32 hdiff = targetHeight - origHeight;
+                if (hdiff < 0)
+                    readOffset = (-hdiff) * stride;
+                else
+                    writeOffset = hdiff * stride;
+            }
+            Array.Copy(buffer, readOffset, newData, writeOffset, Math.Min(buffer.Length, newData.Length));
             return newData;
         }
 

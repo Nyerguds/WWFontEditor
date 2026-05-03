@@ -75,7 +75,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Int32 fontStride = (this.m_FontWidth + 7) / 8;
             Int32 charSize = this.m_FontHeight * fontStride;

@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\Compression\RleCompression.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
     <Compile Include="Domain\Utils\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="Domain\FontTypes\FontFileMK.cs" />
     <Compile Include="Domain\FontTypes\FontFileDynV2.cs" />
     <Compile Include="Domain\Utils\ClipboardImage.cs" />
+    <Compile Include="Domain\Utils\ClipboardImageNoTools.cs" />
     <Compile Include="Domain\Utils\Crc32.cs" />
     <Compile Include="Domain\Utils\ImageUtils\BitmapHandler.cs" />
     <Compile Include="Domain\Utils\ImageUtils\ColorHSL.cs" />
@@ -101,6 +103,7 @@
     <Compile Include="Domain\FontEditSettings.cs" />
     <Compile Include="Domain\Utils\ImageUtils\PaletteUtils.cs" />
     <Compile Include="Domain\Utils\ImageUtils\PixelFormatter.cs" />
+    <Compile Include="Domain\Utils\SaveOption.cs" />
     <Compile Include="Domain\Utils\TextUtils.cs" />
     <Compile Include="UI\FrmManagePalettes.cs">
       <SubType>Form</SubType>
@@ -140,6 +143,51 @@
     <Compile Include="UI\FrmSettings.Designer.cs">
       <DependentUpon>FrmSettings.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\SaveOptions\FrmExtraOptions.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\FrmExtraOptions.designer.cs">
+      <DependentUpon>FrmExtraOptions.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionBoolean.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionBoolean.Designer.cs">
+      <DependentUpon>SaveOptionBoolean.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionChoices.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionChoices.Designer.cs">
+      <DependentUpon>SaveOptionChoices.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionInfo.cs" />
+    <Compile Include="UI\SaveOptions\SaveOptionNumber.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionNumber.Designer.cs">
+      <DependentUpon>SaveOptionNumber.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionsList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionString.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SaveOptions\SaveOptionString.Designer.cs">
+      <DependentUpon>SaveOptionString.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Tools\ControlsList\ControlsList.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Tools\ControlsList\ControlsList.designer.cs">
+      <DependentUpon>ControlsList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Tools\ControlsList\CustomControlInfo.cs" />
+    <Compile Include="UI\Tools\ControlsList\ListedControlController.cs" />
     <Compile Include="UI\Tools\DataGridViewScrollSupport.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -210,6 +258,24 @@
     <EmbeddedResource Include="UI\FrmSettings.resx">
       <DependentUpon>FrmSettings.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\SaveOptions\FrmExtraOptions.resx">
+      <DependentUpon>FrmExtraOptions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SaveOptions\SaveOptionBoolean.resx">
+      <DependentUpon>SaveOptionBoolean.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SaveOptions\SaveOptionChoices.resx">
+      <DependentUpon>SaveOptionChoices.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SaveOptions\SaveOptionNumber.resx">
+      <DependentUpon>SaveOptionNumber.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\SaveOptions\SaveOptionString.resx">
+      <DependentUpon>SaveOptionString.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\Tools\ControlsList\ControlsList.resx">
+      <DependentUpon>ControlsList.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\Tools\FrmPalette.resx">
       <DependentUpon>FrmPalette.cs</DependentUpon>
     </EmbeddedResource>
@@ -234,9 +300,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="td-temp.pal">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="license.txt" />

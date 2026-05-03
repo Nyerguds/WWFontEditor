@@ -68,12 +68,12 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(disableCompression, false);
+            return SaveFont(saveOptions, false);
         }
 
-        protected Byte[] SaveFont(Boolean disableCompression, Boolean withheader)
+        protected Byte[] SaveFont(SaveOption[] saveOptions, Boolean withheader)
         {
             Boolean foundStart = false;
             Int32 startSymbol = 0;

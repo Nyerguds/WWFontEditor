@@ -52,7 +52,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Byte[] fileData = new Byte[m_FontSize];
             Int32 imagesCount = Math.Min(128, this.m_ImageDataList.Count);

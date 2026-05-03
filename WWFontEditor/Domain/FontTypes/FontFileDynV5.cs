@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -23,9 +24,9 @@ namespace WWFontEditor.Domain.FontTypes
             LoadFont(fileData, true);
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(disableCompression, true);
+            return SaveFont(saveOptions, true);
         }
 
     }

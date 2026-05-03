@@ -81,7 +81,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             FontFileSymbol[] baseList = new List<FontFileSymbol>(m_ImageDataList).ToArray();
             FontFileSymbol[] newList = new FontFileSymbol[255];

@@ -18,6 +18,7 @@ using WWFontEditor.UI.Tools;
 using Nyerguds.Util;
 using WWFontEditor.Domain.FontTypes;
 using System.Runtime.InteropServices;
+using Nyerguds.Util.Ui.SaveOptions;
 using WWFontEditor.Domain.Utils;
 
 namespace WWFontEditor
@@ -54,6 +55,7 @@ namespace WWFontEditor
         private List<PaletteDropDownInfo> m_DefaultPalettes;
         private List<PaletteDropDownInfo> m_ReadPalettes;
         private Color[] m_CurrentPalette;
+        private Bitmap m_dummyImage;
 
         private Int32[] m_CustomColors;
 
@@ -69,6 +71,7 @@ namespace WWFontEditor
         public FrmFontEditor()
         {
             this.m_Loading = true;
+            m_dummyImage = ImageUtils.GenerateBlankImage(1, 1, new Color[] { Color.Transparent }, 0);
             InitializeComponent();
             m_GridRowTemplateHeight = this.dgrvSymbolsList.RowTemplate.Height;
             // Load settings
@@ -451,6 +454,9 @@ namespace WWFontEditor
         {
             Boolean wasLoading = this.m_Loading;
             this.m_Loading = true;
+            DataTable oldSymbolsTable = null;
+            if (this.dgrvSymbolsList.DataSource is DataTable)
+                oldSymbolsTable = this.dgrvSymbolsList.DataSource as DataTable;
             try
             {
                 if (m_LoadedFont == null)
@@ -462,7 +468,6 @@ namespace WWFontEditor
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
                 Color[] palette = m_CurrentPalette.ToArray();
                 palette[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(0xFF, palette[this.m_LoadedFont.TransparencyColor]);
-                Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = -1;
                 Int32 scrollOffset = -1;
                 if (this.dgrvSymbolsList.Rows.Count > 0 && this.dgrvSymbolsList.CurrentCell != null)
@@ -486,7 +491,7 @@ namespace WWFontEditor
                     row[2] = enc.GetString(new Byte[] { (Byte)i });
                     Bitmap bm = symbol.GetBitmapFullSize(palette, m_LoadedFont, false);
                     if (bm == null)
-                        bm = dummyImage;
+                        bm = m_dummyImage;
                     row[3] = bm;
                     symbolsTable.Rows.Add(row);
                 }
@@ -505,7 +510,48 @@ namespace WWFontEditor
             }
             finally
             {
+                // Cleanup
+                if (oldSymbolsTable != null && oldSymbolsTable.Columns.Count >= 4)
+                {
+                    foreach (DataRow row in oldSymbolsTable.Rows)
+                    {
+                        if (row[3] is Image)
+                        {
+                            Image row3 = row[3] as Image;
+                            row[3] = null;
+                            if (!ReferenceEquals(row3, m_dummyImage))
+                            {
+                                try { row3.Dispose(); }
+                                catch { /* ignore */ }
+                            }
+                        }
+                    }
+                }
                 m_Loading = wasLoading;
+            }
+        }
+
+        private void RefreshCurrentGridImage()
+        {
+            if (!(this.dgrvSymbolsList.DataSource is DataTable))
+                return;
+            if (this.dgrvSymbolsList.SelectedRows.Count == 0)
+                return;
+            DataGridViewRow selRow = this.dgrvSymbolsList.SelectedRows[0];
+
+            Int32 index = GetSelectedIndex();
+            FontFileSymbol symbol = m_LoadedFont.GetSymbol(index);
+            Color[] palette = m_CurrentPalette.ToArray();
+            palette[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(0xFF, palette[this.m_LoadedFont.TransparencyColor]);
+            Image bmOld = selRow.Cells[3].Value as Image;
+            Bitmap bm = symbol.GetBitmapFullSize(palette, m_LoadedFont, false);
+            if (bm == null)
+                bm = m_dummyImage;
+            selRow.Cells[3].Value = bm;
+            if (bmOld != null && !ReferenceEquals(bmOld, m_dummyImage))
+            {
+                try { bmOld.Dispose(); }
+                catch { /* ignore */ }
             }
         }
 
@@ -523,7 +569,19 @@ namespace WWFontEditor
                 return;
             try
             {
-                Byte[] filedata = this.m_LoadedFont.SaveFont(m_Settings.DisableCompression);
+                SaveOption[] saveOptions = this.m_LoadedFont.GetSaveOptions(fileName);
+                if (saveOptions != null && saveOptions.Length > 0)
+                {
+                    SaveOptionInfo soi = new SaveOptionInfo();
+                    soi.Name = "Extra save options for " + m_LoadedFont.ShortTypeDescription;
+                    soi.Properties = saveOptions;
+                    FrmExtraOptions extraopts = new FrmExtraOptions(GetTitle(false));
+                    extraopts.Init(soi);
+                    if (extraopts.ShowDialog(this) != DialogResult.OK)
+                        return;
+                    saveOptions = extraopts.GetSaveOptions();
+                }
+                Byte[] filedata = this.m_LoadedFont.SaveFont(saveOptions);
                 File.WriteAllBytes(fileName, filedata);
                 this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
                 this.m_FileName = fileName;
@@ -547,6 +605,7 @@ namespace WWFontEditor
         {
             Boolean wasLoading = this.m_Loading;
             this.m_Loading = true;
+            Image oldImg = this.pxbImage.Image;
             try
             {
                 Int32 curIndex = GetSelectedIndex();
@@ -580,6 +639,12 @@ namespace WWFontEditor
             }
             finally
             {
+                //Cleanup
+                if (oldImg != null && !ReferenceEquals(pxbImage.Image, oldImg))
+                {
+                    try { oldImg.Dispose(); }
+                    catch { /*ignore*/ }
+                }
                 this.m_Loading = wasLoading;
             }
         }
@@ -627,13 +692,15 @@ namespace WWFontEditor
         {
             Boolean wasLoading = this.m_Loading;
             this.m_Loading = true;
+            Image imEdGrBeh = pxbEditGridBehind.Image;
+            Image imEdGrFrBg = pxbEditGridFront.BackgroundImage;
+            Image imEdGrFr = pxbEditGridFront.Image;
+            Image imPxFull = pxbFullSize.Image;
             try
             {
                 // Beware! Heavy grid logic abound!
-                Bitmap bm = (Bitmap)pxbImage.Image;
-
                 // False if no actual image data loaded.
-                Boolean imgLoadOk = bm != null && this.m_CurWidth != 0 && this.m_CurHeight != 0;
+                Boolean imgLoadOk = pxbImage.Image != null && this.m_CurWidth != 0 && this.m_CurHeight != 0;
                 Boolean fntLoadOk = this.m_LoadedFont != null;
                 Int32 zoom = (Int32)numZoom.Value;
                 Boolean drawGrid = chkGrid.Checked;
@@ -716,6 +783,27 @@ namespace WWFontEditor
             }
             finally
             {
+                // Cleanup. All of these should have been replaced.
+                if (imEdGrBeh != null && !ReferenceEquals(imEdGrBeh, pxbEditGridBehind.Image))
+                {
+                    try { imEdGrBeh.Dispose(); }
+                    catch { /*ignore*/ }
+                }
+                if (imEdGrFrBg != null && !ReferenceEquals(imEdGrFrBg, pxbEditGridFront.BackgroundImage))
+                {
+                    try { imEdGrFrBg.Dispose(); }
+                    catch { /*ignore*/ }
+                }
+                if (imEdGrFr != null && !ReferenceEquals(imEdGrFr, pxbEditGridFront.Image))
+                {
+                    try { imEdGrFr.Dispose(); }
+                    catch { /*ignore*/ }
+                }
+                if (imPxFull != null && !ReferenceEquals(imPxFull, pxbFullSize.Image))
+                {
+                    try { imPxFull.Dispose(); }
+                    catch { /*ignore*/ }
+                }
                 this.m_Loading = wasLoading;
             }
         }
@@ -750,7 +838,8 @@ namespace WWFontEditor
             m_Clicking = false;
             if ((e.Button & MouseButtons.Left) != 0 || (e.Button & MouseButtons.Right) != 0)
             {
-                ReloadDataGrid(false);
+                //ReloadDataGrid(false);
+                this.RefreshCurrentGridImage();
                 this.RepaintPreview();
                 this.AdjustRevertButton();
             }
@@ -903,7 +992,13 @@ namespace WWFontEditor
         {
             Color col = this.GetPaletteColor(this.m_CurrentPaintColor1);
             Color paintColor = Color.FromArgb(0xFF, col);
+            Image oldImg = pxbEditGridFront.Image;
             pxbEditGridFront.Image = ImageUtils.GenerateBlankImage(this.m_CurWidth, this.m_CurHeight, new Color[] { Color.Transparent, paintColor }, 0);
+            if (oldImg != null && !ReferenceEquals(oldImg, pxbEditGridFront.Image))
+            {
+                try { oldImg.Dispose(); }
+                catch { /*ignore*/ }
+            }
         }
 
         private void WipeColorPickInfo()
@@ -957,7 +1052,8 @@ namespace WWFontEditor
                 return;
             this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup, GetEditBpp(m_LoadedFont));
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid(false);
+            //this.ReloadDataGrid(false);
+            this.RefreshCurrentGridImage();
             this.pnlImageScroll.Focus();
         }
 
@@ -967,7 +1063,7 @@ namespace WWFontEditor
                 return;
             this.m_LoadedFont.GetSymbol(GetSelectedIndex()).YOffset = (Byte)this.numYOffset.Value;
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid(false);
+            this.RefreshCurrentGridImage();
         }
 
         private void CmbEncodings_SelectedIndexChanged(object sender, EventArgs e)
@@ -1107,7 +1203,10 @@ namespace WWFontEditor
                 symbol.YOffset = Math.Min(this.m_LoadedFont.YOffsetTypeMax, Math.Max(0, symbol.YOffset + shift));
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid(false);
+            if (!all)
+                this.RefreshCurrentGridImage();
+            else
+                this.ReloadDataGrid(false);
         }
         
         private void ShiftCurrentImage(ShiftDirection shiftDirection, Boolean all, Boolean expand)
@@ -1140,7 +1239,10 @@ namespace WWFontEditor
                     symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked, this.m_LoadedFont.TransparencyColor);
             }
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid(false);
+            if (!all)
+                this.RefreshCurrentGridImage();
+            else
+                this.ReloadDataGrid(false);
         }
 
         private void ToggleTempColorSelect(Boolean enabled)
@@ -1208,7 +1310,11 @@ namespace WWFontEditor
             else
                 symbol.ChangeWidth(newDimension, this.m_LoadedFont.TransparencyColor);
             this.ReloadImageInfo(true);
-            this.ReloadDataGrid(isHeight && (newDimension > m_GridRowTemplateHeight || oldHeight > m_GridRowTemplateHeight));
+
+            if (isHeight && (newDimension > m_GridRowTemplateHeight || oldHeight > m_GridRowTemplateHeight))
+                this.ReloadDataGrid(true);
+            else
+                this.RefreshCurrentGridImage();
         }
 
         private void NumWidth_ValueChanged(object sender, EventArgs e)
@@ -1373,12 +1479,10 @@ namespace WWFontEditor
             DataObject retrievedData = (DataObject)Clipboard.GetDataObject();
             FontFileSymbol clipboard = null;
             if (retrievedData != null)
-            {
                 clipboard = GetClipboardData(retrievedData);
-            }
             if (clipboard == null)
             {
-                MessageBox.Show("No font data found on the clipboard.", GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No image data found on the clipboard.", GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             Int32 curIndex = GetSelectedIndex();
@@ -1431,7 +1535,9 @@ namespace WWFontEditor
             Bitmap clipboardimage = ClipboardImage.GetClipboardImage(retrievedData);
             if (clipboardimage == null)
                 return null;
-            return new FontFileSymbol(clipboardimage, this.m_CurrentPalette, this.m_LoadedFont);
+            FontFileSymbol clipboardSymbol = new FontFileSymbol(clipboardimage, this.m_CurrentPalette, this.m_LoadedFont);
+            clipboardimage.Dispose();
+            return clipboardSymbol;
         }
 
         private void NumSymbols_ValueChanged(object sender, EventArgs e)
@@ -1691,35 +1797,52 @@ namespace WWFontEditor
 
         private void RepaintPreview()
         {
-            if (m_LoadedFont == null)
+            Image oldImg = pxbPreview.Image;
+            try
             {
-                this.pxbPreview.Image = null;
-                this.pxbPreview.BackColor = System.Drawing.Color.Silver;
-                this.pnlImagePreview.Enabled = false;
-                this.pnlImagePreview.BackColor = System.Drawing.Color.Silver;
-                return;
-            }
-            Int32 zoom = (Int32)numZoomPreview.Value;
-            this.pnlImagePreview.Enabled = true;
-            this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
-            this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
-            Image image;
-            if (chkWrapPreview.Checked)
-            {
-                // Done three times to prevent scrollbar problems.
-                if (pnlImagePreview.VerticalScroll.Visible)
+                if (m_LoadedFont == null)
                 {
-                    image = GeneratePreview(String.Empty, 0, true);
-                    pxbPreview.Image = image;
-                    pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
+                    this.pxbPreview.Image = null;
+                    this.pxbPreview.BackColor = System.Drawing.Color.Silver;
+                    this.pnlImagePreview.Enabled = false;
+                    this.pnlImagePreview.BackColor = System.Drawing.Color.Silver;
+                    return;
                 }
-                image = GeneratePreview(0, true);
-                pxbPreview.Image = image;
-                pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
+                Int32 zoom = (Int32)numZoomPreview.Value;
+                this.pnlImagePreview.Enabled = true;
+                this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
+                this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
+                Image image1 = null;
+                Image image2 = null;
+                if (chkWrapPreview.Checked)
+                {
+                    // Done three times to prevent scrollbar problems.
+                    if (pnlImagePreview.VerticalScroll.Visible)
+                    {
+                        image1 = GeneratePreview(String.Empty, 0, true);
+                        pxbPreview.Image = image1;
+                        pxbPreview.Size = new Size(image1.Width * zoom, image1.Height * zoom);
+                    }
+                    image2 = GeneratePreview(0, true);
+                    pxbPreview.Image = image2;
+                    pxbPreview.Size = new Size(image2.Width * zoom, image2.Height * zoom);
+                }
+                Image image3 = this.GeneratePreview(this.chkWrapPreview.Checked ? 0 : -1, true);
+                pxbPreview.Image = image3;
+                pxbPreview.Size = new Size(image3.Width * zoom, image3.Height * zoom);
+                try { if (image1 != null && !ReferenceEquals(image1, pxbPreview.Image)) image1.Dispose(); }
+                catch { /*ignore*/ }
+                try { if (image2 != null && !ReferenceEquals(image2, pxbPreview.Image)) image2.Dispose(); }
+                catch { /*ignore*/ }
             }
-            image = GeneratePreview(chkWrapPreview.Checked ? 0 : -1, true);
-            pxbPreview.Image = image;
-            pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
+            finally
+            {
+                if (oldImg != null && !ReferenceEquals(oldImg, pxbPreview.Image))
+                {
+                    try { oldImg.Dispose(); }
+                    catch { /*ignore*/ }
+                }
+            }
         }
 
         private Bitmap GeneratePreview(Int32 width, Boolean transparentBg)
@@ -1882,6 +2005,11 @@ namespace WWFontEditor
         private void FrmFontEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE);
+            if(e.Cancel)
+                return;
+            m_LoadedFont = null;
+            ReloadUi(true);
+            m_dummyImage.Dispose();
         }
 
         private Boolean AbortForChangesAskSave(String question)

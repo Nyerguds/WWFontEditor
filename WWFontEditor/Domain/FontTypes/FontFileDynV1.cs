@@ -58,7 +58,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Byte[][] imageData = new Byte[0x60][];
             for (Int32 i = 0; i < 0x60; i++)
@@ -69,7 +69,6 @@ namespace WWFontEditor.Domain.FontTypes
                     if (eightBitData[b] != 0)
                         eightBitData[b] = MaxValue;
                 }
-
                 imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, InternalBpp, true);
             }
             Int32 symbolsize = m_FontWidth * InternalBpp;

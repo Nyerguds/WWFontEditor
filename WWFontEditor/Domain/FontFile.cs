@@ -84,12 +84,14 @@ namespace WWFontEditor.Domain
         /// <returns>False if the font was not identified as this type.</returns>
         public abstract void LoadFont(Byte[] fileData);
 
+        public virtual SaveOption[] GetSaveOptions(String targetFileName) { return new SaveOption[0]; }
+        
         /// <summary>
         /// Saves the font data to a byte array and returns it.
         /// </summary>
-        /// <param name="disableCompression">True to disable any optional compression that might obfuscate the binary readability of the font.</param>
+        /// <param name="saveOptions"></param>
         /// <returns>The font data to be written to disk.</returns>
-        public abstract Byte[] SaveFont(Boolean disableCompression);
+        public abstract Byte[] SaveFont(SaveOption[] saveOptions);
 
         // any actions to be taken after conversion to this type. Free to override by subclasses.
         protected virtual void PostConvertCleanup() { }
@@ -496,40 +498,45 @@ namespace WWFontEditor.Domain
         #region internal data loading/saving methods
 
         /// <summary>
-        ///     Optimizes the image data list, and returns a list of reference addresses, starting from the given fontOffset.
+        ///     Creates a 16-bit little endian index of reference addresses, starting from the given fontOffset.
         ///     After the procedure, fontOffset will have the address behind the last data to write.
+        ///     if "optimize" is enabled this will remove duplicate images in the process.
         /// </summary>
         /// <param name="imageData">Image data. Duplicate arrays in this are set to 0-sized ones.</param>
         /// <param name="startIndex">Start index in the imageData array.</param>
+        /// <param name="reduce">True to only start the index from the start offset. False generates the full index with 0 on the empty spots.</param>
         /// <param name="fontOffset">Start offset of the addressing. Adjusted to the end offset.</param>
-        /// <returns></returns>
-        protected Byte[] OptimizeImagesList(Byte[][] imageData, Int32 startIndex, ref Int32 fontOffset)
+        /// <param name="usesNullOffset">Use 0 value for symbols with no data.</param>
+        /// <param name="optimise">Optimise to remove duplicate indices.</param>
+        /// <returns>The list of reference addresses, relative to the given font offset.</returns>
+        protected Byte[] CreateImageIndex(Byte[][] imageData, Int32 startIndex, Boolean reduce, ref Int32 fontOffset, Boolean usesNullOffset, Boolean optimise)
         {
-            Int32[] refslist = CreateRefsList(imageData, startIndex);
-            Int32 symbols = imageData.Length - startIndex;
-            Byte[] fontDataOffsetsList = new Byte[symbols * 2];
+            Int32[] refslist = optimise ? this.CreateOptimizedRefsList(imageData, startIndex) : null;
+            Int32 symbols = imageData.Length;
+            Int32 writeDiff = reduce ? -startIndex : 0;
+            Byte[] fontDataOffsetsList = new Byte[(reduce ? symbols - startIndex : symbols) * 2];
 
-            for (Int32 i = 0; i < symbols; i++)
+            for (Int32 i = startIndex; i < symbols; i++)
             {
-                Int32 replacei = refslist[i];
-                if (imageData[i + startIndex].Length == 0)
+                Int32 replacei = optimise ? refslist[i] : i;
+                if (usesNullOffset && imageData[i].Length == 0)
                 {
                     // Data is null: just write 0
-                    fontDataOffsetsList[i * 2] = 0;
-                    fontDataOffsetsList[i * 2 + 1] = 0;
+                    fontDataOffsetsList[(i + writeDiff) * 2] = 0;
+                    fontDataOffsetsList[(i + writeDiff) * 2 + 1] = 0;
                 }
                 else if (replacei == i)
                 {
                     // Data is not null and not a duplicate: write offset and advance offset ptr.
-                    ArrayUtils.WriteIntToByteArray(fontDataOffsetsList, i * 2, 2, true, (UInt32)fontOffset);
-                    fontOffset += imageData[i + startIndex].Length;
+                    ArrayUtils.WriteIntToByteArray(fontDataOffsetsList, (i + writeDiff) * 2, 2, true, (UInt32)fontOffset);
+                    fontOffset += imageData[i].Length;
                 }
                 else
                 {
                     // Data is duplicate: clear data and copy previously written offset.
                     imageData[i] = new Byte[0];
-                    fontDataOffsetsList[i * 2] = fontDataOffsetsList[replacei * 2];
-                    fontDataOffsetsList[i * 2 + 1] = fontDataOffsetsList[replacei * 2 + 1];
+                    fontDataOffsetsList[(i + writeDiff) * 2] = fontDataOffsetsList[(replacei + writeDiff) * 2];
+                    fontDataOffsetsList[(i + writeDiff) * 2 + 1] = fontDataOffsetsList[(replacei + writeDiff) * 2 + 1];
                 }
             }
             return fontDataOffsetsList;
@@ -538,15 +545,15 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// File size optimization. This function makes a map to re-map duplicate entries to the first found occurrence.
         /// In the final images array, any index not referencing itself is deemed a copy and should be removed in favour of the reference.
-        /// If startindex is greater than 0, the returned references list will be smaller too, and references will be to the decreased array.
+        /// If startindex is greater than 0, the returned references list will not be smaller; the ones before the start will simply not be processed.
         /// </summary>
         /// <param name="imageData">Image data array</param>
         /// <param name="startIndex">Start index in the array.</param>
         /// <returns></returns>
-        protected Int32[] CreateRefsList(Byte[][] imageData, Int32 startIndex)
+        protected Int32[] CreateOptimizedRefsList(Byte[][] imageData, Int32 startIndex)
         {
             Int32 imagesCount = imageData.Length;
-            Int32[] refsList = new Int32[imagesCount - startIndex];
+            Int32[] refsList = new Int32[imagesCount];
             for (Int32 checkedEntry = startIndex; checkedEntry < imagesCount; checkedEntry++)
             {
                 for (Int32 dupetest = startIndex; dupetest < imagesCount; dupetest++)
@@ -554,7 +561,7 @@ namespace WWFontEditor.Domain
                     if (dupetest == checkedEntry || imageData[checkedEntry].SequenceEqual(imageData[dupetest]))
                     {
                         // reached the own index, or the data matches. Either way, set ref and continue with next one.
-                        refsList[checkedEntry - startIndex] = dupetest - startIndex;
+                        refsList[checkedEntry] = dupetest;
                         break;
                     }
                 }

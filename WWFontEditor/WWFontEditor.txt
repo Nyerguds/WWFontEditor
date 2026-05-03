@@ -301,6 +301,13 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.11: (2017/11/20 13:31)
+-Optimised image memory handling in the user interface.
+-Added save options system that allows specific options per font type.
+-Rewrote the symbol index generating to make optimisation optional.
+-Migrated compression options from program settings to font save options.
+-Added save options for previously uneditable data like Dynamix Y-baseline.
+
 v1.10.6: (2017/09/27 10:15)
 -Added Kings of the Beach font. It's an exe-extracted font, though.
 

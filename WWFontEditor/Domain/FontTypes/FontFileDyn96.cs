@@ -66,7 +66,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Int32 len = this.m_ImageDataList.Count;
             Byte[] symbolWidths = new Byte[len];

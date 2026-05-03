@@ -1,4 +1,5 @@
 ﻿using System;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -29,7 +30,7 @@ namespace WWFontEditor.Domain.FontTypes
             LoadV3V4Font(fileData, true);
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             return this.SaveV3V4Font(true);
         }

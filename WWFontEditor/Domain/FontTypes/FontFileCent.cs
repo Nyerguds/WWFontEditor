@@ -74,7 +74,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Byte[] characterWidths = new Byte[NrOfSymbols];
             Byte[] characterYOffsets = new Byte[NrOfSymbols];

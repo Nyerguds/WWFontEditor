@@ -217,7 +217,7 @@ namespace WWFontEditor.Domain
         {
             if (this.Height == newHeight)
                 return;
-            this.ByteData = ImageUtils.ChangeHeight(this.ByteData, this.Width, this.Height, newHeight, this.TransparencyColor);
+            this.ByteData = ImageUtils.ChangeHeight(this.ByteData, this.Width, this.Height, newHeight, false, this.TransparencyColor);
             this.Height = newHeight;
         }
 
@@ -225,7 +225,7 @@ namespace WWFontEditor.Domain
         {
             if (Width == newWidth)
                 return;
-            this.ByteData = ImageUtils.Change8BitStride(this.ByteData, this.Width, this.Height, newWidth, false, backColor);
+            this.ByteData = ImageUtils.ChangeStride(this.ByteData, this.Width, this.Height, newWidth, false, backColor);
             this.Width = newWidth;
         }
 
@@ -296,18 +296,21 @@ namespace WWFontEditor.Domain
                 return false;
             return this.ByteData.SequenceEqual(other.ByteData);
         }
-
+        
         /// <summary>
         /// Crop the image in Y-dimension and adjust the Y offset instead.
         /// This can not be performed on fonts that don't support Y-offset!
         /// </summary>
+        /// <param name="yOffsetMax">Maximum value for Y-offset; related to how the Y is saved. Use -1 to ignore.</param>
         public void OptimizeYHeight(Int32 yOffsetMax)
         {
-            if(yOffsetMax == 0)
+            if (yOffsetMax == 0)
                 return;
+            if (yOffsetMax < 0)
+                yOffsetMax = Int32.MaxValue;
             Int32 height = this.Height;
             Int32 yoffSet = this.YOffset;
-            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor, yOffsetMax);
+            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor, yOffsetMax, true);
             this.Height = height;
             this.YOffset = yoffSet;
         }

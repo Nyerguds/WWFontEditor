@@ -31,22 +31,28 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            if (fileData.Length < 0x104)
+            LoadFont(fileData, false);
+        }
+
+        public void LoadFont(Byte[] fileData, Boolean extendedFormat)
+        {
+            if (fileData.Length < SymbolsTypeMax * 2 + 4)
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileData.Length - 2)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
-            // the size of the file: already read. Skip this.
-            //Int16 filesize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
-            Int16[] fontDataOffsetsList = new Int16[0x80];
-            for (Int32 i = 0; i < 0x80; i++)
+            Int16[] fontDataOffsetsList = new Int16[SymbolsTypeMax];
+            for (Int32 i = 0; i < SymbolsTypeMax; i++)
                 fontDataOffsetsList[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 2 + i * 2, 2, true);
+            // Detect modified type
+            if (fontDataOffsetsList[0] == 0x204 && !extendedFormat)
+                throw new FileTypeLoadException(ERR_SIZEHEADER);
             // the height of a symbol in pixel
-            this.m_FontHeight = fileData[0x102];
+            this.m_FontHeight = fileData[SymbolsTypeMax * 2 + 2];
             // the width of a symbol in pixel
-            this.m_FontWidth = fileData[0x103];
-            for (Int32 i = 0; i < 0x80; i++)
+            this.m_FontWidth = fileData[SymbolsTypeMax * 2 + 3];
+            for (Int32 i = 0; i < SymbolsTypeMax; i++)
             {
                 Int32 start = fontDataOffsetsList[i];
                 Byte[] curData8bit;
@@ -62,26 +68,33 @@ namespace WWFontEditor.Domain.FontTypes
                 this.m_ImageDataList.Add(fc);
             }
         }
-
-        public override Byte[] SaveFont(Boolean disableCompression)
+        
+        public override SaveOption[] GetSaveOptions(String targetFileName)
         {
-            Byte[][] imageData = new Byte[0x80][];
-            for (Int32 i = 0; i < 0x80; i++)
+            return new SaveOption[] { new SaveOption("OPT", SaveOptionType.Boolean, "Optimise duplicate symbols (Does not work for Eye of the Beholder 1)", "0") };
+        }
+
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
+        {
+            Byte[][] imageData = new Byte[SymbolsTypeMax][];
+            for (Int32 i = 0; i < SymbolsTypeMax; i++)
             {
                 FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
                 imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
-            Int32 fontDataOffset = 0x104;
+            Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
+            Int32 afterIndex = SymbolsTypeMax * 2;
+            Int32 fontDataOffset = afterIndex + 4;
             Int32 dataOffset = fontDataOffset;
             // Not sure if this is legal; the original fonts seem unoptimised.
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, 0, ref dataOffset);
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref dataOffset, false, optimise);
             Byte[] fullData = new Byte[dataOffset];
             Int32 headerFileSize = dataOffset - 2;
             fullData[0x00] = (Byte)(headerFileSize & 0xFF);         //Int16 FileSize, low byte;
             fullData[0x01] = (Byte)((headerFileSize >> 8) & 0xFF);  //Int16 FileSize, high byte;
             Array.Copy(fontDataOffsetsList, 0, fullData, 0x02, fontDataOffsetsList.Length);
-            fullData[0x102] = (Byte)m_FontHeight;                // Byte FontHeight
-            fullData[0x103] = (Byte)m_FontWidth;                 // Byte FontWidth
+            fullData[afterIndex + 2] = (Byte)m_FontHeight;          // Byte FontHeight
+            fullData[afterIndex + 3] = (Byte)m_FontWidth;           // Byte FontWidth
             foreach (Byte[] symbolImgData in imageData)
             {
                 if (symbolImgData.Length == 0)

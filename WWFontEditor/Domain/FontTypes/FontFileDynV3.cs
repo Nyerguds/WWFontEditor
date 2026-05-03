@@ -32,9 +32,9 @@ namespace WWFontEditor.Domain.FontTypes
             LoadFont(fileData, 0x08);
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(disableCompression, true);
+            return SaveFont(saveOptions, true);
         }
 
     }

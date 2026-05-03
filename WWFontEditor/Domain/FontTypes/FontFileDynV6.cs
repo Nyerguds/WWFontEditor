@@ -91,7 +91,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             this.m_lineHeight = (Byte)FontFileDynV4.CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
             Int32 len = this.m_ImageDataList.Count;

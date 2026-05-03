@@ -46,7 +46,7 @@ namespace WWFontEditor.Domain.FontTypes
             this.LoadV3V4Font(fileData, false);
         }
 
-        public override Byte[] SaveFont(Boolean disableCompression)
+        public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             return this.SaveV3V4Font(false);
         }
@@ -72,17 +72,13 @@ namespace WWFontEditor.Domain.FontTypes
             Int16 heightsListOffset = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 2, true);
             //Int16 unknown0E = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0E, 2, true);
             //Byte AlwaysZero = fileData[0x10];
-            Byte lastIndex = fileData[0x11];
-            this.m_FontHeight = fileData[0x12];
-            this.m_FontWidth = fileData[0x13];
-
-            Int32 length = lastIndex;
+            Int32 length;
             Boolean isV4 = dataFormat == 0x02;
             if (isV4)
             {
                 if (!forV4)
                     throw new FileTypeLoadException("Load type identifies as v4.");
-                // isn't in the header? Calculate.
+                // Byte 0x11 is not filled in on TS fonts, so instead, calculate it from the header offsets.
                 Int32[] headerVals = new Int32[] { fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset }.OrderBy(n => n).Take(2).ToArray();
                 Int32 divval = 1;
                 if (headerVals[0] == fontDataOffsetsListOffset || headerVals[0] == heightsListOffset)
@@ -93,10 +89,12 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 if (forV4)
                     throw new FileTypeLoadException("Load type identifies as v3.");
-                length++;
+                length = fileData[0x11] +1;
             }
             else
                 throw new FileTypeLoadException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
+            this.m_FontHeight = fileData[0x12];
+            this.m_FontWidth = fileData[0x13];
             if (fontDataOffsetsListOffset + length * 2 > fileLength)
                 throw new FileTypeLoadException("File data too short for offsets list!");
             if (widthsListOffset + length > fileLength)
@@ -182,8 +180,8 @@ namespace WWFontEditor.Domain.FontTypes
                 heightsList[i * 2 + 1] = imgHeight;
             }
             Int32 fontOffset = forV4 ? 0 : fontOffsetStart;
-            Byte[] fontDataOffsetsList = this.OptimizeImagesList(imageData, 0, ref fontOffset);
-            // V2 (C&C) has its Y/height list before the image data.
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref fontOffset, true, true);
+            // V3 (C&C) has its Y/height list before the image data.
             if (!forV4)
                 heightsListOffset = fontOffset;
             Int32 fullLength = !forV4 ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
