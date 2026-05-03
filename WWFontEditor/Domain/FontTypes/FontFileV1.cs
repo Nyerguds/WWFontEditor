@@ -16,10 +16,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMin { get { return 8; } }
         public override Int32 FontHeightTypeMax { get { return 8; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }
-        // Not needed here: the automatic parent takes care of it
-        //public override Boolean IndividualSizesAllowed { get { return false; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override String ShortTypeName { get { return "WW V1"; } }
+        public override String ShortTypeName { get { return "WW v1"; } }
         public override String ShortTypeDescription { get { return "WWFont v1 (WarConst, ElmStr, DrStr, CirEdg)"; } }
         public override String LongTypeDescription { get { return "A simple 1 BPP font without header data; it's always a 128-item list of 8x8 symbols."; } }
         public override String[] GamesListForType { get { return new String[]

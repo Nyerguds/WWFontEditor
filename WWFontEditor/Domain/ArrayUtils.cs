@@ -4,8 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 
-namespace WWFontEditor.Domain
-
+namespace Nyerguds.Util
 {
     public static class ArrayUtils
     {
@@ -23,51 +22,111 @@ namespace WWFontEditor.Domain
             {
                 swapped[newHeight] = new T[origHeight];
                 for (Int32 newWidth = 0; newWidth < origHeight; newWidth++)
-                {
                     swapped[newHeight][newWidth] = original[newWidth][newHeight];
-                }
             }
             return swapped;
         }
 
-        public static Int32 GetBEIntFromByteArray(Byte[] data, Int32 startIndex)
+        public static Boolean ArraysAreEqual<T>(T[] row1, T[] row2) where T : IEquatable<T>
         {
-            return (data[startIndex] << 24)
-                 | (data[startIndex + 1] << 16)
-                 | (data[startIndex + 2] << 8)
-                 | data[startIndex + 3];
+            // There's probably a Linq version of this though... Probably .All() or something.
+            // But this is with simple arrays.
+            if (row1 == null && row2 == null)
+                return true;
+            if (row1 == null || row2 == null)
+                return false;
+            if (row1.Length != row2.Length)
+                return false;
+            for (Int32 i = 0; i < row1.Length; i++)
+                if (row1[i].Equals(row2[i]))
+                    return false;
+            return true;
         }
 
-        public static Int16 GetBEShortFromByteArray(Byte[] data, Int32 startIndex)
+        public static UInt32 GetIntFromByteArray(Byte[] data, Int32 startIndex, Int32 bytes, Boolean littleEndian)
         {
-            return (Int16)Convert.ToUInt16((data[startIndex] << 8) | data[startIndex + 1]);
+            UInt32 value = 0;
+            Int32 lastByte = bytes - 1;
+            if (data.Length < startIndex + bytes)
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to read a " + bytes + "-byte value from offset" + startIndex + ".");
+            for (Int32 index = 0; index < bytes; index++)
+            {
+                Int32 offs = startIndex + (littleEndian ? lastByte - index : index);
+                value |= (UInt32)(data[offs] << (index * 8));
+            }
+            return value;
+        }
+
+        public static void WriteIntToByteArray(Byte[] data, Int32 startIndex, Int32 bytes, Boolean littleEndian, UInt32 value)
+        {
+            Int32 lastByte = bytes - 1;
+            if (data.Length < startIndex + bytes)
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset" + startIndex + ".");
+            for (Int32 index = 0; index < bytes; index++)
+            {
+                Int32 offs = startIndex + (littleEndian ? lastByte - index : index);
+                data[offs] = (Byte)(value >> (8 * index) & 0xFF);
+            }
         }
 
         public static Int32 GetLEIntFromByteArray(Byte[] data, Int32 startIndex)
         {
-            return (data[startIndex + 3] << 24)
-                 | (data[startIndex + 2] << 16)
-                 | (data[startIndex + 1] << 8)
-                 | data[startIndex];
+            UInt32 val = ((UInt32)data[startIndex] << 24)
+                         | ((UInt32)data[startIndex + 1] << 16)
+                         | ((UInt32)data[startIndex + 2] << 8)
+                         | data[startIndex + 3];
+            return (Int32)val;
         }
 
-
-        public static void SetLEIntInByteArray(Byte[] data, Int32 startIndex, Int32 value)
+        public static void SetLEIntInByteArray(Byte[] data, Int32 index, Int32 value)
         {
-            data[startIndex + 0x00] = (Byte)(value & 0xFF);
-            data[startIndex + 0x01] = (Byte)((value >> 0x08) & 0xFF);
-            data[startIndex + 0x02] = (Byte)((value >> 0x10) & 0xFF);
-            data[startIndex + 0x03] = (Byte)((value >> 0x18) & 0xFF);
+            UInt32 val = (UInt32)value;
+            data[index] = (Byte)(val >> 24 & 0xFF);
+            data[index + 1] = (Byte)(val >> 16 & 0xFF);
+            data[index + 2] = (Byte)(val >> 8 & 0xFF);
+            data[index + 3] = (Byte)(val & 0xFF);
         }
+
         public static Int16 GetLEShortFromByteArray(Byte[] data, Int32 startIndex)
+        {
+            return (Int16)Convert.ToUInt16((data[startIndex] << 8) | data[startIndex + 1]);
+        }
+
+        public static void SetLEShortInByteArray(Byte[] data, Int32 index, Int16 value)
+        {
+            UInt16 val = (UInt16)value;
+            data[index] = (Byte)(val >> 8 & 0xFF);
+            data[index + 1] = (Byte)(val & 0xFF);
+        }
+
+        public static Int32 GetBEIntFromByteArray(Byte[] data, Int32 startIndex)
+        {
+            UInt32 val = ((UInt32)data[startIndex + 3] << 24)
+                         | ((UInt32)data[startIndex + 2] << 16)
+                         | ((UInt32)data[startIndex + 1] << 8)
+                         | data[startIndex];
+            return (Int32)val;
+        }
+
+        public static void SetBEIntInByteArray(Byte[] data, Int32 index, Int32 value)
+        {
+            UInt32 val = (UInt32)value;
+            data[index] = (Byte)(val & 0xFF);
+            data[index + 1] = (Byte)(val >> 8 & 0xFF);
+            data[index + 2] = (Byte)(val >> 16 & 0xFF);
+            data[index + 3] = (Byte)(val >> 24 & 0xFF);
+        }
+
+        public static Int16 GetBEShortFromByteArray(Byte[] data, Int32 startIndex)
         {
             return (Int16)Convert.ToUInt16((data[startIndex + 1] << 8) | data[startIndex]);
         }
 
-        public static void SetLEShortInByteArray(Byte[] data, Int32 startIndex, Int16 value)
+        public static void SetBEShortInByteArray(Byte[] data, Int32 index, Int16 value)
         {
-            data[startIndex + 0x00] = (Byte)(value & 0xFF);
-            data[startIndex + 0x01] = (Byte)((value >> 8) & 0xFF);
+            UInt16 val = (UInt16)value;
+            data[index + 1] = (Byte)(val >> 8 & 0xFF);
+            data[index] = (Byte)(val & 0xFF);
         }
     }
 }

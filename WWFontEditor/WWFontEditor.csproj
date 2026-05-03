@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domain\ArrayUtils.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV1.cs" />
     <Compile Include="Domain\ImageUtils\ColorHSL.cs" />
     <Compile Include="Domain\ImageUtils\ColorUtils.cs" />
     <Compile Include="Domain\ImageUtils\SixBitColor.cs" />

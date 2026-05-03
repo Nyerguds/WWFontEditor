@@ -9,6 +9,8 @@ It does not have support for RA2 fonts because paletted editing is very
 different in nature than high colour editing, and all internal data in the
 editor uses 8-bit images. And there's already an editor for that, anyway ;)
 
+This might evolve into a more general 1 to 8 bit font editor for more games.
+
 Have fun with it!
 
 
@@ -150,6 +152,10 @@ WWFont v4
 IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
 
+Dynamix Font v1
+-Rise of the Dragon
+-Heart of China
+-The Adventures of Willy Beamish
 
 -------------------------
 Note on Dune 2000 support
@@ -212,6 +218,9 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+
+v1.8: (2017/07/10 10:32)
+-Added support for basic Dynamix/Sierra 1-bit font.
 
 v1.7.1: (2017/05/23 18:40)
 -Added new "Paste on symbol" option (Ctrl+Shift+V) that pastes with

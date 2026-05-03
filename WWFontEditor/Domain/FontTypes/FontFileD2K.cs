@@ -37,7 +37,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte empty07 = fileData[07];
             //No clue if this is ok as test...
             if (fontLoadedFlag != 1 || empty05 != 0 || empty06 != 0 || empty07 != 0)
-                throw new FileTypeLoadException("Identifying bytes in header do not match.");
+                throw new FileTypeLoadException(ERR_BADHEADER);
             this.m_FontHeight = maxHeight;
             // Wlll be increased to the max found in the file.
             this.m_FontWidth = spaceSize;

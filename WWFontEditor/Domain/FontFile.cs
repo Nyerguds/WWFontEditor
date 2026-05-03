@@ -12,8 +12,9 @@ using WWFontEditor.Domain.FontTypes;
 namespace WWFontEditor.Domain
 {
     public abstract class FontFile : IEquatable<FontFile>, FileTypeBroadcaster
-    {                              
+    {
         protected const String ERR_NOHEADER = "File data too short to contain header.";
+        protected const String ERR_BADHEADER = "Identifying bytes in header do not match.";
         protected const String ERR_SIZECHECK = "File size value in header does not match file data length.";
 
         #region protected variables
@@ -126,20 +127,35 @@ namespace WWFontEditor.Domain
         
         /// <summary>
         /// All supported types. Never put types in here that don't derive from FontFile.
-        /// Ordered in a logical way for autodetection, from complex to simple, to prevent false positives.
-        /// This list is also used for open / save / convert dialogs.
+        /// This list is used for open / save / convert dialogs, and should have the items in a logical order.
         /// </summary>
         public static Type[] SupportedTypes =
         {
+            typeof (FontFileV1),
+            typeof (FontFileV2),
+            typeof (FontFileV3),
+            typeof (FontFileV4),
+            typeof (FontFileD2K),
+            typeof (FontFileDynV1)
+        };
+
+        /// <summary>
+        /// All supported types. Never put types in here that don't derive from FontFile.
+        /// Ordered in a logical way for autodetection, from complex to simple, to prevent false positives.
+        /// </summary>
+        public static Type[] AutoDetectTypes =
+        {
+            // Dynamix fonts have a very specific "FNT:" header start so I prefer putting them first.
+            typeof(FontFileDynV1),
             typeof (FontFileV4),
             typeof (FontFileV3),
             typeof (FontFileV2),
             // V1's "check" is file size only; leave it at the end.
             typeof (FontFileV1),
             // Can safely be put behind V1, since its minimum size is more than V1's fixed size.
-            typeof (FontFileD2K),
+            typeof (FontFileD2K)
         };
-        
+
         /// <summary>
         /// Attempts to load the given data as one of the known font types.
         /// </summary>
@@ -149,12 +165,12 @@ namespace WWFontEditor.Domain
         public static FontFile LoadFontFile(Byte[] fileData, out List<FileTypeLoadException> loadErrors)
         {
             Type fontType = typeof (FontFile);
-            foreach (Type t in SupportedTypes)
+            foreach (Type t in AutoDetectTypes)
                 if (!t.IsSubclassOf(fontType))
                     throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
             loadErrors = new List<FileTypeLoadException>();
             //List<Exception> processErrors = new List<Exception>();
-            foreach (Type type in SupportedTypes)
+            foreach (Type type in AutoDetectTypes)
             {
                 FontFile fontInstance = null;
                 try
