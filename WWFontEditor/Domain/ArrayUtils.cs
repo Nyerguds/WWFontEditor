@@ -46,19 +46,6 @@ namespace WWFontEditor.Domain
             return true;
         }
         
-        /// <summary>
-        /// Used to make sure that functions calling to get the internal arrays get a copy, and can't modify the originals.
-        /// </summary>
-        /// <typeparam name="T">The type of the array.</typeparam>
-        /// <param name="array">The array to clone.</param>
-        /// <returns></returns>
-        public static T[] CloneArray<T>(T[] array)
-        {
-            T[] retval = new T[array.Length];
-            Array.Copy(array, retval, array.Length);
-            return retval;
-        }
-
         public static Int32 GetBEIntFromByteArray(byte[] data, int startIndex)
         {
             return (data[startIndex] << 24)

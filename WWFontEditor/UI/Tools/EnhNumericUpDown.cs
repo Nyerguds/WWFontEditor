@@ -56,10 +56,10 @@ namespace Nyerguds.Util.UI
         {
             this.MouseWheelIncrement = 1;
             this.KeyDown += CheckKeyPress;
-            this.TextChanged += EnhNumericUpDown_TextChanged;
+            //this.TextChanged += EnhNumericUpDown_TextChanged;
         }
 
-        private void EnhNumericUpDown_TextChanged(object sender, EventArgs e)
+        protected override void OnTextChanged(EventArgs e)
         {
             if (!Regex.IsMatch(this.Text, "^\\d*$"))
             {

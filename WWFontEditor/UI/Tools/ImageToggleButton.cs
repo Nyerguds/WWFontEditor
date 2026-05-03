@@ -1,0 +1,143 @@
+﻿using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace Nyerguds.Util.UI
+{
+
+    [DefaultEvent("CheckStateChanged")]
+    public class ImageButtonCheckBox : Label
+    {
+        private Boolean m_Checked = false;
+        private Boolean m_Toggle = false;
+        private Boolean m_Clicking = false;
+        public Boolean m_TabStop = true;
+        public event EventHandler CheckStateChanged;
+
+        [Bindable(true)]
+        [DefaultValue(false)]
+        [RefreshProperties(RefreshProperties.Repaint)]
+        [SettingsBindable(true)]
+        public Boolean Checked
+        {
+            get { return this.m_Checked; }
+            set
+            {
+                this.m_Checked = value;
+                this.Invalidate();
+                if (CheckStateChanged != null)
+                    CheckStateChanged(this, new EventArgs());
+            }
+        }
+
+        [Bindable(true)]
+        [DefaultValue(true)]
+        [SettingsBindable(true)]
+        public Boolean Toggle { get; set; }
+
+        [Browsable(true)]
+        [DefaultValue(true)]
+        public new bool TabStop
+        {
+            get { return m_TabStop; }
+            set
+            {
+                // For the editor; it doesnt't execute the SetStyle code in the constructor so it always fetches "false" here.
+                m_TabStop = value;
+                base.TabStop = value;
+            }
+        }
+
+        public ImageButtonCheckBox()
+        {
+            this.SetStyle(ControlStyles.Selectable, true);
+            base.TabStop = m_TabStop;
+            this.ImageAlign = ContentAlignment.MiddleCenter;
+        }
+        
+        protected override void OnEnter(EventArgs e)
+        {
+            this.Invalidate();
+            base.OnEnter(e);
+        }
+
+        protected override void OnLeave(EventArgs e)
+        {
+            this.Invalidate();
+            base.OnLeave(e);
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            this.Focus();
+            this.m_Clicking = true;
+            this.Invalidate();
+            base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            if (this.ClientRectangle.Contains(e.Location))
+            {
+                if (this.Toggle)
+                    this.Checked = !this.Checked;
+                else
+                    this.Checked = true;
+            }
+            this.m_Clicking = false;
+            this.Invalidate();
+            base.OnMouseUp(e);
+        }
+
+        protected override bool IsInputKey(Keys keyData)
+        {
+            if (keyData == Keys.Enter || keyData == Keys.Space) return true;
+            return base.IsInputKey(keyData);
+        }
+
+        protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e)
+        {
+            if (!e.Alt && !e.Control && (e.KeyValue == (Int32)System.Windows.Forms.Keys.Space || e.KeyValue == (Int32)System.Windows.Forms.Keys.Enter))
+            {
+                m_Clicking = true;
+                this.Invalidate();
+            }
+            this.PerformLayout();
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            if (!e.Alt && !e.Control && (e.KeyValue == (Int32)System.Windows.Forms.Keys.Space || e.KeyValue == (Int32)System.Windows.Forms.Keys.Enter))
+            {
+                this.Checked = !this.Checked;
+                this.m_Clicking = false;
+                this.Invalidate();
+            }
+            this.PerformLayout();
+            base.OnKeyUp(e);
+        }
+
+        protected override void OnPaint(PaintEventArgs pe)
+        {
+            base.OnPaint(pe);
+            ButtonBorderStyle bs = this.m_Checked ? ButtonBorderStyle.Inset : ButtonBorderStyle.Outset;
+            Boolean hasImage = this.Image != null;
+            Int32 centerOffsetX = hasImage ? (this.ClientRectangle.Width - this.Image.Width) / 2 : 0;
+            Int32 centerOffsetY = hasImage? (this.ClientRectangle.Height - this.Image.Height) / 2 : 0;
+            if (this.m_Clicking)
+            {
+                bs = ButtonBorderStyle.Inset;
+                if (hasImage && ImageAlign == ContentAlignment.MiddleCenter)
+                    ControlPaint.DrawImageDisabled(pe.Graphics, Image, centerOffsetX, centerOffsetY, this.BackColor);
+            }
+            ControlPaint.DrawBorder(pe.Graphics, ClientRectangle, Parent.BackColor, bs);
+            if (this.Focused)
+            {
+                Rectangle rc = this.ClientRectangle;
+                rc.Inflate(-1, -1);
+                ControlPaint.DrawFocusRectangle(pe.Graphics, rc);
+            }
+        }
+    }
+}

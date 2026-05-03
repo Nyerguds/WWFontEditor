@@ -7,84 +7,175 @@ using System.Drawing.Imaging;
 
 namespace WWFontEditor.Domain
 {
-    public class FntFile
+    public class FontFile
     {
-        public Int16 FileSize { get; private set; }           // Size of the file
-        public Byte DataFormat { get; private set; }          // Data format for the image data: 00 for 4-bit image data, 02 for 8-bit.
-        public Byte Unknown03 { get; private set; }           // Unknown entry (0x05 in C&C/RA1, 0x00 in TS)
-        public Int16 Unknown04 { get; private set; }          // [Unused?] Unknown entry (always 0x000e) (font version position?)
-        public Int16 FontDataOffsetsListOffset { get; private set; } // Absolute offset of the start of FontDataList (Normally 0x14)
-        public Int16 WidthsListOffset { get; private set; }   // Absolute offset of the start of WidthsList
-        public Int16 FontDataOffset { get; private set; }     // [Unused?] Start of the actual font data? Should equals the first entry in FontDataList, but doesn't in TS.
-        public Int16 HeightsListOffset { get; private set; }  // Absolute offset of the start of HeightsList
-        public Int16 Unknown0E { get; private set; }          // [Unused?] Unknown entry (always 0x1011 or 0x1012; 0x0000 in TS) (font version?)
-        public Byte AlwaysZero { get; private set; }          // [Unused?] Align byte. Always 0x00
-        public Byte LastIndex { get; private set; }           // Last (0-based) character index. Add 1 to get the amount of characters.
-        public Byte FontHeight { get; private set; }          // Overall maximum font height.
-        public Byte FontWidth { get; private set; }           // Overall maximum font width.
+        /// <summary>Size of the file</summary>
+        public Int16 FileSize { get; private set; }
+        /// <summary>Data format for the image data: 00 for 4-bit image data, 02 for 8-bit.</summary>
+        public Byte DataFormat { get; private set; }
+        /// <summary>Unknown entry (0x05 in C&amp;C/RA1, 0x00 in TS)</summary>
+        public Byte Unknown03 { get; private set; }
+        /// <summary>[Unused?] Unknown entry (always 0x000e) (font version position?)</summary>
+        public Int16 Unknown04 { get; private set; }
+        /// <summary>Absolute offset of the start of FontDataList (Normally 0x14)</summary>
+        public Int16 FontDataOffsetsListOffset { get; private set; }
+        /// <summary>Absolute offset of the start of WidthsList</summary>
+        public Int16 WidthsListOffset { get; private set; }
+        /// <summary>[Unused?] Start of the actual font data? Should equals the first entry in FontDataList, but doesn't in TS.</summary>
+        public Int16 FontDataOffset { get; private set; }
+        /// <summary>Absolute offset of the start of HeightsList</summary>
+        public Int16 HeightsListOffset { get; private set; }
+        /// <summary>[Unused?] Unknown entry (always 0x1011 or 0x1012; 0x0000 in TS) (font version?)</summary>
+        public Int16 Unknown0E { get; private set; }
+        /// <summary>[Unused?] Align byte. Always 0x00</summary>
+        public Byte AlwaysZero { get; private set; }
 
-                                                     private List<Byte> m_WidthsList;   //  array with the widths of all font entries
-        private List<Byte> m_HeightsList;  // array with the heights of all font entries
-        private List<Byte> m_OffsetYList;  // array with the vertical offsets of all font entries
-        private List<Byte[]> ImageDataList;
-
-        public Int32 Length { get { return LastIndex + 1; } }
-
-        public Byte GetCharWidth(Int32 index)
+        protected Byte m_fontHeight;
+        /// <summary>Overall maximum font height.</summary>
+        public Byte FontHeight
         {
-            return this.m_WidthsList[index];
+            get { return m_fontHeight; }
+            set
+            {
+                this.m_fontHeight = value;
+                foreach (FontFileCharacter fontchar in this.m_ImageDataList)
+                    if (fontchar.Height > value)
+                        fontchar.ChangeHeight(value);
+            }
         }
 
-        public Byte GetCharHeight(Int32 index)
+        protected Byte m_fontWidth;
+        /// <summary>Overall maximum font width.</summary>
+        public Byte FontWidth
         {
-            return this.m_HeightsList[index]; 
+            get { return m_fontWidth; }
+            set
+            {
+                this.m_fontWidth = value;
+                foreach (FontFileCharacter fontchar in this.m_ImageDataList)
+                    if (fontchar.Width > value)
+                        fontchar.ChangeWidth(value);
+            }
         }
 
-        public Byte GetCharYOffset(Int32 index)
-        {
-            return this.m_OffsetYList[index];
-        }
+        /// <summary> array with the actual image data (as 8-bit) as byte arrays</summary>
+        private List<FontFileCharacter> m_ImageDataList = new List<FontFileCharacter>();
 
-        public FntFile(Byte[] fileData)
+        public FontFile(Byte[] fileData)
         {
             LoadFromFileData(fileData);
         }
 
-        public Bitmap GetBitmap(Int32 index, Color[] colors)
+        /// <summary>
+        /// Creates a deep clone of this font.
+        /// </summary>
+        /// <returns>A deep clone of this font.</returns>
+        public FontFile Clone()
         {
-            if (index < 0 || index > LastIndex)
-                throw new ArgumentOutOfRangeException();
-            ColorPalette palette = GeneratePalette(colors);
-            return GetBitmap(index, palette);
+            FontFile clone = (FontFile)this.MemberwiseClone();
+            clone.m_ImageDataList = new List<FontFileCharacter>();
+            foreach (FontFileCharacter image in this.m_ImageDataList)
+                clone.m_ImageDataList.Add(image.Clone());
+            return clone;
         }
 
-        public Bitmap[] GetAllBitmaps(Color[] colors)
+        public void RestorePicFromBackup(Int32 index, FontFile backup)
         {
-            ColorPalette palette = GeneratePalette(colors);
+            if (index < 0 || backup.Length <= index || this.Length <= index)
+                return;
+            RestorePicFromBackup(index, backup.m_ImageDataList[index]);
+        }
+
+        public void RestorePicFromBackup(Int32 index, FontFileCharacter backup)
+        {
+            if (index < 0 || this.Length <= index)
+                return;
+            FontFileCharacter fontchar = backup.Clone();
+            if (fontchar.Height > this.FontHeight)
+                fontchar.ChangeHeight(this.FontHeight);
+            if (fontchar.Width > this.FontWidth)
+                fontchar.ChangeWidth(this.FontWidth);
+            this.m_ImageDataList[index] = fontchar;
+        }
+
+        public Int32 Length
+        {
+            get { return m_ImageDataList.Count; }
+            set
+            {
+                value = Math.Min(value, 0x100);
+                if (value < m_ImageDataList.Count)
+                    m_ImageDataList = this.m_ImageDataList.Take(value).ToList();
+                else
+                {
+                    for (Int32 i = m_ImageDataList.Count; i < value; i++)
+                    {
+                        m_ImageDataList.Add(new FontFileCharacter());
+                    }
+                }
+            }
+        }
+
+        public Byte GetCharWidth(Int32 index)
+        {
+            if (index < 0 || index >= this.Length)
+                return 0;
+            return this.m_ImageDataList[index].Width;
+        }
+
+        public Byte GetCharHeight(Int32 index)
+        {
+            if (index < 0 || index >= this.Length)
+                return 0;
+            return this.m_ImageDataList[index].Height; 
+        }
+
+        public Byte GetCharYOffset(Int32 index)
+        {
+            if (index < 0 || index >= this.Length)
+                return 0;
+            return this.m_ImageDataList[index].YOffset;
+        }
+
+        public FontFileCharacter[] GetAllRawData()
+        {
+            return this.m_ImageDataList.ToArray();
+        }
+        public FontFileCharacter GetRawData(Int32 index)
+        {
+            if (index < 0 || index >= this.Length)
+                return null;
+            return this.m_ImageDataList[index];
+        }
+
+        public Bitmap GetBitmap(Int32 index, Color[] colors, Boolean addTransparentZero)
+        {
+            if (index < 0 || index >= this.Length)
+                return null;
+            ColorPalette palette = ImageUtils.MakePalette(colors, GetPixelFormat(), addTransparentZero);
+            return this.m_ImageDataList[index].GetBitmap(palette);
+        }
+
+        public Bitmap[] GetAllBitmaps(Color[] colors, Boolean addTransparentZero)
+        {
             Bitmap[] allChars = new Bitmap[this.Length];
+            ColorPalette palette = ImageUtils.MakePalette(colors, GetPixelFormat(), addTransparentZero);
             for (Int32 i = 0; i < allChars.Length; i++)
-                allChars[i] = GetBitmap(i, palette);
+                allChars[i] = this.m_ImageDataList[i].GetBitmap(palette);
             return allChars;
         }
 
         public void PaintPixel(Int32 index, Int32 x, Int32 y, Byte value)
         {
-            if (index < 0 || index > LastIndex)
+            if (index < 0 || index >= this.Length)
                 throw new IndexOutOfRangeException("Bad character index '" + index + "'.");
-            Byte chWidth = GetCharWidth(index);
-            Byte chHeight = this.GetCharHeight(index);
-            if (x < 0 || x >= chWidth || y < 0 || y >= chHeight)
-                return; // Ignore. without error. Might accidentally occur when dragging or something I guess.
-            Int32 pxf = Image.GetPixelFormatSize(this.GetPixelFormat());
-            Int32 maxSize = (Int32)Math.Pow(2, pxf);
-            if (maxSize <= value)
-                throw new IndexOutOfRangeException("Byte value too large for " + pxf + " bit image!");
-            ImageDataList[index][y * chWidth + x] = value;
+            FontFileCharacter character = GetRawData(index);
+            character.PaintPixel(x, y, value, this.GetPixelFormat());
         }
 
         public Byte[] WriteFntFile()
         {
-            Int32 imagesCount = this.ImageDataList.Count;
+            Int32 imagesCount = this.m_ImageDataList.Count;
             Byte[] fontDataOffsetsList = new Byte[imagesCount*2];
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
@@ -95,9 +186,10 @@ namespace WWFontEditor.Domain
             Int32 fontOffsetStart = widthListOffset + imagesCount;
             for (Int32 i = 0; i < imagesCount; i++)
             {
-                Byte[] imgData8bit = this.ImageDataList[i];
-                Byte imgWidth = GetCharWidth(i);
-                Byte imgHeight = GetCharHeight(i);
+                FontFileCharacter fc = this.m_ImageDataList[i];
+                Byte[] imgData8bit = fc.ByteData;
+                Byte imgWidth = fc.Width;
+                Byte imgHeight = fc.Height;
                 Int32 stride = (imgWidth / 2) + (imgWidth % 2);
                 Int32 dubstride = stride * 2;
                 Byte[] imgData4bit = new Byte[stride*imgHeight];
@@ -112,7 +204,7 @@ namespace WWFontEditor.Domain
                 }
                 imageData[i] = imgData4bit;
                 widthsList[i] = imgWidth;
-                heightsList[i * 2] = this.GetCharYOffset(i);
+                heightsList[i * 2] = fc.YOffset;
                 heightsList[i * 2 + 1] = imgHeight;
             }
             Int32[] refslist = CreateRefsList(imageData);
@@ -137,22 +229,22 @@ namespace WWFontEditor.Domain
             Int32 fullLength = heightsListOffset + imagesCount * 2;
             Byte[] fullData = new Byte[fullLength];
             // write header
-            fullData[0x00] = (Byte)(fullLength & 0xFF);         //Int16 FileSize, byte 1;
-            fullData[0x01] = (Byte)((fullLength >> 8) & 0xFF);  //Int16 FileSize, byte 2;
+            fullData[0x00] = (Byte)(fullLength & 0xFF);         //Int16 FileSize, low byte;
+            fullData[0x01] = (Byte)((fullLength >> 8) & 0xFF);  //Int16 FileSize, high byte;
             fullData[0x02] = 0x00;                              // Byte DataFormat
             fullData[0x03] = Unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
-            fullData[0x04] = (Byte)(Unknown04 & 0xFF);          // Int16 Unknown04, byte 1; (always 0x0e)
-            fullData[0x05] = (Byte)((Unknown04 >> 8) & 0xFF);   // Int16 Unknown04, byte 2; (always 0x00)
-            fullData[0x06] = (Byte)(offsetsListOffset & 0xFF);        // Int16 FontDataListOffset, byte 1;
-            fullData[0x07] = (Byte)((offsetsListOffset >> 8) & 0xFF); // Int16 FontDataListOffset, byte 2;
-            fullData[0x08] = (Byte)(widthListOffset & 0xFF);          // Int16 WidthsListOffset, byte 1
-            fullData[0x09] = (Byte)((widthListOffset >> 8) & 0xFF);   // Int16 WidthsListOffset, byte 2
-            fullData[0x0A] = fontDataOffsetsList[0];            // Int16 FontDataOffset, byte 1
-            fullData[0x0B] = fontDataOffsetsList[1];             // Int16 FontDataOffset, byte 2
-            fullData[0x0C] = (Byte)(heightsListOffset & 0xFF);        // Int16 HeightsListOffset, byte 1
-            fullData[0x0D] = (Byte)((heightsListOffset >> 8) & 0xFF); // Int16 HeightsListOffset, byte 2
-            fullData[0x0E] = (Byte)(Unknown0E & 0xFF);          // Int16 Unknown0E, byte 1 (0x11 for pre-C&C WW games?)
-            fullData[0x0F] = (Byte)((Unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, byte 2 (always 0x10)
+            fullData[0x04] = (Byte)(Unknown04 & 0xFF);          // Int16 Unknown04, low byte; (always 0x0e)
+            fullData[0x05] = (Byte)((Unknown04 >> 8) & 0xFF);   // Int16 Unknown04, high byte; (always 0x00)
+            fullData[0x06] = (Byte)(offsetsListOffset & 0xFF);        // Int16 FontDataListOffset, low byte;
+            fullData[0x07] = (Byte)((offsetsListOffset >> 8) & 0xFF); // Int16 FontDataListOffset, high byte;
+            fullData[0x08] = (Byte)(widthListOffset & 0xFF);          // Int16 WidthsListOffset, low byte
+            fullData[0x09] = (Byte)((widthListOffset >> 8) & 0xFF);   // Int16 WidthsListOffset, high byte
+            fullData[0x0A] = fontDataOffsetsList[0];            // Int16 FontDataOffset, low byte
+            fullData[0x0B] = fontDataOffsetsList[1];             // Int16 FontDataOffset, high byte
+            fullData[0x0C] = (Byte)(heightsListOffset & 0xFF);        // Int16 HeightsListOffset, low byte
+            fullData[0x0D] = (Byte)((heightsListOffset >> 8) & 0xFF); // Int16 HeightsListOffset, high byte
+            fullData[0x0E] = (Byte)(Unknown0E & 0xFF);          // Int16 Unknown0E, low byte (0x11 for pre-C&C WW games?)
+            fullData[0x0F] = (Byte)((Unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, high byte (always 0x10)
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
             fullData[0x11] = (Byte)(imagesCount - 1);           // Byte LastCharIndex
             fullData[0x12] = FontHeight;                        // Byte FontHeight
@@ -198,50 +290,6 @@ namespace WWFontEditor.Domain
             return refsList;
         }
 
-        protected Bitmap GetBitmap(Int32 index, ColorPalette palette)
-        {
-            if(index < 0 || index > LastIndex)
-                throw new ArgumentOutOfRangeException();
-            PixelFormat pf = PixelFormat.Format8bppIndexed;
-            Int32 width = m_WidthsList[index];
-            Int32 height = m_HeightsList[index];
-            if (width == 0 || height == 0)
-                return null;
-            Byte[] imageData = ImageDataList[index];
-            if (imageData.Length == 0 || width == 0 | height == 0)
-                return new Bitmap(FontWidth, FontHeight, pf);
-            return ImageUtils.BuildImage(imageData, width, height, width, pf, palette);
-        }
-
-        private ColorPalette GeneratePalette(Color[] sourcePalette)
-        {
-            Int32 palSize = (Int32)Math.Pow(2, Image.GetPixelFormatSize(this.GetPixelFormat()));
-            ColorPalette pal = new Bitmap(10, 10, GetPixelFormat()).Palette;
-            if (sourcePalette != null)
-            {
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                {
-                    if (i < sourcePalette.Length)
-                        pal.Entries[i] = sourcePalette[i];
-                    else
-                        pal.Entries[i] = Color.Empty;
-                }
-            }
-            else
-            {
-                // generate greyscale palette.
-                Int32 steps = 255 / (palSize - 1);
-                for (Int32 i = 0; i < pal.Entries.Length; i++)
-                {
-                    Byte grayval = (Byte)Math.Min(255, Math.Round((Double)i * steps, MidpointRounding.AwayFromZero));
-                    pal.Entries[i] = Color.FromArgb(255, grayval, grayval, grayval);
-                }
-            }
-            // make color 0 transparent
-            pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
-            return pal;            
-        }
-
         /// <summary>
         /// Gets the pixel format of the loaded font. The image handling internally is 8 bit,
         /// but this will restrict the size of the values that can be painted on the image.
@@ -261,12 +309,11 @@ namespace WWFontEditor.Domain
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
                 throw new Exception("File data too short enough to be a valid FNT file.");
-            ReadHeader(fileData);
+            Int32 length = this.ReadHeaderAndGetLastIndex(fileData) + 1;
             if (this.FileSize != fileLength)
                 throw new Exception("File size in header does not match file data!");
             if (this.DataFormat != 0x00)
                 throw new NotImplementedException(String.Format("Font type {0} is not supported.", this.DataFormat));
-            Int32 length = this.Length;
             if (this.FontDataOffsetsListOffset + length * 2 > fileLength)
                 throw new Exception("File data too short for offsets list!");
             if (WidthsListOffset + length > fileLength)
@@ -277,30 +324,30 @@ namespace WWFontEditor.Domain
             Int16[] fontDataOffsetsList = new Int16[length];
             for (Int32 i = 0; i < length; i++)
                 fontDataOffsetsList[i] = ArrayUtils.GetLEShortFromByteArray(fileData, this.FontDataOffsetsListOffset + i * 2);
-            m_WidthsList = new List<Byte>();
+            List<Byte> widthsList = new List<Byte>();
             for (Int32 i = 0; i < length; i++)
             {
                 Byte width = fileData[this.WidthsListOffset + i];
                 if (width > this.FontWidth)
                     throw new Exception(String.Format("Illegal value '{0}' in character widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
-                this.m_WidthsList.Add(width);
+                widthsList.Add(width);
             }
-            m_OffsetYList = new List<Byte>();
-            m_HeightsList = new List<Byte>();
+            List<Byte> yOffsetsList = new List<Byte>();
+            List<Byte> heightsList = new List<Byte>();
             for (Int32 i = 0; i < length; i++)
             {
-                this.m_OffsetYList.Add(fileData[this.HeightsListOffset + i * 2]);
+                yOffsetsList.Add(fileData[this.HeightsListOffset + i * 2]);
                 Byte height = fileData[this.HeightsListOffset + i * 2 + 1];
                 if (height > this.FontHeight)
                     throw new Exception(String.Format("Illegal value '{0}' in character heights list at entry #{1}: the value is larger than global height '{2}'.", height, i, this.FontHeight));
-                this.m_HeightsList.Add(height);
+                heightsList.Add(height);
             }
-            ImageDataList = new List<Byte[]>();
+            this.m_ImageDataList = new List<FontFileCharacter>();
             for (Int32 i = 0; i < length; i++)
             {
                 Int32 start = fontDataOffsetsList[i];
-                Int32 width = this.m_WidthsList[i];
-                Int32 height = this.m_HeightsList[i];
+                Byte width = widthsList[i];
+                Byte height = heightsList[i];
                 Int32 stride = Image.GetPixelFormatSize(this.GetPixelFormat()) * width;
                 stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
                 Int32 size = height * stride;
@@ -322,14 +369,20 @@ namespace WWFontEditor.Domain
                             curData8bit[index8bit] = (Byte)((curData[index4bit] & 0xF0) >> 4);
                     }
                 }
-                ImageDataList.Add(curData8bit);
+                FontFileCharacter fc = new FontFileCharacter();
+                fc.Width = width;
+                fc.Height = height;
+                fc.YOffset = yOffsetsList[i];
+                fc.ByteData = curData8bit;
+                this.m_ImageDataList.Add(fc);
             }
         }
 
-        protected void ReadHeader(Byte[] headerBytes)
+
+        protected Byte ReadHeaderAndGetLastIndex(Byte[] headerBytes)
         {
             if (headerBytes.Length < 0x14)
-                return;
+                return (Byte)0x00;
             this.FileSize = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x00);
             this.DataFormat = headerBytes[0x02];
             this.Unknown03 = headerBytes[0x03];
@@ -340,16 +393,12 @@ namespace WWFontEditor.Domain
             this.HeightsListOffset = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x0C);
             this.Unknown0E = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x0E);
             this.AlwaysZero = headerBytes[0x10];
-            this.LastIndex = headerBytes[0x11];
+            Byte lastIndex = headerBytes[0x11];
             this.FontHeight = headerBytes[0x12];
             this.FontWidth = headerBytes[0x13];
+            return lastIndex;
         }
 
     }
 
-    public enum FntFileVersion
-    {
-        Kyrandia,
-        CnC
-    }
 }

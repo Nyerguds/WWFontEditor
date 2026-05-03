@@ -1,4 +1,4 @@
-﻿namespace WWFontEditor.Ui
+﻿namespace Nyerguds.Util.UI
 {
     partial class FrmPalette
     {
@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.btnClose = new System.Windows.Forms.Button();
-            this.palettePanel = new WWFontEditor.Ui.PalettePanel();
+            this.palettePanel = new Nyerguds.Util.UI.PalettePanel();
             this.SuspendLayout();
             // 
             // btnClose
@@ -48,28 +48,18 @@
             // palettePanel
             // 
             this.palettePanel.AutoSize = true;
-            this.palettePanel.Border = new System.Windows.Forms.Padding(20);
-            this.palettePanel.EmptyIndicatorBackColor = System.Drawing.Color.Black;
-            this.palettePanel.EmptyIndicatorChar = 'X';
-            this.palettePanel.EmptyIndicatorCharColor = System.Drawing.Color.Red;
-            this.palettePanel.LabelSize = new System.Drawing.Size(16, 16);
             this.palettePanel.Location = new System.Drawing.Point(0, 0);
-            this.palettePanel.MaxColors = 256;
             this.palettePanel.Name = "palettePanel";
-            this.palettePanel.PadBetween = new System.Drawing.Point(4, 4);
+            this.palettePanel.Padding = new System.Windows.Forms.Padding(20);
             this.palettePanel.Palette = null;
             this.palettePanel.Remap = null;
-            this.palettePanel.ColorSelectMode = ColorSelMode.Single;
-            this.palettePanel.SelectedIndices = new int[0];
-            this.palettePanel.ShowColorToolTips = true;
-            this.palettePanel.ShowRemappedPalette = true;
+            this.palettePanel.SelectedIndices = new int[] {
+        0};
+            this.palettePanel.ShowRemappedPalette = false;
             this.palettePanel.Size = new System.Drawing.Size(356, 356);
             this.palettePanel.TabIndex = 0;
-            this.palettePanel.TableWidth = 16;
-            this.palettePanel.TransparencyIndicatorBackColor = System.Drawing.Color.Empty;
-            this.palettePanel.TransparencyIndicatorChar = 'T';
-            this.palettePanel.TransparencyIndicatorCharColor = System.Drawing.Color.Blue;
-            this.palettePanel.LabelMouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.palettePanel_LabelMouseDoubleClick);
+            this.palettePanel.TransItemBackColor = System.Drawing.Color.Empty;
+            this.palettePanel.ColorLabelMouseDoubleClick += new Nyerguds.Util.UI.PaletteClickEventHandler(this.palettePanel_ColorLabelMouseDoubleClick);
             // 
             // FrmPalette
             // 
@@ -91,7 +81,7 @@
         #endregion
 
         protected System.Windows.Forms.Button btnClose;
-        protected Ui.PalettePanel palettePanel;
+        protected PalettePanel palettePanel;
 
     }
 }

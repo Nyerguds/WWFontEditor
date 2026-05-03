@@ -92,6 +92,44 @@ namespace ColorManipulation
             return targetImage;
         }
 
+        public static ColorPalette MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero)
+        {
+            return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
+        }
+
+        public static ColorPalette MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero, Color? defaultColor)
+        {
+            ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+            {
+                if (sourcePalette != null && i < sourcePalette.Length)
+                    pal.Entries[i] = sourcePalette[i];
+                else if (defaultColor.HasValue)
+                    pal.Entries[i] = defaultColor.Value;
+            }
+            // make color 0 transparent
+            if (addTransparentZero)
+                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
+            return pal;
+        }
+
+        public static ColorPalette GeneratePalette(PixelFormat pixelFormat, Boolean addTransparentZero, Boolean reverseGenerated)
+        {
+            ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
+            Int32 palSize = (Int32)Math.Pow(2, Image.GetPixelFormatSize(pixelFormat));
+            // generate greyscale palette.
+            Int32 steps = 255 / (palSize - 1);
+            for (Int32 i = 0; i < pal.Entries.Length; i++)
+            {
+                Double curval = reverseGenerated ? pal.Entries.Length - 1 - i : i;
+                Byte grayval = (Byte)Math.Min(255, Math.Round(curval * steps, MidpointRounding.AwayFromZero));
+                pal.Entries[i] = Color.FromArgb(255, grayval, grayval, grayval);
+            }
+            // make color 0 transparent
+            if (addTransparentZero)
+                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
+            return pal;
+        }
 
         /// <summary>
         /// Creates a bitmap based on data, width, height, stride and pixel format.
@@ -105,6 +143,8 @@ namespace ColorManipulation
         /// <returns>The new image</returns>
         public static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat, ColorPalette palette)
         {
+            if (width == 0 || height == 0)
+                return null;
             Bitmap newImage = new Bitmap(width, height, pixelFormat);
             BitmapData targetData = newImage.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, newImage.PixelFormat);
             CopyMemory(targetData.Scan0, sourceData, sourceData.Length, stride, targetData.Stride);
@@ -268,6 +308,8 @@ namespace ColorManipulation
 
         public static Bitmap GenerateBlankImage(Int32 width, Int32 height, Color[] colors, Byte paintColor)
         {
+            if (width == 0 || height == 0)
+                return null;
             ColorPalette pal = GeneratePalette(colors, Color.Empty);
             Byte[] blankArray = new Byte[width * height];
             if (paintColor != 0)
@@ -278,6 +320,8 @@ namespace ColorManipulation
 
         public static Bitmap GenerateCheckerboardImage(Int32 width, Int32 height, Color[] colors, Byte color1, Byte color2)
         {
+            if (width == 0 || height == 0)
+                return null;
             ColorPalette pal = GeneratePalette(colors, Color.Empty);
             Byte[] patternArray = new Byte[width * height];
             for (Int32 y = 0; y < width; y++)
@@ -300,6 +344,8 @@ namespace ColorManipulation
             Int32 height1 = origHeight * zoomFactor;
             Int32 width = width1 + 1;
             Int32 height = height1 + 1;
+            if (width == 0 || height == 0)
+                return null;
             Byte[] patternArray = new Byte[width * height];
             if (bgColor != 0)
                 for (Int32 i = 0; i < patternArray.Length; i++)

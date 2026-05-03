@@ -1,4 +1,4 @@
-﻿namespace WWFontEditor.Ui
+﻿namespace Nyerguds.Util.UI
 {
     partial class PalettePanel
     {
@@ -37,6 +37,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Name = "PalettePanel";
+            this.Padding = new System.Windows.Forms.Padding(2);
             this.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.BackgroundMouseDoubleClick);
             this.ResumeLayout(false);
 

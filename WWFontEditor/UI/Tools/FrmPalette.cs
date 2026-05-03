@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
-using System.IO;
-using ColorManipulation;
-using System.Drawing.Imaging;
 
-namespace WWFontEditor.Ui
+namespace Nyerguds.Util.UI
 {
     public partial class FrmPalette : Form
     {
@@ -29,7 +22,7 @@ namespace WWFontEditor.Ui
             Int32 panelInitialWidth = palettePanel.Width;
             Point BtnCloseInitial = btnClose.Location;
             palettePanel.MaxColors = maxColors;
-            palettePanel.TableWidth = 8; //(Int32)Math.Sqrt(maxColors); //Math.Min(16, maxColors);
+            palettePanel.ColorTableWidth = 8; //(Int32)Math.Sqrt(maxColors); //Math.Min(16, maxColors);
             palettePanel.Palette = palette;
             palettePanel.ColorSelectMode = colorSelectMode;
             palettePanel.SelectedIndices = selectedIndices;
@@ -54,20 +47,20 @@ namespace WWFontEditor.Ui
             this.Close();
         }
         
-        private void palettePanel_LabelMouseDoubleClick(object sender, MouseEventArgs e)
+        private void palettePanel_ColorLabelMouseDoubleClick(object sender, PaletteClickEventArgs e)
         {
             if (!m_Editable || e.Button != System.Windows.Forms.MouseButtons.Left)
                 return;
-            Int32 colindex = (Int32)sender;
+            Int32 colindex = e.Index;
             ColorDialog cdl = new ColorDialog();
-            cdl.Color = palettePanel.Palette[colindex];
+            cdl.Color = e.Color;
             cdl.FullOpen = true;
             cdl.CustomColors = m_Customcolors;
             DialogResult res = cdl.ShowDialog();
             m_Customcolors = cdl.CustomColors;
             if (res == DialogResult.OK || res == DialogResult.Yes)
             {
-                palettePanel.Palette[colindex] = cdl.Color;
+                ((PalettePanel)sender).Palette[colindex] = cdl.Color;
             }
         }
     }
