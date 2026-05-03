@@ -141,7 +141,7 @@ namespace ColorManipulation
         public static ColorPalette GenerateGrayPalette(PixelFormat pixelFormat, Boolean addTransparentZero, Boolean reverseGenerated)
         {
             ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
-            Int32 palSize = (Int32)Math.Pow(2, Image.GetPixelFormatSize(pixelFormat));
+            Int32 palSize = 1 << Image.GetPixelFormatSize(pixelFormat);
             // generate greyscale palette.
             Int32 steps = 255 / (palSize - 1);
             for (Int32 i = 0; i < pal.Entries.Length; i++)
@@ -191,7 +191,7 @@ namespace ColorManipulation
         public static ColorPalette GenerateRainbowPalette(Int32 bpp, Boolean keepWin16Pal, Boolean blackOnZero, Boolean addTransparentZero, Boolean reverseGenerated)
         {
             ColorPalette pal = new Bitmap(10, 10, GetPalettedFormat(bpp)).Palette;
-            Int32 colors = (Int32)Math.Pow(2, bpp);
+            Int32 colors = 1 << bpp;
             if (keepWin16Pal)
                 colors -= 16;
             if (blackOnZero && !keepWin16Pal)

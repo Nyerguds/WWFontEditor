@@ -19,7 +19,7 @@ namespace WWFontEditor.UI.Wrappers
         {
             this.Name = name;
             this.BitsPerPixel = bpp;
-            Int32 expectedcolors = (Int32)Math.Pow(2, bpp);
+            Int32 expectedcolors = 1 << bpp;
             Color[] palette = new Color[expectedcolors];
             Int32 copiedColors = Math.Min(colors.Length, expectedcolors);
             Array.Copy(colors, palette, copiedColors);

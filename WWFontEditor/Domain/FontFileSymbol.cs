@@ -66,7 +66,7 @@ namespace WWFontEditor.Domain
             // shouldn't. Let's assume that's implemented correctly ;)
             if (this.BitsPerPixel <= bitsPerPixel)
                 return false;
-            Int32 colValLimit = (Int32)Math.Pow(2, bitsPerPixel);
+            Int32 colValLimit = 1 << bitsPerPixel;
             return this.ByteData.Any(x => x >= colValLimit);
         }
 
@@ -78,7 +78,7 @@ namespace WWFontEditor.Domain
             Int32 myBpp = this.BitsPerPixel;
             Byte[] newByteData;
             Int32 targetBpp = targetVersion.BitsPerPixel;
-            Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
+            Int32 colValLimit = 1 << targetBpp;
             if (defaultValue.HasValue && defaultValue.Value >= colValLimit)
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
             if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
@@ -167,7 +167,7 @@ namespace WWFontEditor.Domain
             if (x < 0 || x >= Width || y < 0 || y >= Height)
                 return; // Ignore without error. Might accidentally occur when dragging or something I guess.
             Int32 pxf = this.BitsPerPixel;
-            Int32 maxSize = (Int32)Math.Pow(2, pxf);
+            Int32 maxSize = 1 << pxf;
             if (maxSize <= value)
                 throw new IndexOutOfRangeException("Byte value too large for " + pxf + " bit image!");
             this.ByteData[y * Width + x] = value;
@@ -215,7 +215,7 @@ namespace WWFontEditor.Domain
         public void ReplaceColor(Byte sourceVal, Byte targetVal)
         {
             Int32 pxf = this.BitsPerPixel;
-            Int32 maxSize = (Int32)Math.Pow(2, pxf);
+            Int32 maxSize = 1 << pxf;
             if (maxSize <= targetVal)
                 throw new IndexOutOfRangeException("Byte value too large for " + pxf + " bit image!");
             this.ByteData = this.ByteData.Select(x => x == sourceVal? targetVal : x).ToArray();

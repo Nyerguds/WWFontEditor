@@ -474,7 +474,7 @@ namespace Nyerguds.Util.UI
 
         protected virtual Label GenerateLabel(Int32 x, Int32 y, Color color, Boolean isEmpty, Boolean isTransparent, Boolean addBorder)
         {
-            Label lbl = new System.Windows.Forms.Label();
+            Label lbl = new LabelNoCopyOnDblClick();
             SetLabelProperties(lbl, x, y, color, isEmpty, isTransparent, addBorder);
             lbl.MouseClick += this.ColorLblMouseClick;
             lbl.MouseDoubleClick += this.ColorLblMouseDoubleClick;
@@ -678,6 +678,37 @@ namespace Nyerguds.Util.UI
             this.Color = color;
         }
 
+    }
+
+    /// <summary>
+    /// Disables the "feature" that double-clicking a label copies its text. Since said copy apparently happens
+    /// on the internal text variable in the Label class, an override fixes this problem.
+    /// </summary>
+    public class LabelNoCopyOnDblClick: Label
+    {
+        private String text;
+
+        public override String Text
+        {
+            get
+            {
+                return text;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    value = "";
+                }
+
+                if (text != value)
+                {
+                    text = value;
+                    Refresh();
+                    OnTextChanged(EventArgs.Empty);
+                }
+            }
+        }
     }
 
 }

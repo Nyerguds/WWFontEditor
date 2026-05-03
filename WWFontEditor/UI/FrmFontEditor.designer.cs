@@ -34,9 +34,9 @@
             this.lblSymbols = new System.Windows.Forms.Label();
             this.lblType = new System.Windows.Forms.Label();
             this.lblFontMaxX = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.lblYOffset = new System.Windows.Forms.Label();
+            this.lblSymbolWidth = new System.Windows.Forms.Label();
+            this.lblSymbolHeight = new System.Windows.Forms.Label();
+            this.lblSymbolYOffset = new System.Windows.Forms.Label();
             this.lblPaintColor1 = new System.Windows.Forms.Label();
             this.lblPaintColor2 = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
@@ -47,7 +47,6 @@
             this.btnShiftRight = new System.Windows.Forms.Button();
             this.btnShiftUp = new System.Windows.Forms.Button();
             this.btnRemap = new System.Windows.Forms.Button();
-            this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -63,12 +62,12 @@
             this.editorSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.btnSavePalette = new System.Windows.Forms.Button();
             this.btnResetPalette = new System.Windows.Forms.Button();
             this.txtPreview = new System.Windows.Forms.TextBox();
             this.btnValType = new System.Windows.Forms.Button();
             this.pxbPreview = new RedCell.UI.Controls.PixelBox();
+            this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.chkPicker = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkPaint = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -80,6 +79,7 @@
             this.numHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numYOffset = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.chkGrid = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.cmbEncodings = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.dgrvSymbolsList = new WWFontEditor.UI.Tools.DataGridViewScrollSupport();
             this.palColorSelector = new Nyerguds.Util.UI.PalettePanel();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -154,32 +154,32 @@
             this.lblFontMaxX.TabIndex = 26;
             this.lblFontMaxX.Text = "x";
             // 
-            // label4
+            // lblSymbolWidth
             // 
-            this.label4.Location = new System.Drawing.Point(6, 16);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(50, 20);
-            this.label4.TabIndex = 27;
-            this.label4.Text = "Width:";
-            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblSymbolWidth.Location = new System.Drawing.Point(6, 16);
+            this.lblSymbolWidth.Name = "lblSymbolWidth";
+            this.lblSymbolWidth.Size = new System.Drawing.Size(50, 20);
+            this.lblSymbolWidth.TabIndex = 27;
+            this.lblSymbolWidth.Text = "Width:";
+            this.lblSymbolWidth.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // label5
+            // lblSymbolHeight
             // 
-            this.label5.Location = new System.Drawing.Point(6, 42);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(50, 20);
-            this.label5.TabIndex = 27;
-            this.label5.Text = "Height:";
-            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblSymbolHeight.Location = new System.Drawing.Point(6, 42);
+            this.lblSymbolHeight.Name = "lblSymbolHeight";
+            this.lblSymbolHeight.Size = new System.Drawing.Size(50, 20);
+            this.lblSymbolHeight.TabIndex = 27;
+            this.lblSymbolHeight.Text = "Height:";
+            this.lblSymbolHeight.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblYOffset
+            // lblSymbolYOffset
             // 
-            this.lblYOffset.Location = new System.Drawing.Point(6, 68);
-            this.lblYOffset.Name = "lblYOffset";
-            this.lblYOffset.Size = new System.Drawing.Size(50, 20);
-            this.lblYOffset.TabIndex = 27;
-            this.lblYOffset.Text = "Y-offset:";
-            this.lblYOffset.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblSymbolYOffset.Location = new System.Drawing.Point(6, 68);
+            this.lblSymbolYOffset.Name = "lblSymbolYOffset";
+            this.lblSymbolYOffset.Size = new System.Drawing.Size(50, 20);
+            this.lblSymbolYOffset.TabIndex = 27;
+            this.lblSymbolYOffset.Text = "Y-offset:";
+            this.lblSymbolYOffset.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblPaintColor1
             // 
@@ -298,17 +298,6 @@
             this.btnRemap.UseVisualStyleBackColor = true;
             this.btnRemap.Click += new System.EventHandler(this.BtnRemap_Click);
             // 
-            // cmbEncodings
-            // 
-            this.cmbEncodings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.cmbEncodings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbEncodings.FormattingEnabled = true;
-            this.cmbEncodings.Location = new System.Drawing.Point(12, 440);
-            this.cmbEncodings.Name = "cmbEncodings";
-            this.cmbEncodings.Size = new System.Drawing.Size(196, 21);
-            this.cmbEncodings.TabIndex = 21;
-            this.cmbEncodings.SelectedIndexChanged += new System.EventHandler(this.CmbEncodings_SelectedIndexChanged);
-            // 
             // groupBox1
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -320,11 +309,11 @@
             this.groupBox1.Controls.Add(this.btnShiftLeft);
             this.groupBox1.Controls.Add(this.btnShiftDown);
             this.groupBox1.Controls.Add(this.btnShiftRight);
-            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.lblSymbolWidth);
             this.groupBox1.Controls.Add(this.btnShiftUp);
             this.groupBox1.Controls.Add(this.numYOffset);
-            this.groupBox1.Controls.Add(this.label5);
-            this.groupBox1.Controls.Add(this.lblYOffset);
+            this.groupBox1.Controls.Add(this.lblSymbolHeight);
+            this.groupBox1.Controls.Add(this.lblSymbolYOffset);
             this.groupBox1.Location = new System.Drawing.Point(616, 34);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(162, 176);
@@ -462,17 +451,6 @@
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutToolStripMenuItem_Click);
             // 
-            // cmbPalettes
-            // 
-            this.cmbPalettes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmbPalettes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbPalettes.FormattingEnabled = true;
-            this.cmbPalettes.Location = new System.Drawing.Point(616, 212);
-            this.cmbPalettes.Name = "cmbPalettes";
-            this.cmbPalettes.Size = new System.Drawing.Size(162, 21);
-            this.cmbPalettes.TabIndex = 90;
-            this.cmbPalettes.SelectedIndexChanged += new System.EventHandler(this.CmbPalettes_SelectedIndexChanged);
-            // 
             // btnSavePalette
             // 
             this.btnSavePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -532,6 +510,17 @@
             this.pxbPreview.Size = new System.Drawing.Size(381, 83);
             this.pxbPreview.TabIndex = 315;
             this.pxbPreview.TabStop = false;
+            // 
+            // cmbPalettes
+            // 
+            this.cmbPalettes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbPalettes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbPalettes.FormattingEnabled = true;
+            this.cmbPalettes.Location = new System.Drawing.Point(616, 212);
+            this.cmbPalettes.Name = "cmbPalettes";
+            this.cmbPalettes.Size = new System.Drawing.Size(162, 21);
+            this.cmbPalettes.TabIndex = 90;
+            this.cmbPalettes.SelectedIndexChanged += new System.EventHandler(this.CmbPalettes_SelectedIndexChanged);
             // 
             // chkPicker
             // 
@@ -709,6 +698,17 @@
             this.toolTip1.SetToolTip(this.chkGrid, "Toggle grid");
             this.chkGrid.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
             // 
+            // cmbEncodings
+            // 
+            this.cmbEncodings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.cmbEncodings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbEncodings.FormattingEnabled = true;
+            this.cmbEncodings.Location = new System.Drawing.Point(12, 440);
+            this.cmbEncodings.Name = "cmbEncodings";
+            this.cmbEncodings.Size = new System.Drawing.Size(196, 21);
+            this.cmbEncodings.TabIndex = 21;
+            this.cmbEncodings.SelectedIndexChanged += new System.EventHandler(this.CmbEncodings_SelectedIndexChanged);
+            // 
             // dgrvSymbolsList
             // 
             this.dgrvSymbolsList.AllowUserToAddRows = false;
@@ -806,7 +806,6 @@
             // pxbEditGridFront
             // 
             this.pxbEditGridFront.BackColor = System.Drawing.Color.Transparent;
-            this.pxbEditGridFront.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbEditGridFront.Location = new System.Drawing.Point(3, 3);
             this.pxbEditGridFront.Margin = new System.Windows.Forms.Padding(0);
             this.pxbEditGridFront.Name = "pxbEditGridFront";
@@ -823,7 +822,6 @@
             // pxbImage
             // 
             this.pxbImage.BackColor = System.Drawing.Color.Transparent;
-            this.pxbImage.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbImage.Location = new System.Drawing.Point(3, 3);
             this.pxbImage.Margin = new System.Windows.Forms.Padding(0);
             this.pxbImage.Name = "pxbImage";
@@ -837,7 +835,6 @@
             // pxbEditGridBehind
             // 
             this.pxbEditGridBehind.BackColor = System.Drawing.Color.Transparent;
-            this.pxbEditGridBehind.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbEditGridBehind.Location = new System.Drawing.Point(3, 3);
             this.pxbEditGridBehind.Margin = new System.Windows.Forms.Padding(0);
             this.pxbEditGridBehind.Name = "pxbEditGridBehind";
@@ -851,7 +848,6 @@
             // pxbFullSize
             // 
             this.pxbFullSize.BackColor = System.Drawing.Color.Transparent;
-            this.pxbFullSize.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.pxbFullSize.Location = new System.Drawing.Point(3, 3);
             this.pxbFullSize.Margin = new System.Windows.Forms.Padding(0);
             this.pxbFullSize.Name = "pxbFullSize";
@@ -937,9 +933,9 @@
         private System.Windows.Forms.Label lblSymbols;
         private System.Windows.Forms.Label lblType;
         private System.Windows.Forms.Label lblFontMaxX;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label lblYOffset;
+        private System.Windows.Forms.Label lblSymbolWidth;
+        private System.Windows.Forms.Label lblSymbolHeight;
+        private System.Windows.Forms.Label lblSymbolYOffset;
         private RedCell.UI.Controls.PixelBox pxbFullSize;
         private RedCell.UI.Controls.PixelBox pxbEditGridBehind;
         private RedCell.UI.Controls.PixelBox pxbImage;

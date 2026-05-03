@@ -179,7 +179,6 @@ namespace WWFontEditor.Domain
         {
             if (this.BitsPerPixel <= bitsPerPixel)
                 return false;
-            Int32 colValLimit = (Int32)Math.Pow(2, bitsPerPixel);
             foreach (FontFileSymbol ffs in m_ImageDataList)
                 if (ffs.HasTooHighDataFor(bitsPerPixel))
                     return true;
@@ -207,7 +206,7 @@ namespace WWFontEditor.Domain
         public void CloneInto(FontFile newFont, Byte overflowColor)
         {
             Int32 targetBpp = newFont.BitsPerPixel;
-            Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
+            Int32 colValLimit = 1 << targetBpp;
             if (overflowColor >= colValLimit)
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", overflowColor, targetBpp));
             newFont.FontWidth = this.FontWidth;
@@ -608,7 +607,7 @@ namespace WWFontEditor.Domain
             Int32 stride = bitsLength * width;
             stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
             // Bit mask for reducing read and shifted data to actual bits length
-            Int32 bitmask = (Int32)Math.Pow(2, bitsLength) - 1;
+            Int32 bitmask = (1 << bitsLength) - 1;
             Int32 size = stride * height;
             // File check, and getting actual data.
             if (start + size > fileData.Length)
@@ -644,7 +643,7 @@ namespace WWFontEditor.Domain
             stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
             // Bit mask for reducing original data to actual bits maximum.
             // Should not be needed if data is correct, but eh.
-            Int32 bitmask = (Int32)Math.Pow(2, bitsLength) - 1;
+            Int32 bitmask = (1 << bitsLength) - 1;
             Byte[] dataXbit = new Byte[stride * height];
             // Actual conversion porcess.
             for (Int32 y = 0; y < height; y++)

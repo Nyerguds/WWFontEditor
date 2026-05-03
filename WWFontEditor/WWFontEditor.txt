@@ -184,6 +184,11 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 Version history
 ---------------
 
+v1.5.4:
+-Fixed the (MS) bug where editing palette colour #0 messed up the clipboard.
+ (Double clicking a label copies its text to the clipboard. Pretty dumb.)
+-Optimized some of the internals.
+
 v1.5.3:
 -Added code page numbers to encodings dropdown, and put 437 with DOS encodings.
 -WWFont v3 and v4 will now do automatic height and Y-offset optimization.

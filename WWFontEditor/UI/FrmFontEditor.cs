@@ -434,7 +434,7 @@ namespace WWFontEditor
 
         public static void InitPaletteControl(Int32 bitsPerPixel, PalettePanel palPanel, Color[] palette, Int32 maxDimension)
         {
-            Int32 colors = (Int32)Math.Pow(2, bitsPerPixel);
+            Int32 colors = 1 << bitsPerPixel;
             palPanel.MaxColors = colors;
             Int32 squaresPerRow = (Int32)Math.Sqrt(colors);
             Int32 squaresPerCol = colors / squaresPerRow + ((colors % squaresPerRow) > 0 ? 1 : 0);
@@ -1170,22 +1170,33 @@ namespace WWFontEditor
                 return;
             DataObject retrievedData = (DataObject)Clipboard.GetDataObject();
             FontFileSymbol clipboard = null;
-            if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
+            if (retrievedData != null)
             {
-                clipboard = retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
+                if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
+                {
+                    clipboard = retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
+                }
+                if (clipboard == null && retrievedData.GetDataPresent(DataFormats.Bitmap))
+                {
+                    Image srcImage = retrievedData.GetData(DataFormats.Bitmap) as Image;
+                    clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
+                }
+                if (clipboard == null && retrievedData.GetDataPresent(typeof(Image)))
+                {
+                    Image srcImage = retrievedData.GetData(typeof(Image)) as Image;
+                    clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
+                }
+                String[] o = retrievedData.GetFormats();
+                foreach (String st in o)
+                {
+
+                }
             }
-            else if (retrievedData.GetDataPresent(DataFormats.Bitmap))
-            {
-                Image srcImage = retrievedData.GetData(DataFormats.Bitmap) as Image;
-                clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
-            }
-            else
+            if (clipboard == null)
             {
                 MessageBox.Show("No font data found on the clipboard.", m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            if (clipboard == null)
-                return;
             Int32 curIndex = GetSelectedIndex();
             FontFileSymbol fc = this.m_LoadedFont.GetSymbol(curIndex);
             if (fc == null)
@@ -1355,7 +1366,7 @@ namespace WWFontEditor
             }
             else
             {
-                Int32 nrcols = (Int32)Math.Pow(2, currentPal.BitsPerPixel);
+                Int32 nrcols = 1 << currentPal.BitsPerPixel;
                 btnSavePalette.Enabled = currentPal.SourceFile != null && currentPal.Entry >= 0 && currentPal.Entry < 256 / nrcols;
                 m_CurrentPalette = currentPal.Colors;
                 bpp = currentPal.BitsPerPixel;
@@ -1397,7 +1408,7 @@ namespace WWFontEditor
             PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
             if (currentPal == null)
                 return;
-            Int32 nrcols = (Int32)Math.Pow(2, currentPal.BitsPerPixel);
+            Int32 nrcols = 1 << currentPal.BitsPerPixel;
             if (currentPal.SourceFile == null || currentPal.Entry < 0 || currentPal.Entry >= 256 / nrcols)
                 return;
             FileInfo palfile = new FileInfo(GeneralUtils.GetAbsolutePath(currentPal.SourceFile, Path.GetDirectoryName(Application.ExecutablePath)));

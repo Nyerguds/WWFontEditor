@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Windows.Forms;
 
 namespace Nyerguds.Util.UI
@@ -18,11 +14,12 @@ namespace Nyerguds.Util.UI
         private void SetDropDownWidth()
         {
             Int32 widestStringInPixels = this.Width;
+            Boolean noDisplayMember = String.IsNullOrEmpty(this.DisplayMember);
             foreach (Object o in Items)
             {
                 String toCheck;
-                if (String.IsNullOrEmpty(this.DisplayMember))
-                    toCheck = o.ToString();
+                if (noDisplayMember)
+                    toCheck = o == null? String.Empty : o.ToString();
                 else
                 {
                     Object val = null;
@@ -30,9 +27,12 @@ namespace Nyerguds.Util.UI
                     catch { /* ignore; if it fails, just consider it empty. */ }
                     toCheck = val == null ? String.Empty : val.ToString();
                 }
-                Int32 newWidth = TextRenderer.MeasureText(toCheck, this.Font).Width;
-                if (newWidth > widestStringInPixels)
-                    widestStringInPixels = newWidth;
+                if (toCheck.Length > 0)
+                {
+                    Int32 newWidth = TextRenderer.MeasureText(toCheck, this.Font).Width;
+                    if (newWidth > widestStringInPixels)
+                        widestStringInPixels = newWidth;
+                }
             }
             if (this.Items.Count * this.ItemHeight > this.DropDownHeight)
                 widestStringInPixels += SystemInformation.VerticalScrollBarWidth;
