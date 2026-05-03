@@ -506,7 +506,7 @@ namespace WWFontEditor.Domain
                 Byte[] data8Bit;
                 try
                 {
-                    data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength, false);
+                    data8Bit = ImageUtils.ConvertTo8Bit(fileData, width, height, start, bitsLength);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -602,6 +602,10 @@ namespace WWFontEditor.Domain
         /// <returns></returns>
         protected Byte[] OptimizeImagesList(Byte[][] imageData, ref Int32 fontOffset)
         {
+            // This needs to be done before the process can start!
+            for (Int32 i = 0; i < imageData.Length; i++)
+                if (imageData[i] == null)
+                    imageData[i] = new Byte[0];
             Int32[] refslist = CreateRefsList(imageData);
             Byte[] fontDataOffsetsList = new Byte[imageData.Length * 2];
             for (Int32 i = 0; i < imageData.Length; i++)

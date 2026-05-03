@@ -27,11 +27,12 @@ Table of Contents
 > Version history
 
 
---------------
+-------------
 Features list
 -------------
 
-* Can edit fonts from pretty much all pre-RA2 Westwood games (see full list).
+* Can edit fonts from pretty much all pre-RA2 Westwood Studios games.
+* Can edit fonts from the old Sierra/Dynamix adventure games.
 * Fonts can be converted to other font types.
 * Symbol sizes can be adjusted (if the font type supports it).
 * New symbols can be added (if the font type supports it).
@@ -233,6 +234,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.9.4: (2017/07/14 10:37)
+-Fixed some problem with collapsing identical symbols that caused a crash.
 
 v1.9.3: (2017/07/13 19:07)
 -Fixed remaining bugs from the cleanup that made Dynamix fonts not work.

@@ -30,9 +30,9 @@ namespace WWFontEditor.Domain.FontTypes
         {
             if (fileData.Length < 0x0C)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            // Poor Man's bytes-to-string conversion. Will give incorrect chars on values > 0x7F,
-            // but it doesn't matter here since the string that is compared with doesn't contain those.
-            if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => (Char)x).ToArray())))
+            Byte[] sectionId = new Byte[4];
+            Array.Copy(fileData, 0, sectionId, 0, 4);
+            if (!sectionId.SequenceEqual(Encoding.ASCII.GetBytes("FNT:")))
                 throw new FileTypeLoadException(ERR_BADHEADER);
             Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
@@ -42,7 +42,6 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException("Complex Dynamix font detected.");
             this.m_FontWidth = fileData[dataOffset];
             this.m_FontHeight = fileData[dataOffset+1];
-            //if (newType) dataOffset++;
             Byte startSymbol = fileData[dataOffset+2];
             Byte nrOfSymbols = fileData[dataOffset+3];
             Int32 symbolSize = ((m_FontWidth + 7) / 8) * m_FontHeight;
@@ -57,7 +56,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start + (symbolSize * i), this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start + (symbolSize * i), this.BitsPerPixel);
                 }
                 catch (IndexOutOfRangeException)
                 {

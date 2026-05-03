@@ -35,16 +35,16 @@ namespace WWFontEditor.Domain.FontTypes
         {
             if (fileData.Length < 0x15)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            // Poor Man's bytes-to-string conversion. Will give incorrect chars on values > 0x7F,
-            // but it doesn't matter here since the string that is compared with doesn't contain those.
-            if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => (Char)x).ToArray())))
+            Byte[] sectionId = new Byte[4];
+            Array.Copy(fileData, 0, sectionId, 0, 4);
+            if (!sectionId.SequenceEqual(Encoding.ASCII.GetBytes("FNT:")))
                 throw new FileTypeLoadException(ERR_BADHEADER);
             Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             Int32 dataOffset = 0x08;
             if (fileData[dataOffset] != 0xFF)
-                throw new FileTypeLoadException("Not a complex-type Dynamix font!");
+                throw new FileTypeLoadException("Not a complex Dynamix font!");
             this.m_FontWidth = fileData[dataOffset+1];
             this.m_FontHeight = fileData[dataOffset + 2];
             this.lineHeight = fileData[dataOffset + 3];
@@ -94,7 +94,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(data, widths[i], this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(data, widths[i], this.m_FontHeight, readStart + offsets[i], this.BitsPerPixel);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -122,7 +122,10 @@ namespace WWFontEditor.Domain.FontTypes
                 if (!foundStart)
                 {
                     if (i < 0x20 && ffs.Width == 0)
+                    {
+                        imageData[i] = new Byte[0];
                         continue;
+                    }
                     foundStart = true;
                     startSymbol = i;
                 }
@@ -149,7 +152,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = startSymbol; i < fullNrOfSymbols; i++)
             {
                 Byte[] image = imageData[i];
-                if (image.Length == 0)
+                if (image == null || image.Length == 0)
                     continue;
                 Array.Copy(image, 0, fullData, dataOffset + offset, image.Length);
                 //ArrayUtils.WriteIntToByteArray(fullData, indexOffset, 2, false, offset);

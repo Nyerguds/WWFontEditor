@@ -52,7 +52,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel);
                 }
                 catch (IndexOutOfRangeException)
                 {
