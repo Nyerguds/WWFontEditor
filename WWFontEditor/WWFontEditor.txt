@@ -157,11 +157,14 @@ WWFont v4
 -Command & Conquer Tiberian Sun Firestorm Installer
 -Lands of Lore III Installer
 
-WWFont v5
--Command & Conquer Red Alert 2
-
 IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
+
+Westwood BitFont
+-Command & Conquer Red Alert 2 (unused editor fonts)
+
+Westwood Unicode BitFont
+-Command & Conquer Red Alert 2
 
 Dynamix Font v1 a/b (2bpp and 4bpp version)
 -Pete Rose Pennant Fever
@@ -314,6 +317,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.13.2: (2019/03/19 16:07)
+-Renamed "WWFont v5" to "WW BitFont (Unicode)" and "WWFont v6" to "WW BitFont".
 
 v1.13.1: (2019/03/19 14:05)
 -Added support for the Red Alert 2 "FoNt" format.

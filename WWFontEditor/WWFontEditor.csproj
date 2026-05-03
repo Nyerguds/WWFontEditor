@@ -56,8 +56,8 @@
     <Compile Include="Domain\Utils\EncodingSupport.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
-    <Compile Include="Domain\FontTypes\FontFileWsV5.cs" />
-    <Compile Include="Domain\FontTypes\FontFileWsV6.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsBfUni.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsBf.cs" />
     <Compile Include="Domain\UnicodeInfo.cs" />
     <Compile Include="Domain\Utils\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />

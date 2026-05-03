@@ -8,7 +8,7 @@ namespace WWFontEditor.Domain.FontTypes
     /// <summary>
     /// Westwood Studios RA2/Nox font format.
     /// </summary>
-    public class FontFileWsV6 : FontFile
+    public class FontFileWsBf : FontFile
     {
         public override Int32 SymbolsTypeMax { get { return 0x100; } }
         public override Int32 FontWidthTypeMax { get { return 0xFF; } }
@@ -20,8 +20,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontTypePaddingRight { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 1; } }
 
-        public override String ShortTypeName { get { return "WWFont v6"; } }
-        public override String ShortTypeDescription { get { return "WWFont v6 (RA2)"; } }
+        public override String ShortTypeName { get { return "WW BitFont"; } }
+        public override String ShortTypeDescription { get { return "WW BitFont (RA2)"; } }
         public override String LongTypeDescription { get { return "A 1-bpp font which saves only the used range."; } }
         public override String[] GamesListForType { get { return new String[] { "Command & Conquer Red Alert 2" }; } }
 
@@ -59,6 +59,9 @@ namespace WWFontEditor.Domain.FontTypes
                 if (readOffset + symbolDataSize > fileData.Length)
                     throw new FileTypeLoadException("File is not long enough to contain all symbols!");
                 Byte symbolWidth = fileData[readOffset++];
+                // Technically the read font width is irrelevant, and thus it might be wrong.
+                if (symbolWidth > m_FontWidth && ImageUtils.GetMinimumStride(symbolWidth, 1) <= stride)
+                    m_FontWidth = symbolWidth;
                 Byte[] symbolData = new Byte[symbolImageSize];
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolImageSize);
                 Int32 symbolStride = stride;

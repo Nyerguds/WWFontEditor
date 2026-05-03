@@ -11,7 +11,7 @@ namespace WWFontEditor.Domain.FontTypes
     /// <summary>
     /// Westwood Studios RA2 font format.
     /// </summary>
-    public class FontFileWsV5 : FontFile
+    public class FontFileWsBfUni : FontFile
     {
         public override Int32 SymbolsTypeMin { get { return 0x10000; } }
         public override Int32 SymbolsTypeMax { get { return 0x10000; } }
@@ -24,8 +24,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontTypePaddingRight { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 1; } }
 
-        public override String ShortTypeName { get { return "WWFont v5"; } }
-        public override String ShortTypeDescription { get { return "WWFont v5 (RA2)"; } }
+        public override String ShortTypeName { get { return "WW BitFont (Unicode)"; } }
+        public override String ShortTypeDescription { get { return "WW BitFont (Unicode) (RA2)"; } }
         public override String LongTypeDescription { get { return "A 1-bpp font which supports unicode."; } }
         public override String[] GamesListForType { get { return new String[] { "Command & Conquer Red Alert 2", }; } }
         /// <summary>Indicates that the font file is unicode, and is thus not limited to 256 characters.</summary>
@@ -74,6 +74,9 @@ namespace WWFontEditor.Domain.FontTypes
                 if (curSymbolUsage == null)
                     break;
                 Byte symbolWidth = fileData[readOffset++];
+                // Technically the read font width is irrelevant, and thus it might be wrong.
+                if (symbolWidth > m_FontWidth && ImageUtils.GetMinimumStride(symbolWidth, 1) <= stride)
+                    m_FontWidth = symbolWidth;
                 Byte[] symbolData = new Byte[symbolImageSize];
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolImageSize);
                 readOffset += symbolImageSize;

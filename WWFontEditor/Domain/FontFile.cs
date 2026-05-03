@@ -156,8 +156,8 @@ namespace WWFontEditor.Domain
             typeof(FontFileWsV2),
             typeof(FontFileWsV3),
             typeof(FontFileWsV4),
-            typeof(FontFileWsV5),
-            typeof(FontFileWsV6),
+            typeof(FontFileWsBf),
+            typeof(FontFileWsBfUni),
             typeof(FontFileD2K),
             typeof(FontFileTran),
             typeof(FontFileDynV1a),
@@ -187,9 +187,9 @@ namespace WWFontEditor.Domain
             typeof(FontFileDynV4),
             typeof(FontFileDynV5),
             typeof(FontFileDynV6),
-            // WW v5 and higher start with a very specifically cased fonT/FoNt/tNoF string
-            typeof(FontFileWsV6),
-            typeof(FontFileWsV5),
+            // WW BitFont starts with a very specifically cased fonT/FoNt/tNoF string
+            typeof(FontFileWsBf),
+            typeof(FontFileWsBfUni),
             // These start with their file size.
             typeof(FontFileWsV4),
             typeof(FontFileWsV3),
