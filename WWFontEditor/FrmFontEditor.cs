@@ -1,9 +1,11 @@
-﻿using WWFontEditor.Domain;
-using ColorManipulation;
+﻿using ColorManipulation;
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
+using WWFontEditor.Domain;
+using WWFontEditor.Ui;
 
 namespace WWFontEditor
 {
@@ -11,23 +13,23 @@ namespace WWFontEditor
     {
         private Color[] PaletteRainbow = new Color[]
             {
-                ImageUtils.ColorFromUInt(0xFF000000),
-                ImageUtils.ColorFromUInt(0xFFFF0000),
-                ImageUtils.ColorFromUInt(0xFFFF5E00),
-                ImageUtils.ColorFromUInt(0xFFFFBF00),
-                ImageUtils.ColorFromUInt(0xFFE1FF00),
-                ImageUtils.ColorFromUInt(0xFF80FF00),
-                ImageUtils.ColorFromUInt(0xFF22FF00),
-                ImageUtils.ColorFromUInt(0xFF00FF40),
-                ImageUtils.ColorFromUInt(0xFF00FF9D),
-                ImageUtils.ColorFromUInt(0xFF00FFFF),
-                ImageUtils.ColorFromUInt(0xFF009DFF),
-                ImageUtils.ColorFromUInt(0xFF0040FF),
-                ImageUtils.ColorFromUInt(0xFF2200FF),
-                ImageUtils.ColorFromUInt(0xFF8000FF),
-                ImageUtils.ColorFromUInt(0xFFE100FF),
-                ImageUtils.ColorFromUInt(0xFFFF00BF),
-                ImageUtils.ColorFromUInt(0xFFFF005E),
+                ImageUtils.ColorFromUInt(0x00000000), // 0
+                ImageUtils.ColorFromUInt(0xFFFF0000), // 1
+                ImageUtils.ColorFromUInt(0xFFFF5E00), // 2
+                ImageUtils.ColorFromUInt(0xFFFFBF00), // 3
+                ImageUtils.ColorFromUInt(0xFFE1FF00), // 4
+                ImageUtils.ColorFromUInt(0xFF80FF00), // 5
+                ImageUtils.ColorFromUInt(0xFF22FF00), // 6
+                ImageUtils.ColorFromUInt(0xFF00FF40), // 7
+                ImageUtils.ColorFromUInt(0xFF00FF9D), // 8
+                ImageUtils.ColorFromUInt(0xFF00FFFF), // 9
+                ImageUtils.ColorFromUInt(0xFF009DFF), // 10
+                ImageUtils.ColorFromUInt(0xFF0040FF), // 11
+                ImageUtils.ColorFromUInt(0xFF2200FF), // 12
+                ImageUtils.ColorFromUInt(0xFF8000FF), // 13
+                ImageUtils.ColorFromUInt(0xFFE100FF), // 14
+                ImageUtils.ColorFromUInt(0xFFFF00BF), // 15
+                // ImageUtils.ColorFromUInt(0xFFFF005E), // 16
             };
 
         
@@ -38,7 +40,6 @@ namespace WWFontEditor
         private Int32 m_CurYOffset;
         private Int32 m_LastHoverPixelX = -1;
         private Int32 m_LastHoverPixelY = -1;
-        // TODO: Change these two to Byte later, when implementing color palette support.
         private Byte m_CurrentPaintColorFront = 1;
         private Byte m_CurrentPaintColorBack = 0;
         private Color[] m_CurrentPalette;
@@ -54,9 +55,12 @@ namespace WWFontEditor
 
         public FrmFontEditor()
         {
-            m_CurrentPalette = PaletteRainbow;
             InitializeComponent();
-            //*/
+            // Colors init
+            m_CurrentPalette = PaletteRainbow;
+            palColorSelector.Palette = m_CurrentPalette;
+            palColorSelector.SelectedIndices = new Int32[] { m_CurrentPaintColorFront, m_CurrentPaintColorBack };
+            // PixelBox hierarchy init            
             pxbEditGridBehind.Parent = pxbFullSize;
             pxbEditGridBehind.BackColor = Color.Transparent;
             pxbImage.Parent = pxbFullSize;
@@ -64,13 +68,9 @@ namespace WWFontEditor
             pxbImage.BringToFront();
             pxbEditGridFront.Parent = pxbImage;
             pxbEditGridFront.BackColor = Color.Transparent;
-            /*/
-            this.pxbEditGridFront.SendToBack();
-            this.pxbImage.SendToBack();
-            this.pxbEditGridBehind.SendToBack();
-            this.pxbFullSize.SendToBack();
-            //*/
-            this.lblPaintColor.BackColor = m_CurrentPalette[this.m_CurrentPaintColorFront];
+
+            this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColorFront]);
+            this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColorBack]);
             this.Text = "Westwood Font Editor " + GeneralUtils.ProgramVersion() + " - Created by Nyerguds";
         }
 
@@ -154,8 +154,8 @@ namespace WWFontEditor
         {
             if (m_Loadedfont == null)
                 return;
-            FntFileVersion ver = m_Loadedfont.Unknown0E == 0x1012 ? FntFileVersion.CnC : FntFileVersion.Kyrandia;
-            Byte[] filedata = m_Loadedfont.WriteFntFile(ver);
+            //FntFileVersion ver = m_Loadedfont.Unknown0E == 0x1012 ? FntFileVersion.CnC : FntFileVersion.Kyrandia;
+            Byte[] filedata = m_Loadedfont.WriteFntFile();
             File.WriteAllBytes(fileName, filedata);
         }
 
@@ -344,6 +344,9 @@ namespace WWFontEditor
                 // Clear previous pixel
                 if (m_LastHoverPixelX != -1 && m_LastHoverPixelY != -1)
                     ImageUtils.DrawRect8Bit(gridFront, m_LastHoverPixelX, m_LastHoverPixelY, m_LastHoverPixelX, m_LastHoverPixelY, 0, true);
+                // set color, just in case it changed.
+                if (m_CurrentPalette.Length > m_CurrentPaintColorFront)
+                    gridFront.Palette.Entries[1] = m_CurrentPalette[m_CurrentPaintColorFront];
                 // Draw new pixel
                 if (inBounds)
                     ImageUtils.DrawRect8Bit(gridFront, picX, picY, picX, picY, 1, true);
@@ -372,23 +375,16 @@ namespace WWFontEditor
             this.m_LastHoverPixelY = -1;
         }
         
-        private void lblPaintColor_Click(object sender, EventArgs e)
+        private void palColorSelector_ColorSelectionChanged(object sender, EventArgs e)
         {
-            /*/
-            ColorDialog cdl = new ColorDialog();
-            cdl.Color = this.currentPaintColorFront;
-            cdl.FullOpen = true;
-            cdl.CustomColors = this.customcolors;
-            DialogResult res = cdl.ShowDialog(this);
-            customcolors = cdl.CustomColors;
-            if (res == DialogResult.OK || res == DialogResult.Yes)
-            {
-                this.currentPaintColorFront = cdl.Color;
-                this.lblPaintColor.BackColor = currentPaintColorFront;
-                RefreshImage();
-            }
-            pxbEditGridFront.Image.Palette[1] = cdl.Color;
-            //*/
+            Int32[] colors = palColorSelector.SelectedIndices;
+            if (colors.Length != 2)
+                return;
+            m_CurrentPaintColorFront = (Byte)colors[0];
+            lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColorFront]);
+            m_CurrentPaintColorBack = (Byte)colors[1];
+            lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColorBack]);
+            RefreshImage();
         }
 
     }

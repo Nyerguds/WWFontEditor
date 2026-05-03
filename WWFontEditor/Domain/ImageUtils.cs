@@ -12,21 +12,6 @@ namespace ColorManipulation
     public static class ImageUtils
     {
 
-        public static Color GetVisibleBorderColor(Color color)
-        {
-            float bri = color.GetBrightness();
-            if (color.GetSaturation() < .16)
-            {
-                // this color is grey
-                return bri < .5 ? Color.White : Color.Black;
-            }
-            return GetInvertedColor(color);
-        }
-
-        public static Color GetInvertedColor(Color color)
-        {
-            return Color.FromArgb((Int32)(0x00FFFFFFu ^ (UInt32)color.ToArgb()));
-        }
 
         public static void SaveImage(Bitmap image, String filename)
         {

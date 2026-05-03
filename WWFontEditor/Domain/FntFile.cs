@@ -23,11 +23,9 @@ namespace WWFontEditor.Domain
         public Byte FontHeight { get; private set; }          // Overall maximum font height.
         public Byte FontWidth { get; private set; }           // Overall maximum font width.
 
-        //private Int16[] m_FontDataOffsetsList;  // array with the positions of all font entries
-        private List<Byte> m_WidthsList;   //  array with the widths of all font entries
+                                                     private List<Byte> m_WidthsList;   //  array with the widths of all font entries
         private List<Byte> m_HeightsList;  // array with the heights of all font entries
         private List<Byte> m_OffsetYList;  // array with the vertical offsets of all font entries
-
         private List<Byte[]> ImageDataList;
 
         public Int32 Length { get { return LastIndex + 1; } }
@@ -84,7 +82,7 @@ namespace WWFontEditor.Domain
             ImageDataList[index][y * chWidth + x] = value;
         }
 
-        public Byte[] WriteFntFile(FntFileVersion version)
+        public Byte[] WriteFntFile()
         {
             Int32 imagesCount = this.ImageDataList.Count;
             Byte[] fontDataOffsetsList = new Byte[imagesCount*2];
@@ -142,9 +140,9 @@ namespace WWFontEditor.Domain
             fullData[0x00] = (Byte)(fullLength & 0xFF);         //Int16 FileSize, byte 1;
             fullData[0x01] = (Byte)((fullLength >> 8) & 0xFF);  //Int16 FileSize, byte 2;
             fullData[0x02] = 0x00;                              // Byte DataFormat
-            fullData[0x03] = 0x05;                              // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
-            fullData[0x04] = 0x0E;                              // Int16 Unknown04, byte 1; (always 0x0e)
-            fullData[0x05] = 0x00;                              // Int16 Unknown04, byte 2; (always 0x00)
+            fullData[0x03] = Unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
+            fullData[0x04] = (Byte)(Unknown04 & 0xFF);          // Int16 Unknown04, byte 1; (always 0x0e)
+            fullData[0x05] = (Byte)((Unknown04 >> 8) & 0xFF);   // Int16 Unknown04, byte 2; (always 0x00)
             fullData[0x06] = (Byte)(offsetsListOffset & 0xFF);        // Int16 FontDataListOffset, byte 1;
             fullData[0x07] = (Byte)((offsetsListOffset >> 8) & 0xFF); // Int16 FontDataListOffset, byte 2;
             fullData[0x08] = (Byte)(widthListOffset & 0xFF);          // Int16 WidthsListOffset, byte 1
@@ -153,11 +151,8 @@ namespace WWFontEditor.Domain
             fullData[0x0B] = fontDataOffsetsList[1];             // Int16 FontDataOffset, byte 2
             fullData[0x0C] = (Byte)(heightsListOffset & 0xFF);        // Int16 HeightsListOffset, byte 1
             fullData[0x0D] = (Byte)((heightsListOffset >> 8) & 0xFF); // Int16 HeightsListOffset, byte 2
-            if (version == FntFileVersion.Kyrandia)
-                fullData[0x0E] = 0x11;                          // Int16 Unknown0E, byte 1 (0x11 for pre-C&C WW games?)
-            else if (version == FntFileVersion.CnC)
-                fullData[0x0E] = 0x12;                          // Int16 Unknown0E, byte 1 (0x12 in C&C/RA)
-            fullData[0x0F] = 0x10;                              // Int16 Unknown0E, byte 2 (always 0x10)
+            fullData[0x0E] = (Byte)(Unknown0E & 0xFF);          // Int16 Unknown0E, byte 1 (0x11 for pre-C&C WW games?)
+            fullData[0x0F] = (Byte)((Unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, byte 2 (always 0x10)
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
             fullData[0x11] = (Byte)(imagesCount - 1);           // Byte LastCharIndex
             fullData[0x12] = FontHeight;                        // Byte FontHeight
@@ -252,7 +247,7 @@ namespace WWFontEditor.Domain
         /// but this will restrict the size of the values that can be painted on the image.
         /// </summary>
         /// <returns>the pixel format of the loaded font.</returns>
-        private PixelFormat GetPixelFormat()
+        public PixelFormat GetPixelFormat()
         {
             if (this.DataFormat == 0)
                 return PixelFormat.Format4bppIndexed;

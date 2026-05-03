@@ -29,14 +29,13 @@
         private void InitializeComponent()
         {
             this.btnClose = new System.Windows.Forms.Button();
-            this.btnSavePalette = new System.Windows.Forms.Button();
             this.palettePanel = new WWFontEditor.Ui.PalettePanel();
             this.SuspendLayout();
             // 
             // btnClose
             // 
             this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClose.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnClose.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btnClose.Location = new System.Drawing.Point(216, 369);
             this.btnClose.Margin = new System.Windows.Forms.Padding(0);
             this.btnClose.Name = "btnClose";
@@ -45,18 +44,6 @@
             this.btnClose.Text = "Close window";
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
-            // 
-            // btnSavePalette
-            // 
-            this.btnSavePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnSavePalette.Location = new System.Drawing.Point(20, 369);
-            this.btnSavePalette.Margin = new System.Windows.Forms.Padding(0);
-            this.btnSavePalette.Name = "btnSavePalette";
-            this.btnSavePalette.Size = new System.Drawing.Size(120, 23);
-            this.btnSavePalette.TabIndex = 2;
-            this.btnSavePalette.Text = "Save Palette";
-            this.btnSavePalette.UseVisualStyleBackColor = true;
-            this.btnSavePalette.Click += new System.EventHandler(this.btnSavePalette_Click);
             // 
             // palettePanel
             // 
@@ -67,17 +54,18 @@
             this.palettePanel.EmptyIndicatorCharColor = System.Drawing.Color.Red;
             this.palettePanel.LabelSize = new System.Drawing.Size(16, 16);
             this.palettePanel.Location = new System.Drawing.Point(0, 0);
-            this.palettePanel.Multiselect = false;
+            this.palettePanel.MaxColors = 256;
             this.palettePanel.Name = "palettePanel";
             this.palettePanel.PadBetween = new System.Drawing.Point(4, 4);
             this.palettePanel.Palette = null;
             this.palettePanel.Remap = null;
-            this.palettePanel.Selectable = false;
+            this.palettePanel.ColorSelectMode = ColorSelMode.Single;
             this.palettePanel.SelectedIndices = new int[0];
             this.palettePanel.ShowColorToolTips = true;
             this.palettePanel.ShowRemappedPalette = true;
             this.palettePanel.Size = new System.Drawing.Size(356, 356);
             this.palettePanel.TabIndex = 0;
+            this.palettePanel.TableWidth = 16;
             this.palettePanel.TransparencyIndicatorBackColor = System.Drawing.Color.Empty;
             this.palettePanel.TransparencyIndicatorChar = 'T';
             this.palettePanel.TransparencyIndicatorCharColor = System.Drawing.Color.Blue;
@@ -91,7 +79,6 @@
             this.CancelButton = this.btnClose;
             this.ClientSize = new System.Drawing.Size(356, 407);
             this.Controls.Add(this.palettePanel);
-            this.Controls.Add(this.btnSavePalette);
             this.Controls.Add(this.btnClose);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "FrmPalette";
@@ -104,7 +91,6 @@
         #endregion
 
         protected System.Windows.Forms.Button btnClose;
-        protected System.Windows.Forms.Button btnSavePalette;
         protected Ui.PalettePanel palettePanel;
 
     }

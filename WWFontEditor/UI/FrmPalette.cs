@@ -17,64 +17,41 @@ namespace WWFontEditor.Ui
         protected Boolean m_ApplyRemap;
         protected String m_Filename;
         protected Boolean m_Editable;
-
+        
         private FrmPalette()
-            : this(null, PixelFormat.Format8bppIndexed, null, false, false, false, false, null)
+            : this(null, 256, null, false, ColorSelMode.None, null)
         { }
         
-        public FrmPalette(Color[] palette, PixelFormat pixelFormat, String filename, Boolean editable, Boolean allowSave, Boolean selectable, Boolean multiselect, Int32[] selectedIndices)
+        public FrmPalette(Color[] palette, Int32 maxColors, String filename, Boolean editable, ColorSelMode colorSelectMode, Int32[] selectedIndices)
         {
             InitializeComponent();
-            palettePanel.PixelFormat = pixelFormat;
+            Int32 panelInitialHeight = palettePanel.Height;
+            Int32 panelInitialWidth = palettePanel.Width;
+            Point BtnCloseInitial = btnClose.Location;
+            palettePanel.MaxColors = maxColors;
+            palettePanel.TableWidth = 8; //(Int32)Math.Sqrt(maxColors); //Math.Min(16, maxColors);
             palettePanel.Palette = palette;
-            palettePanel.Selectable = selectable;
-            palettePanel.Multiselect = multiselect;
+            palettePanel.ColorSelectMode = colorSelectMode;
             palettePanel.SelectedIndices = selectedIndices;
-
             this.m_Filename = filename;
-            btnSavePalette.Visible = allowSave;
             this.m_Editable = editable;
-
-            /*/
-            if (!m_ShowFilterToggle)
-            {
-                Int32 diff = btnSavePalette.Location.Y - chkColorOption.Location.Y;
-                btnSavePalette.Location = new Point(btnSavePalette.Location.X, btnSavePalette.Location.Y - diff);
-                btnClose.Location = new Point(btnClose.Location.X, btnClose.Location.Y - diff);
-                this.Size = new Size(this.Size.Width, this.Size.Height - diff);
-            }
-            //*/
+            Int32 heightdiff = panelInitialHeight - this.palettePanel.Height;
+            Int32 widthDiff = panelInitialWidth - this.palettePanel.Width;
+            Int32 actualWidthDiff = this.Width - Math.Max(208, this.Width - widthDiff);
+            this.Height -= heightdiff;
+            this.Width -=actualWidthDiff;
+            btnClose.Location = new Point(BtnCloseInitial.X - actualWidthDiff, BtnCloseInitial.Y - heightdiff);
         }
 
-        public Int32[] GetSelectedIndices()
+        public Int32[] SelectedIndices
         {
-            return palettePanel.SelectedIndices;
+            get { return palettePanel.SelectedIndices; }
+            set { palettePanel.SelectedIndices = value; }
         }
 
         protected virtual void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        protected void btnSavePalette_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog sfd = new SaveFileDialog();
-            sfd.InitialDirectory = Path.GetDirectoryName(m_Filename);
-            sfd.FileName = Path.GetDirectoryName(m_Filename) + "\\" + Path.GetFileNameWithoutExtension(m_Filename) + ".pal";
-            sfd.Title = "Save palette";
-            sfd.Filter = "C&C color palette file (*.pal)|*.pal|All Files|*.*";
-            sfd.DefaultExt = "pal";
-            sfd.AddExtension = true;
-            DialogResult ofres = sfd.ShowDialog();
-            if (ofres == System.Windows.Forms.DialogResult.Cancel)
-                return;
-
-            String palfilename = sfd.FileName;
-
-            //ImageUtils.WritePaletteFile(palettePanel.Palette, palfilename);
-
-            sfd.Dispose();
-            sfd = null;
         }
         
         private void palettePanel_LabelMouseDoubleClick(object sender, MouseEventArgs e)

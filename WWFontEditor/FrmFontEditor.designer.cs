@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmFontEditor));
             this.btnSave = new System.Windows.Forms.Button();
             this.btnOpen = new System.Windows.Forms.Button();
             this.lblZoom = new System.Windows.Forms.Label();
@@ -47,8 +48,11 @@
             this.label5 = new System.Windows.Forms.Label();
             this.lblYOffset = new System.Windows.Forms.Label();
             this.chkGrid = new System.Windows.Forms.CheckBox();
-            this.lblPaintColor = new System.Windows.Forms.Label();
+            this.lblPaintColor1 = new System.Windows.Forms.Label();
             this.chkOutline = new System.Windows.Forms.CheckBox();
+            this.lblPaintColor2 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.palColorSelector = new WWFontEditor.Ui.PalettePanel();
             this.numIndex = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.pnlImageScroll = new Nyerguds.Util.UI.SelectablePanel();
@@ -56,6 +60,7 @@
             this.pxbImage = new RedCell.UI.Controls.PixelBox();
             this.pxbEditGridBehind = new RedCell.UI.Controls.PixelBox();
             this.pxbFullSize = new RedCell.UI.Controls.PixelBox();
+            this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numIndex)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numZoom)).BeginInit();
             this.pnlImageScroll.SuspendLayout();
@@ -262,15 +267,14 @@
             this.chkGrid.UseVisualStyleBackColor = true;
             this.chkGrid.CheckedChanged += new System.EventHandler(this.ChkTrans_CheckedChanged);
             // 
-            // lblPaintColor
+            // lblPaintColor1
             // 
-            this.lblPaintColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblPaintColor.BackColor = System.Drawing.Color.Black;
-            this.lblPaintColor.Location = new System.Drawing.Point(375, 331);
-            this.lblPaintColor.Name = "lblPaintColor";
-            this.lblPaintColor.Size = new System.Drawing.Size(20, 20);
-            this.lblPaintColor.TabIndex = 119;
-            this.lblPaintColor.Click += new System.EventHandler(this.lblPaintColor_Click);
+            this.lblPaintColor1.BackColor = System.Drawing.Color.Black;
+            this.lblPaintColor1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblPaintColor1.Location = new System.Drawing.Point(8, 20);
+            this.lblPaintColor1.Name = "lblPaintColor1";
+            this.lblPaintColor1.Size = new System.Drawing.Size(20, 20);
+            this.lblPaintColor1.TabIndex = 119;
             // 
             // chkOutline
             // 
@@ -285,6 +289,55 @@
             this.chkOutline.Text = "Show editable area";
             this.chkOutline.UseVisualStyleBackColor = true;
             this.chkOutline.CheckedChanged += new System.EventHandler(this.ChkOutline_CheckedChanged);
+            // 
+            // lblPaintColor2
+            // 
+            this.lblPaintColor2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblPaintColor2.BackColor = System.Drawing.Color.Black;
+            this.lblPaintColor2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblPaintColor2.Location = new System.Drawing.Point(43, 20);
+            this.lblPaintColor2.Name = "lblPaintColor2";
+            this.lblPaintColor2.Size = new System.Drawing.Size(20, 20);
+            this.lblPaintColor2.TabIndex = 122;
+            // 
+            // panel1
+            // 
+            this.panel1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panel1.BackgroundImage")));
+            this.panel1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.panel1.Controls.Add(this.lblPaintColor1);
+            this.panel1.Controls.Add(this.lblPaintColor2);
+            this.panel1.Location = new System.Drawing.Point(378, 238);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(71, 53);
+            this.panel1.TabIndex = 123;
+            // 
+            // palColorSelector
+            // 
+            this.palColorSelector.AutoSize = true;
+            this.palColorSelector.Border = new System.Windows.Forms.Padding(0);
+            this.palColorSelector.ColorSelectMode = WWFontEditor.Ui.ColorSelMode.TwoMouseButtons;
+            this.palColorSelector.EmptyIndicatorBackColor = System.Drawing.Color.Black;
+            this.palColorSelector.EmptyIndicatorChar = 'X';
+            this.palColorSelector.EmptyIndicatorCharColor = System.Drawing.Color.Red;
+            this.palColorSelector.LabelSize = new System.Drawing.Size(16, 16);
+            this.palColorSelector.Location = new System.Drawing.Point(378, 297);
+            this.palColorSelector.MaxColors = 16;
+            this.palColorSelector.Name = "palColorSelector";
+            this.palColorSelector.PadBetween = new System.Drawing.Point(4, 4);
+            this.palColorSelector.Palette = null;
+            this.palColorSelector.Remap = null;
+            this.palColorSelector.SelectedIndices = new int[] {
+        0,
+        1};
+            this.palColorSelector.ShowColorToolTips = true;
+            this.palColorSelector.ShowRemappedPalette = true;
+            this.palColorSelector.Size = new System.Drawing.Size(156, 36);
+            this.palColorSelector.TabIndex = 121;
+            this.palColorSelector.TableWidth = 8;
+            this.palColorSelector.TransparencyIndicatorBackColor = System.Drawing.Color.Empty;
+            this.palColorSelector.TransparencyIndicatorChar = 'T';
+            this.palColorSelector.TransparencyIndicatorCharColor = System.Drawing.Color.Blue;
+            this.palColorSelector.ColorSelectionChanged += new System.EventHandler(this.palColorSelector_ColorSelectionChanged);
             // 
             // numIndex
             // 
@@ -412,8 +465,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 394);
+            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.palColorSelector);
             this.Controls.Add(this.chkOutline);
-            this.Controls.Add(this.lblPaintColor);
             this.Controls.Add(this.chkGrid);
             this.Controls.Add(this.lblValFilename);
             this.Controls.Add(this.lblFilename);
@@ -436,13 +490,14 @@
             this.Controls.Add(this.btnOpen);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.pnlImageScroll);
-            this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.MinimumSize = new System.Drawing.Size(700, 300);
+            this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.Name = "FrmFontEditor";
             this.Text = "Westwood Font Editor v#.#.# - Created by Nyerguds";
             this.Shown += new System.EventHandler(this.FrmFontEditor_Shown);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Frm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Frm_DragEnter);
+            this.panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numIndex)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numZoom)).EndInit();
             this.pnlImageScroll.ResumeLayout(false);
@@ -453,7 +508,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.pxbFullSize)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
@@ -484,8 +538,11 @@
         private RedCell.UI.Controls.PixelBox pxbImage;
         private RedCell.UI.Controls.PixelBox pxbEditGridFront;
         private System.Windows.Forms.CheckBox chkGrid;
-        private System.Windows.Forms.Label lblPaintColor;
+        private System.Windows.Forms.Label lblPaintColor1;
         private System.Windows.Forms.CheckBox chkOutline;
+        private Ui.PalettePanel palColorSelector;
+        private System.Windows.Forms.Label lblPaintColor2;
+        private System.Windows.Forms.Panel panel1;
     }
 }
 

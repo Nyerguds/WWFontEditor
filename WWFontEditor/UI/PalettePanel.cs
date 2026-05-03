@@ -8,9 +8,11 @@ using System.Text;
 using System.Windows.Forms;
 using ColorManipulation;
 using System.Drawing.Imaging;
+using WWFontEditor.Domain;
 
 namespace WWFontEditor.Ui
 {
+    [DefaultEvent("ColorSelectionChanged")]
     public partial class PalettePanel : UserControl
     {
         protected Label[] m_ColorLabels;
@@ -21,7 +23,9 @@ namespace WWFontEditor.Ui
 
         protected Color[] m_Palette;
         protected Int32[] m_Remap;
-        protected List<Int32> m_SelectedIndices = new List<Int32>();
+        protected ColorSelMode m_ColorSelectMode = ColorSelMode.Single;
+        protected Int32[] m_SelectedIndicesArr = new Int32[1];
+        protected List<Int32> m_SelectedIndicesList = null;
 
         protected Color m_EmptyIndicatorBackColor = Color.Black;
         protected Char m_EmptyIndicatorChar = 'X';
@@ -31,31 +35,31 @@ namespace WWFontEditor.Ui
         protected Char m_TransparencyIndicatorChar = 'T';
         protected Color m_TransparencyIndicatorCharColor = Color.Blue;
 
-        protected Int32 m_Width = 16;
-        protected PixelFormat m_PixelFormat = PixelFormat.Format8bppIndexed;
+        protected Int32 m_TableWidth = 16;
+        protected Int32 m_MaxColors = 256;
         protected Boolean m_ShowColorToolTips = true;
-        protected Boolean m_Selectable = true;
-        protected Boolean m_Multiselect = false;
         protected Boolean m_ShowRemappedPalette = true;
 
         [Description("Frame size. This is completely determined by the padding, label size, and padding between the labels, and can't be modified."), Category("Palette panel")]
         public new Size Size
         {
             get { return base.Size; }
-            set
-            {
-                Int32 pxf = Image.GetPixelFormatSize(m_PixelFormat);
-                Int32 totalColors = (Int32)Math.Pow(2, pxf);
-                Int32 rows = totalColors / m_Width + totalColors % m_Width;
-                Int32 sizeX = m_Padding.Left + LabelSize.Width * m_Width + PadBetween.X * (m_Width - 1) + m_Padding.Right;
-                Int32 sizeY = m_Padding.Top + LabelSize.Height * rows + PadBetween.Y * (rows - 1) + m_Padding.Bottom;
-                base.Size = new Size(sizeX, sizeY);
-                Refresh();
-            }
+            set { ResetSize(); }
+        }
+
+        public new Int32 Width
+        {
+            get { return Size.Width; }
+            set { ResetSize(); }
+        }
+        public new Int32 Height
+        {
+            get { return Size.Height; }
+            set { ResetSize(); }
         }
 
         [Description("Autosize"), Category("Layout")]
-        public Boolean AutoSize
+        public new Boolean AutoSize
         {
             get { return true; }
             set {  }
@@ -65,69 +69,104 @@ namespace WWFontEditor.Ui
         public Padding Border
         {
             get { return m_Padding; }
-            set { this.m_Padding = value; Refresh(); }
+            set { this.m_Padding = value; this.Invalidate(); }
         }
 
         [Description("Determines the size of the color labels."), Category("Palette panel")]
         public Size LabelSize
         {
             get { return m_LabelSize; }
-            set { this.m_LabelSize = value; Refresh(); }
+            set { this.m_LabelSize = value; this.Invalidate(); }
         }
         
         [Description("Padding between the labels."), Category("Palette panel")]
         public Point PadBetween
         {
             get { return m_PadBetween; }
-            set { this.m_PadBetween = value; Refresh(); }
+            set { this.m_PadBetween = value; this.Invalidate(); }
         }
 
         [Description("Color palette. This is normally not set manually through the designer."), Category("Palette panel")]
         public Color[] Palette
         {
             get { return m_Palette; }
-            set { this.m_Palette = value; Refresh(); }
+            set { this.m_Palette = value; this.Invalidate(); }
         }
 
-        [Description("Table used to remap the color palette. Set to null for no remapping."), Category("Palette panel")]
-        public PixelFormat PixelFormat
+        [Description("Maximum amount of colours that can be shown on the palette."), Category("Palette panel")]
+        public Int32 MaxColors
         {
-            get { return m_PixelFormat; }
-            set { this.m_PixelFormat = value; Refresh(); }
+            get { return m_MaxColors; }
+            set
+            {
+                this.m_MaxColors = value;
+                ResetSize();
+            }
+        }
+
+        [Description("Amount of colors shown on each rows."), Category("Palette panel")]
+        public Int32 TableWidth
+        {
+            get { return m_TableWidth; }
+            set { this.m_TableWidth = value; ResetSize(); }
         }
 
         [Description("Table used to remap the color palette. Set to null for no remapping."), Category("Palette panel")]
         public Int32[] Remap
         {
             get { return m_Remap; }
-            set { this.m_Remap = value; Refresh(); }
+            set { this.m_Remap = value; this.Invalidate(); }
         }
 
-        [Description("Selected indices on the palette."), Category("Palette panel")]
+        [Description("Selected indices on the palette. This has/expects a different array size depending on the ColorSelectMode:"
+            + " None gives a 0-size array, Single gives a 1-item array, TwoMousebuttons has a 2-element array with one per colour, and Multi has a dynamic length depending on selected items."),
+            Category("Palette panel")]
         public Int32[] SelectedIndices
         {
             get
             {
-                return m_SelectedIndices.ToArray();
+                if (m_ColorSelectMode == ColorSelMode.Multi)
+                    return m_SelectedIndicesList.ToArray();
+                else
+                    return m_SelectedIndicesArr;
             }
             set
             {
-                m_SelectedIndices.Clear();
-                if (value != null)
+                switch (m_ColorSelectMode)
                 {
-                    foreach (Int32 i in value)
-                        if (!m_SelectedIndices.Contains(i) && i >= 0 && i <= 255)
-                            m_SelectedIndices.Add(i);
-                    m_SelectedIndices.Sort();
-                    if (!m_Multiselect && m_SelectedIndices.Count > 1)
-                    {
-                        Int32 selected = m_SelectedIndices[0];
-                        m_SelectedIndices.Clear();
-                        m_SelectedIndices.Add(selected);
-                    }
+                    case ColorSelMode.None:
+                        break;
+                    case ColorSelMode.Single:
+                        if (value.Length > 0)
+                            m_SelectedIndicesArr[0] = value[0];
+                        else
+                            m_SelectedIndicesArr[0] = 0;
+                        break;
+                    case ColorSelMode.TwoMouseButtons:
+                        if (value.Length == 0)
+                        {
+                            m_SelectedIndicesArr[0] = 0;
+                            m_SelectedIndicesArr[1] = 1;
+                        }
+                        else if (value.Length == 1)
+                        {
+                            m_SelectedIndicesArr[0] = value[0];
+                            m_SelectedIndicesArr[1] = value[0] == 0 ? 1 : 0;
+                        }
+                        else
+                        {
+                            m_SelectedIndicesArr[0] = value[0];
+                            m_SelectedIndicesArr[1] = value[1];
+                        }
+                        break;
+                    case ColorSelMode.Multi:
+                        foreach (Int32 i in value)
+                            if (!m_SelectedIndicesList.Contains(i) && i >= 0 && i < MaxColors)
+                                m_SelectedIndicesList.Add(i);
+                        break;
                 }
                 if (ColorSelectionChanged != null)
-                    ColorSelectionChanged(-1, new EventArgs());
+                    ColorSelectionChanged(this, new EventArgs());
                 Refresh();
             }
         }
@@ -181,11 +220,37 @@ namespace WWFontEditor.Ui
             set { this.m_ShowColorToolTips = value; ResetTooltips(); }
         }
 
-        [Description("Allow selecting of colors on the palette."), Category("Palette panel")]
-        public Boolean Selectable
+        [Description("Change the way colors can be selected on the palette."), Category("Palette panel")]
+        public ColorSelMode ColorSelectMode
         {
-            get { return this.m_Selectable; }
-            set { this.m_Selectable = value; }
+            get { return this.m_ColorSelectMode; }
+            set
+            {
+                Int32[] selInd = this.SelectedIndices;
+                this.m_ColorSelectMode = value;
+                switch (ColorSelectMode)
+                {
+                    case ColorSelMode.None:
+                        m_SelectedIndicesArr = new Int32[0];
+                        m_SelectedIndicesList = null;
+                        break;
+                    case ColorSelMode.Single:
+                    default:
+                        m_SelectedIndicesArr = new Int32[1];
+                        m_SelectedIndicesList = null;
+                        break;
+                    case ColorSelMode.TwoMouseButtons:
+                        m_SelectedIndicesArr = new Int32[2];
+                        m_SelectedIndicesList = null;
+                        break;
+                    case ColorSelMode.Multi:
+                        m_SelectedIndicesArr = null;
+                        m_SelectedIndicesList = new List<Int32>();
+                        break;
+                }
+                // reset this
+                this.SelectedIndices = selInd;
+            }
         }
 
         [Description("Show the remapped palette instead of the original palette. Note that this does not change the Palette property."), Category("Palette panel")]
@@ -193,23 +258,6 @@ namespace WWFontEditor.Ui
         {
             get { return this.m_ShowRemappedPalette; }
             set { this.m_ShowRemappedPalette = value; }
-        }
-
-        [Description("Allow selecting of multiple colors on the palette."), Category("Palette panel")]
-        public Boolean Multiselect
-        {
-            get { return this.m_Multiselect; }
-            set
-            {
-                this.m_Multiselect = value;
-                if (!m_Multiselect)
-                {
-                    Int32[] indices = SelectedIndices;
-                    if (indices.Length > 0)
-                        SelectedIndices = new Int32[] { indices[0] };
-                }
-                Refresh();
-            }
         }
 
         [Description("Occurs when one of the labels is double clicked by the mouse."), Category("Palette panel")]
@@ -228,6 +276,15 @@ namespace WWFontEditor.Ui
                 else
                     m_ColorLabels[i].Visible = !visible;
             Refresh();
+        }
+
+        private void ResetSize()
+        {
+            Int32 rows = m_MaxColors / m_TableWidth + (m_MaxColors % m_TableWidth > 0 ? 1 : 0);
+            Int32 sizeX = m_Padding.Left + LabelSize.Width * m_TableWidth + PadBetween.X * (m_TableWidth - 1) + m_Padding.Right;
+            Int32 sizeY = m_Padding.Top + LabelSize.Height * rows + PadBetween.Y * (rows - 1) + m_Padding.Bottom;
+            base.Size = new Size(sizeX, sizeY);
+            this.Invalidate();            
         }
 
         public void SetVisibility(Int32 colorLabelIndex, Boolean visible)
@@ -251,10 +308,10 @@ namespace WWFontEditor.Ui
         /// <summary>
         /// Constructor
         /// </summary>
-        public PalettePanel(Int32 width, PixelFormat pixelFormat)
+        public PalettePanel(Int32 width, Int32 maxColors)
         {
-            m_Width = width;
-            m_PixelFormat = pixelFormat;
+            m_TableWidth = width;
+            m_MaxColors = maxColors;
             InitializeComponent();
             DrawPalette();
             this.Paint += PalettePanel_Paint;
@@ -298,14 +355,25 @@ namespace WWFontEditor.Ui
             Boolean HasColor = m_Palette != null;
             Boolean HasRemap = m_Remap != null;
             Boolean newPalette = m_ColorLabels == null;
-            if (newPalette)
-                m_ColorLabels = new Label[256];
-            for (Int32 y = 0; y < 16; y++)
+            Int32 rows = m_MaxColors / m_TableWidth + ((m_MaxColors % m_TableWidth > 0) ? 1 : 0);
+            if (!newPalette && m_ColorLabels.Length != m_MaxColors)
             {
-                for (Int32 x = 0; x < 16; x++)
+                foreach (Label colorLabel in m_ColorLabels)
                 {
-                    Int32 index = y * 16 + x;
-
+                    this.Controls.Remove(colorLabel);
+                    colorLabel.Dispose();
+                }
+                newPalette = true;
+            }
+            if (newPalette)
+                m_ColorLabels = new Label[m_MaxColors];
+            for (Int32 y = 0; y < rows; y++)
+            {
+                for (Int32 x = 0; x < m_TableWidth; x++)
+                {
+                    Int32 index = y * m_TableWidth + x;
+                    if (index >= m_MaxColors)
+                        break;
                     Color col = m_EmptyIndicatorBackColor;
                     Boolean emptyCol = false;
                     Boolean transparentCol = false;
@@ -318,11 +386,13 @@ namespace WWFontEditor.Ui
                     }
                     else
                         emptyCol = true;
-
                     if (!emptyCol && col.A == 0)
                         transparentCol = true;
-
-                    Boolean selectThis = m_SelectedIndices.Contains(index);
+                    Boolean selectThis;
+                    if (this.m_ColorSelectMode == ColorSelMode.Multi)
+                        selectThis = m_SelectedIndicesList.Contains(index);
+                    else
+                        selectThis = m_SelectedIndicesArr.Contains(index);
                     if (newPalette)
                         this.m_ColorLabels[index] = this.GenerateLabel(x, y, col, emptyCol, transparentCol, selectThis);
                     else
@@ -335,8 +405,8 @@ namespace WWFontEditor.Ui
             }
             if (!m_ShowColorToolTips)
                 this.toolTipColor.RemoveAll();
-            Int32 sizeX = m_Padding.Left + LabelSize.Width * 16 + PadBetween.X * 15 + m_Padding.Right;
-            Int32 sizeY = m_Padding.Top + LabelSize.Height * 16 + PadBetween.Y * 15 + m_Padding.Bottom;
+            Int32 sizeX = m_Padding.Left + LabelSize.Width * m_TableWidth + PadBetween.X * (m_TableWidth - 1) + m_Padding.Right;
+            Int32 sizeY = m_Padding.Top + LabelSize.Height * rows + PadBetween.Y * (rows - 1) + m_Padding.Bottom;
             base.Size = new Size(sizeX, sizeY);
         }
 
@@ -394,7 +464,7 @@ namespace WWFontEditor.Ui
 
         protected virtual void SetLabelProperties(Label lbl, Int32 x, Int32 y, Color color, Boolean isEmpty, Boolean isTransparent, Boolean addBorder)
         {
-            Int32 index = y * 16 + x;
+            Int32 index = y * m_TableWidth + x;
             if (isEmpty)
             {
                 lbl.BackColor = m_EmptyIndicatorBackColor;
@@ -406,7 +476,7 @@ namespace WWFontEditor.Ui
                 Boolean bgisEmpty = m_TransparencyIndicatorBackColor == Color.Empty;
                 lbl.BackColor = bgisEmpty ? Color.FromArgb(255, color.R, color.G, color.B) : m_TransparencyIndicatorBackColor;
                 lbl.Text = m_TransparencyIndicatorChar.ToString();
-                lbl.ForeColor = bgisEmpty ? ImageUtils.GetVisibleBorderColor(lbl.BackColor) : m_TransparencyIndicatorCharColor;
+                lbl.ForeColor = bgisEmpty ? GetVisibleBorderColor(lbl.BackColor) : m_TransparencyIndicatorCharColor;
             }
             else
             {
@@ -430,38 +500,84 @@ namespace WWFontEditor.Ui
         {
             Label lbl = (Label)sender;
             if (lbl.BorderStyle == BorderStyle.FixedSingle)
-                ControlPaint.DrawBorder(e.Graphics, lbl.DisplayRectangle, ImageUtils.GetVisibleBorderColor(lbl.BackColor), ButtonBorderStyle.Solid);
+            {
+                ButtonBorderStyle bs = ButtonBorderStyle.Inset;
+                if (m_ColorSelectMode == ColorSelMode.TwoMouseButtons)
+                {
+                    Int32 index = (Int32)lbl.Tag;
+                    if (m_SelectedIndicesArr[0] == index)
+                        bs = ButtonBorderStyle.Outset;
+                    else if (m_SelectedIndicesArr[1] == index)
+                        bs = ButtonBorderStyle.Inset;
+                }
+                ControlPaint.DrawBorder(e.Graphics, lbl.DisplayRectangle, Parent.BackColor, bs);
+            }
         }
 
         protected virtual void ColorMouseClick(object sender, MouseEventArgs e)
         {
-            if (!m_Selectable || e.Button != System.Windows.Forms.MouseButtons.Left)
+            if (m_ColorSelectMode == ColorSelMode.None)
+                return;
+            Int32 mousebutton = -1;
+            if ((e.Button & System.Windows.Forms.MouseButtons.Left) != 0)
+                mousebutton = 0;
+            if ((e.Button & System.Windows.Forms.MouseButtons.Right) != 0)
+                mousebutton = 1;
+            if (mousebutton == -1)
+                return;
+            if ((m_ColorSelectMode == ColorSelMode.Single || m_ColorSelectMode == ColorSelMode.Multi) && mousebutton != 0)
                 return;
             Label lbl = (Label)sender;
             Int32 index = (Int32)lbl.Tag;
-            
-            if (!m_Multiselect)
+            if (m_ColorSelectMode == ColorSelMode.Single || m_ColorSelectMode == ColorSelMode.TwoMouseButtons)
             {
-                foreach (Int32 i in m_SelectedIndices)
-                    m_ColorLabels[i].BorderStyle = BorderStyle.None;
-                m_SelectedIndices.Clear();
-                m_SelectedIndices.Add(index);
-                lbl.BorderStyle = BorderStyle.FixedSingle;
-            }
-            else
-            {
-                if (!m_SelectedIndices.Contains(index))
+                Int32 oldVal = m_SelectedIndicesArr[mousebutton];
+                if (m_ColorSelectMode == ColorSelMode.Single)
                 {
-                    m_SelectedIndices.Add(index);
-                    m_SelectedIndices.Sort();
+                    if (index != oldVal)
+                    {
+                        m_ColorLabels[oldVal].BorderStyle = BorderStyle.None;
+                        m_SelectedIndicesArr[0] = index;
+                        lbl.BorderStyle = BorderStyle.FixedSingle;
+                    }
+                }
+                else // 2 button
+                {
+                    Int32 mousebuttonOther = mousebutton == 0 ? 1 : 0;
+                    Int32 oldValOther = m_SelectedIndicesArr[mousebuttonOther];
+                    if (index != oldVal)
+                    {
+                        if (index == oldValOther)
+                        {
+                            m_SelectedIndicesArr[mousebutton] = index;
+                            m_SelectedIndicesArr[mousebuttonOther] = oldVal;
+                            m_ColorLabels[oldVal].Invalidate();
+                        }
+                        else
+                        {
+                            m_ColorLabels[oldVal].BorderStyle = BorderStyle.None;
+                            m_SelectedIndicesArr[mousebutton] = index;
+                            lbl.BorderStyle = BorderStyle.FixedSingle;
+                        }
+                    }
+                }
+            }
+            else if (m_ColorSelectMode == ColorSelMode.Multi)
+            {
+                if (!m_SelectedIndicesList.Contains(index))
+                {
+                    m_SelectedIndicesList.Add(index);
+                    m_SelectedIndicesList.Sort();
                     lbl.BorderStyle = BorderStyle.FixedSingle;
                 }
                 else
                 {
-                    m_SelectedIndices.RemoveAll(i => i == index);
+                    m_SelectedIndicesList.RemoveAll(i => i == index);
                     lbl.BorderStyle = BorderStyle.None;
                 }
             }
+            // force refresh
+            lbl.Invalidate();
             if (this.ColorSelectionChanged != null)
                 this.ColorSelectionChanged(index, e);
         }
@@ -486,5 +602,25 @@ namespace WWFontEditor.Ui
             this.m_SelectedIndices.Clear();
             //*/
         }
+
+        protected static Color GetVisibleBorderColor(Color color)
+        {
+            float bri = color.GetBrightness();
+            if (color.GetSaturation() < .16)
+            {
+                // this color is grey
+                return bri < .5 ? Color.White : Color.Black;
+            }
+            return Color.FromArgb((Int32)(0x00FFFFFFu ^ (UInt32)color.ToArgb()));
+        }
     }
+
+    public enum ColorSelMode
+    {
+        None,
+        Single,
+        TwoMouseButtons,
+        Multi
+    }
+
 }
