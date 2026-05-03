@@ -73,9 +73,8 @@
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(81, 23);
             this.btnSave.TabIndex = 2;
-            this.btnSave.Text = "Save image";
+            this.btnSave.Text = "Save font";
             this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Visible = false;
             this.btnSave.Click += new System.EventHandler(this.BtnSave_Click);
             // 
             // btnOpen
@@ -85,7 +84,7 @@
             this.btnOpen.Name = "btnOpen";
             this.btnOpen.Size = new System.Drawing.Size(75, 23);
             this.btnOpen.TabIndex = 1;
-            this.btnOpen.Text = "Open file";
+            this.btnOpen.Text = "Open font";
             this.btnOpen.UseVisualStyleBackColor = true;
             this.btnOpen.Click += new System.EventHandler(this.BtnOpen_Click);
             // 
@@ -440,8 +439,8 @@
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.MinimumSize = new System.Drawing.Size(700, 300);
             this.Name = "FrmFontEditor";
-            this.Text = "N64 IMG Viewer - Created by Nyerguds";
-            this.Shown += new System.EventHandler(this.FrmCnC64ImgViewer_Shown);
+            this.Text = "Westwood Font Editor v#.#.# - Created by Nyerguds";
+            this.Shown += new System.EventHandler(this.FrmFontEditor_Shown);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Frm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Frm_DragEnter);
             ((System.ComponentModel.ISupportInitialize)(this.numIndex)).EndInit();

@@ -31,30 +31,30 @@ namespace WWFontEditor
             };
 
         
-        private String filename;
-        private FntFile loadedfont;
-        private Int32 curHeight;
-        private Int32 curWidth;
-        private Int32 curYOffset;
-        private Int32 lastHoverPixelX = -1;
-        private Int32 lastHoverPixelY = -1;
+        private String m_FileName;
+        private FntFile m_Loadedfont;
+        private Int32 m_CurHeight;
+        private Int32 m_CurWidth;
+        private Int32 m_CurYOffset;
+        private Int32 m_LastHoverPixelX = -1;
+        private Int32 m_LastHoverPixelY = -1;
         // TODO: Change these two to Byte later, when implementing color palette support.
-        private Byte currentPaintColorFront = 1;
-        private Byte currentPaintColorBack = 0;
-        private Color[] currentPalette;
+        private Byte m_CurrentPaintColorFront = 1;
+        private Byte m_CurrentPaintColorBack = 0;
+        private Color[] m_CurrentPalette;
 
-        private Int32[] customcolors;
+        private Int32[] m_Customcolors;
 
 
-        private Color GridColor = Color.Blue;
-        private Color GridColorFrame = Color.Red;
-        private Color GridColorOuter = Color.White;
-        private Color GridColorOuterFrame = Color.Black;
-        private Color GridColorBg = Color.LightGray;
+        private Color m_GridColor = Color.Blue;
+        private Color m_GridColorFrame = Color.Red;
+        private Color m_GridColorOuter = Color.White;
+        private Color m_GridColorOuterFrame = Color.Black;
+        private Color m_GridColorBg = Color.LightGray;
 
         public FrmFontEditor()
         {
-            currentPalette = PaletteRainbow;
+            m_CurrentPalette = PaletteRainbow;
             InitializeComponent();
             //*/
             pxbEditGridBehind.Parent = pxbFullSize;
@@ -70,14 +70,14 @@ namespace WWFontEditor
             this.pxbEditGridBehind.SendToBack();
             this.pxbFullSize.SendToBack();
             //*/
-            this.lblPaintColor.BackColor = currentPalette[this.currentPaintColorFront];
+            this.lblPaintColor.BackColor = m_CurrentPalette[this.m_CurrentPaintColorFront];
             this.Text = "Westwood Font Editor " + GeneralUtils.ProgramVersion() + " - Created by Nyerguds";
         }
 
         public FrmFontEditor(string[] args) : this()
         {
             if (args.Length > 0 && File.Exists(args[0]))
-                filename = args[0];
+                m_FileName = args[0];
         }
 
         private void Frm_DragEnter(object sender, DragEventArgs e)
@@ -100,28 +100,31 @@ namespace WWFontEditor
 
         private void LoadFontFile(String path)
         {
-            filename = path;
+            m_FileName = path;
             String error = null;
             Boolean loadOk = false;
             try
             {
-                loadedfont = null;
+                m_Loadedfont = null;
                 numIndex.Value = 0;
                 Byte[] data = File.ReadAllBytes(path);
-                loadedfont = new FntFile(data);
-                loadOk = loadedfont != null;
+                m_Loadedfont = new FntFile(data);
+                loadOk = m_Loadedfont != null;
                 numIndex.Enabled = loadOk;
                 if (loadOk)
-                    numIndex.Maximum = loadedfont.LastIndex;
+                {
+                    numIndex.Maximum = m_Loadedfont.LastIndex;
+                    btnSave.Enabled = true;
+                }
             }
             catch (Exception ex)
             {
                 error = ex.Message;
-                loadedfont = null;
+                m_Loadedfont = null;
             }
             if (!loadOk)
             {
-                filename = null;
+                m_FileName = null;
                 lblValFilename.Text = "-";
                 lblValCharacters.Text = "-";
                 lblValFontHeight.Text = "-";
@@ -137,24 +140,44 @@ namespace WWFontEditor
             //pxbFullSize.BackColor = Color.Maroon;
             pxbFullSize.Visible = true;
             lblValFilename.Text = Path.GetFileName(path);
-            lblValCharacters.Text = loadedfont.Length.ToString();
-            lblValFontWidth.Text = loadedfont.FontWidth.ToString();
-            lblValFontHeight.Text = loadedfont.FontHeight.ToString();
+            lblValCharacters.Text = m_Loadedfont.Length.ToString();
+            lblValFontWidth.Text = m_Loadedfont.FontWidth.ToString();
+            lblValFontHeight.Text = m_Loadedfont.FontHeight.ToString();
             ReloadImageInfo();
             //btnSave.Enabled = loadOk;
             //if (loadOk)
             //    btnSave.Focus();
         }
 
-        private void FrmCnC64ImgViewer_Shown(object sender, EventArgs e)
+
+        private void SaveFontFile(String fileName)
         {
-            if (filename != null)
-                LoadFontFile(filename);
+            if (m_Loadedfont == null)
+                return;
+            FntFileVersion ver = m_Loadedfont.Unknown0E == 0x1012 ? FntFileVersion.CnC : FntFileVersion.Kyrandia;
+            Byte[] filedata = m_Loadedfont.WriteFntFile(ver);
+            File.WriteAllBytes(fileName, filedata);
+        }
+
+        private void FrmFontEditor_Shown(object sender, EventArgs e)
+        {
+            if (m_FileName != null)
+                LoadFontFile(m_FileName);
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
         {
-
+            if (m_Loadedfont == null)
+                return;
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "Westwood font files (*.fnt)|*.fnt|All Files (*.*)|*.*";
+            sfd.InitialDirectory = String.IsNullOrEmpty(m_FileName) ? Path.GetFullPath(".") : Path.GetDirectoryName(m_FileName);
+            if (!String.IsNullOrEmpty(m_FileName))
+                sfd.FileName = Path.GetFileName(m_FileName);
+            DialogResult res = sfd.ShowDialog(this);
+            if (res != System.Windows.Forms.DialogResult.OK)
+                return;
+            SaveFontFile(sfd.FileName);
         }
 
         private void BtnOpen_Click(object sender, EventArgs e)
@@ -162,7 +185,7 @@ namespace WWFontEditor
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Multiselect = false;
             ofd.Filter = "Westwood font files (*.fnt)|*.fnt|All Files (*.*)|*.*";
-            ofd.InitialDirectory = String.IsNullOrEmpty(filename) ? Path.GetFullPath(".") : Path.GetDirectoryName(filename);
+            ofd.InitialDirectory = String.IsNullOrEmpty(m_FileName) ? Path.GetFullPath(".") : Path.GetDirectoryName(m_FileName);
             DialogResult res = ofd.ShowDialog(this);
             if (res != System.Windows.Forms.DialogResult.OK)
                 return;
@@ -177,24 +200,24 @@ namespace WWFontEditor
         private void ReloadImageInfo()
         {
             Int32 curIndex = (Int32)numIndex.Value;
-            if (loadedfont == null)
+            if (m_Loadedfont == null)
             {
                 pxbImage.Image = null;
-                curHeight = 0;
-                curWidth = 0;
-                curYOffset = 0;
+                m_CurHeight = 0;
+                m_CurWidth = 0;
+                m_CurYOffset = 0;
                 lblValHeight.Text = "-";
                 lblValWidth.Text = "-";
                 lblValYOffset.Text = "-";
                 return;
             }
-            pxbImage.Image = loadedfont.GetBitmap(curIndex, PaletteRainbow);
-            curHeight = loadedfont.GetCharHeight(curIndex);
-            curWidth = loadedfont.GetCharWidth(curIndex);
-            curYOffset = loadedfont.GetCharYOffset(curIndex);
-            lblValHeight.Text = curHeight.ToString();
-            lblValWidth.Text = curWidth.ToString();
-            lblValYOffset.Text = curYOffset.ToString();
+            pxbImage.Image = m_Loadedfont.GetBitmap(curIndex, PaletteRainbow);
+            m_CurHeight = m_Loadedfont.GetCharHeight(curIndex);
+            m_CurWidth = m_Loadedfont.GetCharWidth(curIndex);
+            m_CurYOffset = m_Loadedfont.GetCharYOffset(curIndex);
+            lblValHeight.Text = m_CurHeight.ToString();
+            lblValWidth.Text = m_CurWidth.ToString();
+            lblValYOffset.Text = m_CurYOffset.ToString();
             RefreshImage();
         }
 
@@ -209,69 +232,69 @@ namespace WWFontEditor
             Bitmap bm = (Bitmap)pxbImage.Image;
             
             // False if no actual image data loaded.
-            Boolean imgLoadOk = bm != null && this.curWidth != 0 && this.curHeight != 0;
-            Boolean fntLoadOk = loadedfont != null;
+            Boolean imgLoadOk = bm != null && this.m_CurWidth != 0 && this.m_CurHeight != 0;
+            Boolean fntLoadOk = m_Loadedfont != null;
             Int32 zoom = (Int32)numZoom.Value;
             Boolean drawGrid = chkGrid.Checked;
             Boolean drawOutline = chkOutline.Checked;
             // AddGred means some kind of grid overlay needs to be drawn; either the grid itself or the outline.
             Boolean addGrid = zoom > 4 && (drawGrid || drawOutline);
             pxbImage.Visible = imgLoadOk | addGrid;
-            pxbImage.Location = new Point(0, curYOffset * zoom);
-            pxbImage.Width = Math.Max(this.curWidth * zoom, 1);
-            pxbImage.Height = Math.Max(this.curHeight * zoom, 1);
+            pxbImage.Location = new Point(0, m_CurYOffset * zoom);
+            pxbImage.Width = Math.Max(this.m_CurWidth * zoom, 1);
+            pxbImage.Height = Math.Max(this.m_CurHeight * zoom, 1);
             Bitmap gridImageSmall = null;
             if (fntLoadOk && addGrid)
             {
                 //Draw normal grid, with or without special outline
-                Color[] palette = new Color[] {Color.Transparent, Color.Black, drawOutline ? GridColor : GridColorOuter, GridColorFrame};
-                gridImageSmall = ImageUtils.GenerateGridImage(curWidth, curHeight, zoom, palette, 0, drawGrid ? (Byte)2 : (Byte)0, drawOutline ? (Byte)3 : (Byte)2);
+                Color[] palette = new Color[] {Color.Transparent, Color.Black, drawOutline ? m_GridColor : m_GridColorOuter, m_GridColorFrame};
+                gridImageSmall = ImageUtils.GenerateGridImage(m_CurWidth, m_CurHeight, zoom, palette, 0, drawGrid ? (Byte)2 : (Byte)0, drawOutline ? (Byte)3 : (Byte)2);
                 if (!drawOutline)
                 {
                     // If outline is disabled, restore any edges touching the full size edges to the grid colour of the outside grid.
-                    ImageUtils.DrawRect8Bit(gridImageSmall, 0, 0, 0, this.curHeight * zoom, 1, true); // left line
-                    if (this.curYOffset == 0)
-                        ImageUtils.DrawRect8Bit(gridImageSmall, 0, 0, curWidth * zoom, 0, 1, true); // top line
-                    if (this.curHeight + this.curYOffset == loadedfont.FontHeight)
-                        ImageUtils.DrawRect8Bit(gridImageSmall, 0, curHeight * zoom, curWidth * zoom, curHeight * zoom, 1, true); // bottom line
-                    if (this.curWidth == loadedfont.FontWidth)
-                        ImageUtils.DrawRect8Bit(gridImageSmall, curWidth * zoom, 0, curWidth * zoom, curHeight * zoom, 1, true); // right line
+                    ImageUtils.DrawRect8Bit(gridImageSmall, 0, 0, 0, this.m_CurHeight * zoom, 1, true); // left line
+                    if (this.m_CurYOffset == 0)
+                        ImageUtils.DrawRect8Bit(gridImageSmall, 0, 0, m_CurWidth * zoom, 0, 1, true); // top line
+                    if (this.m_CurHeight + this.m_CurYOffset == m_Loadedfont.FontHeight)
+                        ImageUtils.DrawRect8Bit(gridImageSmall, 0, m_CurHeight * zoom, m_CurWidth * zoom, m_CurHeight * zoom, 1, true); // bottom line
+                    if (this.m_CurWidth == m_Loadedfont.FontWidth)
+                        ImageUtils.DrawRect8Bit(gridImageSmall, m_CurWidth * zoom, 0, m_CurWidth * zoom, m_CurHeight * zoom, 1, true); // right line
                 }
             }
             pxbEditGridBehind.Visible = fntLoadOk && addGrid;
-            pxbEditGridBehind.Location = new Point(0, curYOffset * zoom);
-            pxbEditGridBehind.Width = Math.Max(this.curWidth * zoom + 1, 1);
-            pxbEditGridBehind.Height = Math.Max(this.curHeight * zoom + 1, 1);
+            pxbEditGridBehind.Location = new Point(0, m_CurYOffset * zoom);
+            pxbEditGridBehind.Width = Math.Max(this.m_CurWidth * zoom + 1, 1);
+            pxbEditGridBehind.Height = Math.Max(this.m_CurHeight * zoom + 1, 1);
             pxbEditGridBehind.Image = gridImageSmall;
             pxbEditGridFront.Visible = true;
             // Parent of pxbImage; no change needed.
             //pxbEditGridFront.Location = new Point(0, curYOffset * zoom);
             pxbEditGridFront.BackColor = Color.Transparent;
             pxbEditGridFront.BackgroundImage = addGrid ? gridImageSmall : null;
-            pxbEditGridFront.Width = Math.Max(this.curWidth * zoom, 1);
-            pxbEditGridFront.Height = Math.Max(this.curHeight * zoom, 1);
+            pxbEditGridFront.Width = Math.Max(this.m_CurWidth * zoom, 1);
+            pxbEditGridFront.Height = Math.Max(this.m_CurHeight * zoom, 1);
 
             //pxbEditGridFront.Image is the overlay image on which the currently hovered pixel is drawn. Make it null if one of the dimensions is 0.
-            pxbEditGridFront.Image = imgLoadOk ? ImageUtils.GenerateBlankImage(this.curWidth, this.curHeight, new Color[] { Color.Transparent, currentPalette[this.currentPaintColorFront] }, 0) : null;
+            pxbEditGridFront.Image = imgLoadOk ? ImageUtils.GenerateBlankImage(this.m_CurWidth, this.m_CurHeight, new Color[] { Color.Transparent, m_CurrentPalette[this.m_CurrentPaintColorFront] }, 0) : null;
             pxbFullSize.Visible = fntLoadOk;
             if (fntLoadOk)
             {
                 if (addGrid && drawGrid)
-                    pxbFullSize.Image = ImageUtils.GenerateGridImage(loadedfont.FontWidth, loadedfont.FontHeight, zoom, new Color[]{ GridColorBg, GridColorOuter, GridColorOuterFrame}, 0, 1, 2);
+                    pxbFullSize.Image = ImageUtils.GenerateGridImage(m_Loadedfont.FontWidth, m_Loadedfont.FontHeight, zoom, new Color[]{ m_GridColorBg, m_GridColorOuter, m_GridColorOuterFrame}, 0, 1, 2);
                 else
                 {
                     // No extra border since it'll deform the image
-                    Int32 bgWidth = loadedfont.FontWidth * zoom;
-                    Int32 bgHeight = loadedfont.FontHeight * zoom;
+                    Int32 bgWidth = m_Loadedfont.FontWidth * zoom;
+                    Int32 bgHeight = m_Loadedfont.FontHeight * zoom;
                     // ... except if the outline is drawn
-                    if (drawOutline && curWidth == loadedfont.FontWidth && addGrid)
+                    if (drawOutline && m_CurWidth == m_Loadedfont.FontWidth && addGrid)
                         bgWidth++;
-                    if (drawOutline && curHeight + curYOffset == loadedfont.FontHeight && addGrid)
+                    if (drawOutline && m_CurHeight + m_CurYOffset == m_Loadedfont.FontHeight && addGrid)
                         bgHeight++;
-                    pxbFullSize.Image = ImageUtils.GenerateBlankImage(bgWidth, bgHeight, new Color[] {GridColorBg}, 0);
-                    pxbFullSize.BackColor = GridColorBg;
-                    pxbFullSize.Width = loadedfont.FontWidth;
-                    pxbFullSize.Height = loadedfont.FontHeight;
+                    pxbFullSize.Image = ImageUtils.GenerateBlankImage(bgWidth, bgHeight, new Color[] {m_GridColorBg}, 0);
+                    pxbFullSize.BackColor = m_GridColorBg;
+                    pxbFullSize.Width = m_Loadedfont.FontWidth;
+                    pxbFullSize.Height = m_Loadedfont.FontHeight;
                 }
             }
         }
@@ -283,14 +306,14 @@ namespace WWFontEditor
 
         private void ChkTrans_CheckedChanged(object sender, EventArgs e)
         {
-            if (loadedfont == null)
+            if (m_Loadedfont == null)
                 return;
             ReloadImageInfo();
         }
 
         private void ChkOutline_CheckedChanged(object sender, EventArgs e)
         {
-            if (loadedfont == null)
+            if (m_Loadedfont == null)
                 return;
             ReloadImageInfo();
         }
@@ -316,37 +339,37 @@ namespace WWFontEditor
             if (drawPreviewPixel)
             {
                 // Optimize by aborting immediately if location is unchanged
-                if (lastHoverPixelX == picX && lastHoverPixelY == picY)
+                if (m_LastHoverPixelX == picX && m_LastHoverPixelY == picY)
                     return;
                 // Clear previous pixel
-                if (lastHoverPixelX != -1 && lastHoverPixelY != -1)
-                    ImageUtils.DrawRect8Bit(gridFront, lastHoverPixelX, lastHoverPixelY, lastHoverPixelX, lastHoverPixelY, 0, true);
+                if (m_LastHoverPixelX != -1 && m_LastHoverPixelY != -1)
+                    ImageUtils.DrawRect8Bit(gridFront, m_LastHoverPixelX, m_LastHoverPixelY, m_LastHoverPixelX, m_LastHoverPixelY, 0, true);
                 // Draw new pixel
                 if (inBounds)
                     ImageUtils.DrawRect8Bit(gridFront, picX, picY, picX, picY, 1, true);
-                this.lastHoverPixelX = picX;
-                this.lastHoverPixelY = picY;
+                this.m_LastHoverPixelX = picX;
+                this.m_LastHoverPixelY = picY;
                 pxbEditGridFront.Invalidate();
             }
             Boolean isLeftClick = (e.Button & MouseButtons.Left) != 0;
             Boolean isRightClick = (e.Button & MouseButtons.Right) != 0;
-            if (this.loadedfont!= null && inBounds && (isLeftClick || isRightClick))
+            if (this.m_Loadedfont!= null && inBounds && (isLeftClick || isRightClick))
             {
                 Int32 curIndex = (Int32)this.numIndex.Value;
                 if (isLeftClick)
-                    this.loadedfont.PaintPixel(curIndex, picX, picY, currentPaintColorFront);
+                    this.m_Loadedfont.PaintPixel(curIndex, picX, picY, m_CurrentPaintColorFront);
                 else
-                    this.loadedfont.PaintPixel(curIndex, picX, picY, currentPaintColorBack);
-                this.pxbImage.Image = this.loadedfont.GetBitmap(curIndex, PaletteRainbow);
+                    this.m_Loadedfont.PaintPixel(curIndex, picX, picY, m_CurrentPaintColorBack);
+                this.pxbImage.Image = this.m_Loadedfont.GetBitmap(curIndex, PaletteRainbow);
             }
         }
 
         private void pxbEditGridFront_MouseLeave(object sender, EventArgs e)
         {
             Bitmap gridFront = (Bitmap)this.pxbEditGridFront.Image;
-            this.pxbEditGridFront.Image = pxbImage.Image != null ? ImageUtils.GenerateBlankImage(gridFront.Width, gridFront.Height, new Color[] { Color.Transparent, currentPalette[this.currentPaintColorFront] }, 0) : null;
-            this.lastHoverPixelX = -1;
-            this.lastHoverPixelY = -1;
+            this.pxbEditGridFront.Image = pxbImage.Image != null ? ImageUtils.GenerateBlankImage(gridFront.Width, gridFront.Height, new Color[] { Color.Transparent, m_CurrentPalette[this.m_CurrentPaintColorFront] }, 0) : null;
+            this.m_LastHoverPixelX = -1;
+            this.m_LastHoverPixelY = -1;
         }
         
         private void lblPaintColor_Click(object sender, EventArgs e)
