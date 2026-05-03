@@ -10,7 +10,7 @@ namespace WWFontEditor.Domain
     // Further info: http://stackoverflow.com/questions/9032673/clipboard-copying-objects-to-and-from
     [Serializable]
     [System.Diagnostics.DebuggerDisplay("{ToString()}")]
-    public class FontFileSymbol
+    public class FontFileSymbol : IEquatable<FontFileSymbol>
     {
         public Byte[] ByteData { get; set; }
         /// <summary>Only use this for initialisation! Use ChangeWidth for editing the image!</summary>
@@ -275,7 +275,14 @@ namespace WWFontEditor.Domain
         {
             return String.Format("{0}x{1} (Y={2}), {3} bytes", this.Width, this.Height, this.YOffset, this.ByteData == null ? 0 : this.ByteData.Length);
         }
-
+        
+        public Boolean Equals(FontFileSymbol other)
+        {
+            // left out bpp; it isn't really relevant since it should get set explicitly on any non-internal clone operation anyway.
+            if (this.Width != other.Width || this.Height != other.Height || this.YOffset != other.YOffset)
+                return false;
+            return this.ByteData.SequenceEqual(other.ByteData);
+        }
     }
 
     public enum ShiftDirection

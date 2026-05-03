@@ -11,13 +11,13 @@ namespace WWFontEditor
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(String[] args)
         {
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FrmFontEditor());
+            Application.Run(new FrmFontEditor(args));
             //Application.Run(new FrmFontEditTest());
         }
 

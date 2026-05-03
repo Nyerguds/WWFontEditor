@@ -24,7 +24,7 @@ namespace WWFontEditor.UI
             : this()
         {
             this.SourceFontFile = fontfile;
-            FontFileDialogItem[] fonttypes = FontFile.AutoDetectTypes.Select(x => new FontFileDialogItem(x)).ToArray();
+            FontFileDialogItem[] fonttypes = FontFile.SupportedTypes.Select(x => new FontFileDialogItem(x)).ToArray();
             cmbTypes.DataSource = fonttypes;
             if (SourceFontFile != null)
             {

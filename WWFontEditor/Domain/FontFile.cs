@@ -10,7 +10,7 @@ using System.Drawing.Drawing2D;
 
 namespace WWFontEditor.Domain
 {
-    public abstract class FontFile
+    public abstract class FontFile : IEquatable<FontFile>
     {                              
         protected const String ERR_NOHEADER = "File data too short to contain header.";
         protected const String ERR_SIZECHECK = "File size value in header does not match file data length.";
@@ -116,37 +116,24 @@ namespace WWFontEditor.Domain
             }
         }
         
-        /// <summary>All supported types lined up for autodetection. Ordered from complex to simple to prevent false positives.</summary>
-        public static Type[] AutoDetectTypes =
+        /// <summary>
+        /// All supported types. Never put types in here that don't derive from FontFile.
+        /// Ordered in a logical way for autodetection, from complex to simple, to prevent false positives.
+        /// This list is also used for open / save / convert dialogs.
+        /// </summary>
+        public static Type[] SupportedTypes =
         {
             typeof (FontFileV4),
             typeof (FontFileV3),
+            // disabled for now; there's not much use to it anyway. Just a single header byte difference which the games themselves probably don't even check.
             //typeof (FontFileV3_1),
             typeof (FontFileV2),
-            // V0's "check" is file size only; leave it last.
+            // V1's "check" is file size only; leave it at the end.
             typeof (FontFileV1),
-            // Can safely be put behind V0, since its size is always more than V1's fixed size.
+            // Can safely be put behind V1, since its minimum size is more than V1's fixed size.
             typeof (FontFileD2K),
         };
-
-        public static FontFile[] GetAutoDetectTypeInstances()
-        {
-            List<FontFile> fonttypes = new List<FontFile>();
-            foreach (Type type in AutoDetectTypes)
-            {
-                FontFile fontInstance = null;
-                try
-                {
-                    fontInstance = (FontFile)Activator.CreateInstance(type);
-                }
-                catch { /* Ignore; programmer error. */ }
-                if (fontInstance == null)
-                    continue;
-                fonttypes.Add(fontInstance);
-            }
-            return fonttypes.ToArray();
-        }
-
+        
         /// <summary>
         /// Attempts to load the given data as one of the known font types.
         /// </summary>
@@ -157,12 +144,12 @@ namespace WWFontEditor.Domain
         public static FontFile LoadFontFile(Byte[] fileData, out List<LoadFailedException> loadErrors)
         {
             Type fontType = typeof (FontFile);
-            foreach (Type t in AutoDetectTypes)
+            foreach (Type t in SupportedTypes)
                 if (!t.IsSubclassOf(fontType))
                     throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
             loadErrors = new List<LoadFailedException>();
             //List<Exception> processErrors = new List<Exception>();
-            foreach (Type type in AutoDetectTypes)
+            foreach (Type type in SupportedTypes)
             {
                 FontFile fontInstance = null;
                 try
@@ -182,13 +169,6 @@ namespace WWFontEditor.Domain
                     e.AttemptedLoadedType = fontInstance.ShortTypeName;
                     loadErrors.Add(e);
                 }
-                /*/
-                // Let this one slip; catch on UI level.
-                catch (Exception e)
-                {
-                    processErrors.Add(e);
-                }
-                //-*/
             }
             return null;
         }
@@ -206,7 +186,12 @@ namespace WWFontEditor.Domain
             return clone;
         }
 
-        public FontFile CloneInto(FontFile newFont, Byte overflowColor)
+        /// <summary>
+        /// Deep-clones the current font into a provided new font object, possibly of a different type.
+        /// </summary>
+        /// <param name="newFont">The new object to clone into.</param>
+        /// <param name="overflowColor">Default value for overflow bytes on the font data in case newFont is of a lower color depth</param>
+        public void CloneInto(FontFile newFont, Byte overflowColor)
         {
             Int32 targetBpp = newFont.BitsPerPixel;
             Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
@@ -227,7 +212,6 @@ namespace WWFontEditor.Domain
             {
                 newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor));
             }
-            return newFont;
         }
 
         public void RestorePicFromBackup(Int32 index, FontFile backup)
@@ -704,6 +688,20 @@ namespace WWFontEditor.Domain
             WW_V3,
             /// <summary>Tiberian Sun</summary>
             WW_V4,
+        }
+
+        public Boolean Equals(FontFile other)
+        {
+            if (this.GetType() != other.GetType())
+                return false;
+            if (this.FontWidth != other.FontWidth || this.FontHeight != other.FontHeight || this.Length != other.Length)
+                return false;
+            for (Int32 i = 0; i < this.Length; i++)
+            {
+                if (!this.m_ImageDataList[i].Equals(other.m_ImageDataList[i]))
+                    return false;
+            }
+            return true;
         }
     }
 

@@ -57,9 +57,9 @@
             this.revertFontToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.revertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copySymbolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pasteSymbolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.revertSymbolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editorSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -366,6 +366,7 @@
             // 
             // saveFontToolStripMenuItem
             // 
+            this.saveFontToolStripMenuItem.Enabled = false;
             this.saveFontToolStripMenuItem.Name = "saveFontToolStripMenuItem";
             this.saveFontToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveFontToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
@@ -374,6 +375,7 @@
             // 
             // saveFontAsToolStripMenuItem
             // 
+            this.saveFontAsToolStripMenuItem.Enabled = false;
             this.saveFontAsToolStripMenuItem.Name = "saveFontAsToolStripMenuItem";
             this.saveFontAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.S)));
@@ -383,6 +385,7 @@
             // 
             // revertFontToolStripMenuItem
             // 
+            this.revertFontToolStripMenuItem.Enabled = false;
             this.revertFontToolStripMenuItem.Name = "revertFontToolStripMenuItem";
             this.revertFontToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
             this.revertFontToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
@@ -400,40 +403,40 @@
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.copyToolStripMenuItem,
-            this.pasteToolStripMenuItem,
-            this.revertToolStripMenuItem,
+            this.copySymbolToolStripMenuItem,
+            this.pasteSymbolToolStripMenuItem,
+            this.revertSymbolToolStripMenuItem,
             this.editorSettingsToolStripMenuItem});
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editToolStripMenuItem.Text = "Edit";
             // 
-            // copyToolStripMenuItem
+            // copySymbolToolStripMenuItem
             // 
-            this.copyToolStripMenuItem.Enabled = false;
-            this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.copyToolStripMenuItem.Text = "Copy symbol";
-            this.copyToolStripMenuItem.Click += new System.EventHandler(this.BtnCopy_Click);
+            this.copySymbolToolStripMenuItem.Enabled = false;
+            this.copySymbolToolStripMenuItem.Name = "copySymbolToolStripMenuItem";
+            this.copySymbolToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C)));
+            this.copySymbolToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.copySymbolToolStripMenuItem.Text = "Copy symbol";
+            this.copySymbolToolStripMenuItem.Click += new System.EventHandler(this.BtnCopy_Click);
             // 
-            // pasteToolStripMenuItem
+            // pasteSymbolToolStripMenuItem
             // 
-            this.pasteToolStripMenuItem.Enabled = false;
-            this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
-            this.pasteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
-            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.pasteToolStripMenuItem.Text = "Paste symbol";
-            this.pasteToolStripMenuItem.Click += new System.EventHandler(this.BtnPaste_Click);
+            this.pasteSymbolToolStripMenuItem.Enabled = false;
+            this.pasteSymbolToolStripMenuItem.Name = "pasteSymbolToolStripMenuItem";
+            this.pasteSymbolToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
+            this.pasteSymbolToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.pasteSymbolToolStripMenuItem.Text = "Paste symbol";
+            this.pasteSymbolToolStripMenuItem.Click += new System.EventHandler(this.BtnPaste_Click);
             // 
-            // revertToolStripMenuItem
+            // revertSymbolToolStripMenuItem
             // 
-            this.revertToolStripMenuItem.Enabled = false;
-            this.revertToolStripMenuItem.Name = "revertToolStripMenuItem";
-            this.revertToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z)));
-            this.revertToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.revertToolStripMenuItem.Text = "Revert symbol";
-            this.revertToolStripMenuItem.Click += new System.EventHandler(this.btnRevert_Click);
+            this.revertSymbolToolStripMenuItem.Enabled = false;
+            this.revertSymbolToolStripMenuItem.Name = "revertSymbolToolStripMenuItem";
+            this.revertSymbolToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z)));
+            this.revertSymbolToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.revertSymbolToolStripMenuItem.Text = "Revert symbol";
+            this.revertSymbolToolStripMenuItem.Click += new System.EventHandler(this.btnRevert_Click);
             // 
             // editorSettingsToolStripMenuItem
             // 
@@ -729,6 +732,8 @@
             this.dgrvSymbolsList.StandardTab = true;
             this.dgrvSymbolsList.TabIndex = 20;
             this.dgrvSymbolsList.VerticalScrollbarOffset = 0;
+            this.dgrvSymbolsList.CellContextMenuStripNeeded += new System.Windows.Forms.DataGridViewCellContextMenuStripNeededEventHandler(this.dgrvSymbolsList_CellContextMenuStripNeeded);
+            this.dgrvSymbolsList.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgrvSymbolsList_CellMouseDown);
             this.dgrvSymbolsList.SelectionChanged += new System.EventHandler(this.DgrvSymbolsList_SelectionChanged);
             // 
             // palColorSelector
@@ -895,6 +900,7 @@
             this.MinimumSize = new System.Drawing.Size(800, 600);
             this.Name = "FrmFontEditor";
             this.Text = "Westwood Font Editor v#.#.# - Created by Nyerguds";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmFontEditor_FormClosing);
             this.Shown += new System.EventHandler(this.FrmFontEditor_Shown);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Frm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Frm_DragEnter);
@@ -963,9 +969,9 @@
         private System.Windows.Forms.Button btnCopy;
         private System.Windows.Forms.Button btnPaste;
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem revertToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem revertSymbolToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem copySymbolToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem pasteSymbolToolStripMenuItem;
         private Nyerguds.Util.UI.EnhNumericUpDown numSymbols;
         private Nyerguds.Util.UI.EnhNumericUpDown numFontWidth;
         private Nyerguds.Util.UI.EnhNumericUpDown numFontHeight;

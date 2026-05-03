@@ -164,6 +164,12 @@ Special thanks to
 Version history
 ---------------
 
+v1.5.2:
+-Improved "save as" logic with font type selection.
+-Added a right-click menu to the grid to copy a symbol as text.
+-Added confirmation dialogs when closing and when opening on a modified font.
+-Added command line argument support for opening a file.
+
 v1.5.1:
 -Fixed bug where image pasting always took precedence over font symbol pasting.
 
