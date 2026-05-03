@@ -104,8 +104,8 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Width > m_FontHeight || !this.CustomSymbSizesForType)
-                        symbol.ChangeWidth(m_FontHeight);
+                    if (symbol.Width > m_FontWidth || !this.CustomSymbSizesForType)
+                        symbol.ChangeWidth(m_FontWidth);
             }
         }
 

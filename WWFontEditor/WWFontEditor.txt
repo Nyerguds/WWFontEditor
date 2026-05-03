@@ -184,6 +184,10 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 Version history
 ---------------
 
+v1.5.8: (2017/04/09 00:30)
+-Fixed a bug in the font size changing that made it change the wrong dimension.
+-Fixed assembly name; it was still "CnCFontEditor".
+
 v1.5.7: (2017/04/08 19:40)
 -Fixed a crash in the previewer when one of the previewed characters is the
  last character in the font.
