@@ -82,6 +82,34 @@ namespace ColorManipulation
                 throw new NotSupportedException(invalid, e);
             }
         }
+
+        public static Int32 GetClosestPaletteIndexMatch(Color col, Color[] colorPalette, List<Int32> excludedindexes)
+        {
+            Int32 colorMatch = 0;
+            Int32 leastDistance = int.MaxValue;
+            Int32 red = col.R;
+            Int32 green = col.G;
+            Int32 blue = col.B;
+            for (Int32 i = 0; i < colorPalette.Length; i++)
+            {
+                if (excludedindexes == null || !excludedindexes.Contains(i))
+                {
+                    Color paletteColor = colorPalette[i];
+                    Int32 redDistance = paletteColor.R - red;
+                    Int32 greenDistance = paletteColor.G - green;
+                    Int32 blueDistance = paletteColor.B - blue;
+                    Int32 distance = (redDistance * redDistance) + (greenDistance * greenDistance) + (blueDistance * blueDistance);
+                    if (distance < leastDistance)
+                    {
+                        colorMatch = i;
+                        leastDistance = distance;
+                        if (distance == 0)
+                            return i;
+                    }
+                }
+            }
+            return colorMatch;
+        }
         
     }
 }

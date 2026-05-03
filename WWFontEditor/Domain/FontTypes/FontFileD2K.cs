@@ -18,7 +18,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 8; } }
         public override String ShortTypeName { get { return "IG D2K"; } }
         public override String ShortTypeDescription { get { return "IG Font (Dune 2000)"; } }
-        public override String LongTypeDescription { get { return "This font was made by IG, not Westwood. It has individual sizes for symbols, but no Y optimization."; } }
+        public override String LongTypeDescription { get { return "An 8 BPP font with a fixed set of 256 characters, which allows separate symbols to specify their width and height. It has no Y offset, but instead optimizes the space to the right of all characters."; } }
         public override String[] GamesListForType { get { return new String[] { "Dune 2000" }; } }
 
         public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)

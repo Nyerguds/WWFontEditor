@@ -63,6 +63,16 @@ namespace WWFontEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap icon_colorchange {
+            get {
+                object obj = ResourceManager.GetObject("icon_colorchange", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap icon_colpicker {
             get {
                 object obj = ResourceManager.GetObject("icon_colpicker", resourceCulture);

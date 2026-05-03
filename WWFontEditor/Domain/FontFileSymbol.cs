@@ -26,6 +26,22 @@ namespace WWFontEditor.Domain
             this.ByteData = new Byte[0];
             this.BitsPerPixel = bitsPerPixel;
         }
+        public FontFileSymbol(Image image, Color[] palette, FontFile source)
+        {
+            this.BitsPerPixel = source.BitsPerPixel; 
+            this.Width = Math.Min(source.FontWidth, image.Width);
+            this.Height = Math.Min(source.FontHeight, image.Height);
+            this.ByteData = new Byte[Width * Height];
+            Bitmap srcImage = new Bitmap(image);
+            for (Int32 y = 0; y < Height; y++)
+            {
+                for (Int32 x = 0; x < Width; x++)
+                {
+                    Color col = srcImage.GetPixel(x, y);
+                    this.ByteData[y * Width + x] = (Byte)ColorUtils.GetClosestPaletteIndexMatch(col, palette, null);
+                }
+            }
+        }
 
         public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel)
         {
@@ -55,7 +71,8 @@ namespace WWFontEditor.Domain
             Byte[] newByteData;
             Int32 targetBpp = targetVersion.BitsPerPixel;
             Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
-
+            if (defaultValue.HasValue && defaultValue.Value >= colValLimit)
+                throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
             if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
             {
                 if (defaultValue == null)
@@ -93,9 +110,16 @@ namespace WWFontEditor.Domain
                 // Remove Y offset; it's been replaced by actual offset
                 newSymbol.YOffset = 0;
             }
+            if (!targetVersion.CustomSymbSizesForType)
+                newSymbol.ChangeHeight(targetVersion.FontHeight);
             // Reduce width if needed
-            if (targetVersion.FontWidth < newSymbol.Width)
+            if (targetVersion.FontWidth < newSymbol.Width || !targetVersion.CustomSymbSizesForType)
                 newSymbol.ChangeWidth(targetVersion.FontWidth);
+            if (targetVersion.FontWidthTypeMin > newSymbol.Width)
+                newSymbol.ChangeWidth(targetVersion.FontWidthTypeMin);
+            else if (targetVersion.FontWidthTypeMax < newSymbol.Width)
+                newSymbol.ChangeWidth(targetVersion.FontWidthTypeMax);
+
             // IF all sizes in the font are fixed (V1, V2) expand symbol to full size.
             // At this point, this should only increase the size.
             if (!targetVersion.CustomSymbSizesForType)
@@ -180,6 +204,15 @@ namespace WWFontEditor.Domain
             }
         }
 
+        public void ReplaceColor(Byte sourceVal, Byte targetVal)
+        {
+            Int32 pxf = this.BitsPerPixel;
+            Int32 maxSize = (Int32)Math.Pow(2, pxf);
+            if (maxSize <= targetVal)
+                throw new IndexOutOfRangeException("Byte value too large for " + pxf + " bit image!");
+            this.ByteData = this.ByteData.Select(x => x == sourceVal? targetVal : x).ToArray();
+        }
+
         private static void ShiftRowVert(Byte[] source, Int32 stride, Boolean up, Boolean wrap)
         {
             Byte[] newSource = source.ToArray();
@@ -242,6 +275,7 @@ namespace WWFontEditor.Domain
         {
             return String.Format("{0}x{1} (Y={2}), {3} bytes", this.Width, this.Height, this.YOffset, this.ByteData == null ? 0 : this.ByteData.Length);
         }
+
     }
 
     public enum ShiftDirection

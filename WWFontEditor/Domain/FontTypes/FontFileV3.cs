@@ -15,14 +15,13 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 4; } }
         public override String ShortTypeName { get { return "WW v3"; } }
         public override String ShortTypeDescription { get { return "WWFont v3 (D2/C&C1/RA1/LoL/Kyr)"; } }
-        public override String LongTypeDescription { get { return "A 4 BPP font which allows separate symbols to specify their width, height and Y-offset."; } }
+        public override String LongTypeDescription { get { return "A 4 BPP font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset."; } }
         public override String[] GamesListForType
         {
             get
             {
                 return new String[]
         {
-            "The Legend of Kyrandia",
             "Dune II",
             "Lands of Lore The Throne of Chaos",
             "The Legend of Kyrandia Hand of Fate",
@@ -40,7 +39,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData, Boolean fromAutoDetect)
         {
-            LoadV3V4Font(fileData, FontFileVersion.WW_V3, fromAutoDetect);
+            LoadV3V4Font(fileData, FontFileVersion.WW_V3, false); //fromAutoDetect);
         }
 
         public override Byte[] SaveFont()

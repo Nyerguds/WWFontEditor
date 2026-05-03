@@ -17,7 +17,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Boolean CustomSymbSizesForType { get { return false; } }
         public override String ShortTypeName { get { return "WW V2"; } }
         public override String ShortTypeDescription { get { return "WWFont V2 (BattleTech, EoB)"; } }
-        public override String LongTypeDescription { get { return "A 1 BPP font with a maximum width of 8 pixels, with the file header specifying the global width and height."; } }
+        public override String LongTypeDescription { get { return "A 1 BPP font with a fixed set of 128 characters, with a maximum width of 8 pixels, with the file header specifying the global width and height for all symbols."; } }
         public override String[] GamesListForType { get { return new String[]
         {
             "BattleTech - The Crescent Hawk's Revenge",

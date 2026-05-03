@@ -81,6 +81,18 @@
     <Compile Include="Domain\ImageUtils.cs" />
     <Compile Include="Domain\FontEditSettings.cs" />
     <Compile Include="Domain\TextUtils.cs" />
+    <Compile Include="UI\FrmReplaceColor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmReplaceColor.Designer.cs">
+      <DependentUpon>FrmReplaceColor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\FrmConvertFontType.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\FrmConvertFontType.Designer.cs">
+      <DependentUpon>FrmConvertFontType.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\FrmConvertToLowerBpp.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -128,6 +140,12 @@
     <Compile Include="UI\Tools\SelectablePanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <EmbeddedResource Include="UI\FrmReplaceColor.resx">
+      <DependentUpon>FrmReplaceColor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\FrmConvertFontType.resx">
+      <DependentUpon>FrmConvertFontType.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\FrmConvertToLowerBpp.resx">
       <DependentUpon>FrmConvertToLowerBpp.cs</DependentUpon>
     </EmbeddedResource>
@@ -176,6 +194,10 @@
     <Content Include="license.txt" />
     <Content Include="Research\d2kfontspecs.txt" />
     <Content Include="Research\fnt_format_info.txt" />
+    <Content Include="Research\HWorks64_2016-12-10_00-13-25.png" />
+    <Content Include="Research\HWorks64_2016-12-10_00-13-28.png" />
+    <Content Include="Research\td-font-pals.txt" />
+    <Content Include="Resources\icon_colorchange.png" />
     <Content Include="Resources\icon_colpicker.png" />
     <Content Include="Resources\icon_copy.png" />
     <Content Include="Resources\icon_editarea.png" />

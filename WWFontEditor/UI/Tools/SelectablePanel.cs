@@ -26,26 +26,30 @@ namespace Nyerguds.Util.UI
 
         protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e)
         {
-            switch (e.KeyValue)
+            if (!e.Shift && !e.Control && !e.Alt)
             {
-                case (int)System.Windows.Forms.Keys.Down:
-                    this.VerticalScroll.Value += 50;
-                    break;
-                case (int)System.Windows.Forms.Keys.Up:
-                    if (this.VerticalScroll.Value - 50 < 0)
-                        this.VerticalScroll.Value = 0;
-                    else this.VerticalScroll.Value -= 50;
-                    break;
-                case (int)System.Windows.Forms.Keys.Right:
-                    this.HorizontalScroll.Value += 50;
-                    break;
-                case (int)System.Windows.Forms.Keys.Left:
-                    if (this.HorizontalScroll.Value - 50 < 0)
-                        this.HorizontalScroll.Value = 0;
-                    else this.HorizontalScroll.Value -= 50;
-                    break;
+                switch (e.KeyValue)
+                {
+                    case (int)System.Windows.Forms.Keys.Down:
+                        if (this.VerticalScroll.Visible)
+                            this.VerticalScroll.Value = Math.Min(this.VerticalScroll.Maximum, this.VerticalScroll.Value + 50);
+                        break;
+                    case (int)System.Windows.Forms.Keys.Up:
+                        if (this.VerticalScroll.Visible)
+                            this.VerticalScroll.Value = Math.Max(this.VerticalScroll.Minimum, this.VerticalScroll.Value - 50);
+                        break;
+                    case (int)System.Windows.Forms.Keys.Right:
+                        if (this.HorizontalScroll.Visible)
+                            this.HorizontalScroll.Value = Math.Min(this.HorizontalScroll.Maximum, this.HorizontalScroll.Value + 50);
+                        break;
+                    case (int)System.Windows.Forms.Keys.Left:
+                        if (this.HorizontalScroll.Visible)
+                            this.HorizontalScroll.Value = Math.Max(this.HorizontalScroll.Minimum, this.HorizontalScroll.Value - 50);
+                        break;
+                }
+                this.PerformLayout();
+                this.Invalidate();
             }
-            this.PerformLayout();
             base.OnPreviewKeyDown(e);
         }
         

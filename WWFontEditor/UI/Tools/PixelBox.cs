@@ -1,4 +1,11 @@
-﻿using System;
+﻿// ===========================================================================
+// This control is licensed under the Code Project Open License (CPOL) 1.02.
+// See https://www.codeproject.com/info/cpol10.aspx for more info.
+// Code taken from https://www.codeproject.com/articles/717312/pixelbox
+// Written by Yvan Rodrigues, 28 Jan 2014.
+// ===========================================================================
+
+using System;
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;

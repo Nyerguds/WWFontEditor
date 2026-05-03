@@ -1,5 +1,5 @@
 ﻿=========================
-Westwood Font Editor v1.4
+Westwood Font Editor v1.5
 ========================= Created by Nyerguds
 
 This editor can read and write paletted fonts of pretty much every Westwood
@@ -28,10 +28,14 @@ Features list
 -------------
 
 * Can edit fonts from pretty much all pre-RA2 Westwood games (see full list).
-* Character sizes can be adjusted (if the font format supports it).
-* New characters can be added (if the font format supports it).
-* Character data can be shifted up/down/left/right.
-* Clipboard: Copy data to other WWFontEditor windows, or even to image editors.
+* Fonts can be converted to other font types.
+* Character sizes can be adjusted (if the font type supports it).
+* New characters can be added (if the font type supports it).
+* Symbol images can be shifted up/down/left/right.
+* Ctrl + arrow keys act as as shortcuts for symbol shifting.
+* Holding Shift while doing a symbol shift will shift all symbols in the font.
+* Data can be copied to other WWFontEditor windows, or even to image editors.
+* Data can be pasted from other WWFontEditor windows, or from images.
 * Has a text encoding dropdown to view character mappings for other encodings.
 * Contains a Dune 2000 encoding for the game's reordered special characters.
 * Can preview text as image, in the chosen text encoding.
@@ -39,6 +43,7 @@ Features list
 * Color palettes can be edited on-the-fly by double-clicking the colours.
 * Has support for adding and editing custom added palettes (see next section).
 * The editor's colors and defaults can be customized in the settings.
+* Color Replace simplifies adapting fonts to the colors used on other fonts.
 
 
 ---------------
@@ -158,6 +163,14 @@ Special thanks to
 ---------------
 Version history
 ---------------
+
+v1.5:
+-Implemented font type conversion.
+-Added global color replace function.
+-Ctrl + arrow keys serve as shortcuts for image shifting.
+-Ctrl + Shift + arrow keys will shift all images in the font.
+-The preview image can now be copied to the clipboard with a right-click menu.
+-Images can now be pasted from the clipboard. They'll adapt to the palette.
 
 v1.4:
 -Clipboard copy can now also be pasted as image in other applications.

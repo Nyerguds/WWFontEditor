@@ -121,13 +121,31 @@ namespace WWFontEditor.Domain
         {
             typeof (FontFileV4),
             typeof (FontFileV3),
-            typeof (FontFileV3_1),
+            //typeof (FontFileV3_1),
             typeof (FontFileV2),
             // V0's "check" is file size only; leave it last.
             typeof (FontFileV1),
             // Can safely be put behind V0, since its size is always more than V1's fixed size.
             typeof (FontFileD2K),
         };
+
+        public static FontFile[] GetAutoDetectTypeInstances()
+        {
+            List<FontFile> fonttypes = new List<FontFile>();
+            foreach (Type type in AutoDetectTypes)
+            {
+                FontFile fontInstance = null;
+                try
+                {
+                    fontInstance = (FontFile)Activator.CreateInstance(type);
+                }
+                catch { /* Ignore; programmer error. */ }
+                if (fontInstance == null)
+                    continue;
+                fonttypes.Add(fontInstance);
+            }
+            return fonttypes.ToArray();
+        }
 
         /// <summary>
         /// Attempts to load the given data as one of the known font types.
@@ -141,7 +159,7 @@ namespace WWFontEditor.Domain
             Type fontType = typeof (FontFile);
             foreach (Type t in AutoDetectTypes)
                 if (!t.IsSubclassOf(fontType))
-                    throw new ArgumentException("Entries in autoDetectTypes list must all be FontFile classes!", "autoDetectTypes");
+                    throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
             loadErrors = new List<LoadFailedException>();
             //List<Exception> processErrors = new List<Exception>();
             foreach (Type type in AutoDetectTypes)
@@ -186,6 +204,30 @@ namespace WWFontEditor.Domain
             foreach (FontFileSymbol image in this.m_ImageDataList)
                 clone.m_ImageDataList.Add(image.Clone());
             return clone;
+        }
+
+        public FontFile CloneInto(FontFile newFont, Byte overflowColor)
+        {
+            Int32 targetBpp = newFont.BitsPerPixel;
+            Int32 colValLimit = (Int32)Math.Pow(2, targetBpp);
+            if (overflowColor >= colValLimit)
+                throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", overflowColor, targetBpp));
+            newFont.FontWidth = this.FontWidth;
+            newFont.FontHeight = this.FontHeight;
+            newFont.m_ImageDataList = new List<FontFileSymbol>();
+
+            //if newFont.SymbolsTypeMax this.newFont.SymbolsTypeMin < thisnewFont.SymbolsTypeMax;
+
+            for (Int32 i = 0; i < newFont.SymbolsTypeMin; i++)
+            {
+                FontFileSymbol image = i < m_ImageDataList.Count? this.m_ImageDataList[i] : new FontFileSymbol(targetBpp);
+                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor));
+            }
+            for (Int32 i = newFont.SymbolsTypeMin; i < Math.Min(m_ImageDataList.Count, newFont.SymbolsTypeMax); i++)
+            {
+                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor));
+            }
+            return newFont;
         }
 
         public void RestorePicFromBackup(Int32 index, FontFile backup)
@@ -260,8 +302,10 @@ namespace WWFontEditor.Domain
             symbol.PaintPixel(x, y, value);
         }
 
-        public Bitmap PrintText(String text, Color[] colors, Encoding enc, Int32 wrapAt)
+        public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
+            // just to be sure this never overflows to infinite height
+            wrapAt = Math.Max(wrapAt, this.FontWidth);
             Int32 fullWidth = 0;
             Int32 fullHeight = this.FontHeight;
             Int32 curWidth = 0;
@@ -273,12 +317,13 @@ namespace WWFontEditor.Domain
                 if (c == '\n')
                 {
                     fullWidth = Math.Max(fullWidth, curWidth);
+                    // special case: since symbol data itself doesn't contain data about which character
+                    // they are (shouldn't, either; it'd complicate copying), use "null" for a line break.
                     symbols.Add(null);
                     curWidth = 0;
                     fullHeight += this.FontHeight;
                     continue;
                 }
-
                 Byte[] val = enc.GetBytes(new Char[]{c});
                 if (val.Length != 1 || val[0] > this.Length)
                     continue;
@@ -299,7 +344,7 @@ namespace WWFontEditor.Domain
             using (Graphics g = Graphics.FromImage(fullBm))
             {
                 g.CompositingMode = CompositingMode.SourceOver;
-                using (SolidBrush brush = new SolidBrush(Color.FromArgb(0xFF, colors[0])))
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg? 0x00 : 0xFF, colors[0])))
                     g.FillRectangle(brush, 0, 0, fullWidth, fullHeight);
                 curWidth = 0;
                 Int32 curHeight = 0;
@@ -307,8 +352,9 @@ namespace WWFontEditor.Domain
                 {
                     if (ffs == null)
                     {
-                        curWidth = 0;
+                        // special case: Line break. Increase height, reset width, and go to next symbol.
                         curHeight += this.FontHeight;
+                        curWidth = 0;
                         continue;
                     }
                     if (wrapAt != -1 && curWidth + ffs.Width > fullWidth)
