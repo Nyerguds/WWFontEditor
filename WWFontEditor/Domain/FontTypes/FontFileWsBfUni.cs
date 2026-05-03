@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Nyerguds.Util;
 using Nyerguds.ImageManipulation;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -39,13 +40,15 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_BADHEADER);
             //UInt32 dataStart = (UInt32) ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             Int32 stride = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 4, true);
-            this.m_FontHeight = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 4, true);
-            this.m_FontWidth = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x10, 4, true);
+            Int32 fontDataHeight = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 4, true);
+            this.m_FontHeight = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x10, 4, true);
+            // Start at 0
+            this.m_FontWidth = 0;
             // count: highest encountered ID. But all IDs are +1.
             Int32 count = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x14, 4, true);
             Int32 symbolDataSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x18, 4, true);
             Int32 symbolImageSize = symbolDataSize - 1;
-            if (stride * m_FontHeight != symbolImageSize)
+            if (stride * fontDataHeight != symbolImageSize)
                 throw new FileTypeLoadException("Symbol size does not match width * height!");
             Int32 readOffset = 0x1C;
             List<Int32>[] symbolUsage = new List<Int32>[count];
@@ -80,12 +83,16 @@ namespace WWFontEditor.Domain.FontTypes
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolImageSize);
                 readOffset += symbolImageSize;
                 Int32 symbolStride = stride;
-                Byte[] symbolData8Bit = ImageUtils.ConvertTo8Bit(symbolData, symbolWidth, this.m_FontHeight, 0, 1, true, ref symbolStride);
+                Byte[] symbolData8Bit = ImageUtils.ConvertTo8Bit(symbolData, symbolWidth, fontDataHeight, 0, 1, true, ref symbolStride);
                 // Debug: view symbol.
                 //String symbol = this.VisualiseOneBitData(symbolData, Int32 symbolWidth, this.m_FontHeight);
                 Int32 usageCount = curSymbolUsage.Count;
                 for (Int32 use = 0; use < usageCount; ++use)
-                    symbols[curSymbolUsage[use]] = new FontFileSymbol(symbolData8Bit, symbolWidth, this.m_FontHeight, 0, 1, this.TransparencyColor);
+                {
+                    FontFileSymbol ffs = new FontFileSymbol(symbolData8Bit, symbolWidth, fontDataHeight, 0, 1, this.TransparencyColor);
+                    ffs.ChangeHeight(m_FontHeight);
+                    symbols[curSymbolUsage[use]] = ffs;
+                }
             }
             for (Int32 i = 0; i <= 0xFFFF; ++i)
                 if (symbols[i] == null)
@@ -98,12 +105,47 @@ namespace WWFontEditor.Domain.FontTypes
             return String.Join("\r\n", Enumerable.Range(0, height).Select(line => String.Join("", data.Skip(line * width).Take(width).Select(c => c > 0 ? "X" : "_").ToArray())).ToArray());
         }
 
+
+        public override SaveOption[] GetSaveOptions(String targetFileName)
+        {
+            Int32 width;
+            //if (this.m_ImageDataList[0x20] != null && this.m_ImageDataList[0x20].Width > 0)
+            //    width = this.m_ImageDataList[0x20].Width*2;
+            //else if (this.m_ImageDataList[0x3000] != null && this.m_ImageDataList[0x3000].Width > 0)
+            //    width = this.m_ImageDataList[0x3000].Width;
+            //else
+            width = 0x14;
+            return new SaveOption[] { new SaveOption("SPC", SaveOptionType.Number, "Default for the standard ideographic width", width.ToString()) };
+        }
+
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            Int32 stride = ImageUtils.GetMinimumStride(this.m_FontWidth, 1);
-            Int32 dataLength = stride * m_FontHeight;
-            Int32 blockLength = dataLength + 1;
             Int32 imageListcount = m_ImageDataList.Count; // should always be 0x10000
+            Int32 fontDataHeight = 0;
+            Int32 fontDataWidth = 0;
+            for (Int32 i = 0; i < imageListcount; ++i)
+            {
+                FontFileSymbol ffs = m_ImageDataList[i];
+                Int32 symbWidth = ffs.Width;
+                if (symbWidth == 0)
+                    continue;
+                if (fontDataWidth < symbWidth)
+                    fontDataWidth = symbWidth;
+                Int32 yoffSet = 0;
+                Int32 height = ffs.Height;
+                ImageUtils.OptimizeYHeight(ffs.ByteData, ffs.Width, ref height, ref yoffSet, true, this.TransparencyColor, this.FontHeight, false);
+                Int32 newHeight = height + yoffSet;
+                if (newHeight > fontDataHeight)
+                    fontDataHeight = newHeight;
+            }
+            Int32 spaceWidth;
+            if (!Int32.TryParse(SaveOption.GetSaveOptionValue(saveOptions, "SPC"), out spaceWidth))
+                spaceWidth = 0x14;
+
+            Int32 stride = ImageUtils.GetMinimumStride(fontDataWidth, 1);
+            Boolean hasHeightDiff = m_FontHeight > fontDataHeight;
+            Int32 dataLength = stride * fontDataHeight;
+            Int32 blockLength = dataLength + 1;
             Byte[][] fontListBin = new Byte[0x10000][];
             // Make list of binary entries, skipping any with width == 0
             for (Int32 i = 0; i < imageListcount; ++i)
@@ -112,6 +154,14 @@ namespace WWFontEditor.Domain.FontTypes
                 Int32 symbWidth = ffs.Width;
                 if (symbWidth == 0)
                     continue;
+                if (hasHeightDiff)
+                {
+                    // Clone, so we don't edit the loaded font for saving.
+                    // FontFileSymbol is not IDisposable, so the garbage collector will take care of the clones.
+                    ffs = ffs.Clone();
+                    // Reduce height to actually used height.
+                    ffs.ChangeHeight(fontDataHeight);
+                }
                 Byte[] output = new Byte[blockLength];
                 output[0] = (Byte)symbWidth;
                 Int32 symbStride = symbWidth;
@@ -121,6 +171,7 @@ namespace WWFontEditor.Domain.FontTypes
                 fontListBin[i] = output;
             }
             // Optimise list by removing all duplicates, and write all entries to the index.
+            // this list is an array of 2-byte Words. It's treated as simple byte array for convenience.
             Byte[] index = new Byte[0x20000];
             Int32 curNum = 0;
             for (Int32 i = 0; i < imageListcount; ++i)
@@ -132,7 +183,9 @@ namespace WWFontEditor.Domain.FontTypes
                 if (curNum > 0xFFFF)
                     throw new NotSupportedException("WWFont v5 can only contain 65535 (0xFFFF) characters!");
                 ArrayUtils.WriteIntToByteArray(index, i << 1, 2, true, (UInt64)curNum);
-                // Start at i; everything before it is already checked. This means the inner loop becomes shorter as this progresses.
+                // Find any duplicates of this symbol in the following data, set their index to the same as this one,
+                // and mark them as "ignore" by setting them to null. Start at i; everything before it is already checked.
+                // This means the inner loop becomes shorter as this progresses. The checked block includes the symbol width.
                 for (Int32 j = i + 1; j < imageListcount; ++j)
                 {
                     Byte[] curChecksymbol = fontListBin[j];
@@ -158,14 +211,11 @@ namespace WWFontEditor.Domain.FontTypes
             }
             Byte[] outputArray = new Byte[0x1C + index.Length + curNum * blockLength];
             Array.Copy(Encoding.ASCII.GetBytes("fonT"), outputArray, 4);
-            // not sure what this is; just gonna hardcode it to what's in 'game.fnt'.
-            ArrayUtils.WriteIntToByteArray(outputArray, 0x04, 4, true, 0x14);
-
-            // Unknown. May be a corrupted width value?
-            ArrayUtils.WriteIntToByteArray(outputArray, 0x04, 4, true, 0x14);
+            // ideographic width.
+            ArrayUtils.WriteIntToByteArray(outputArray, 0x04, 4, true, (UInt64)spaceWidth);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x08, 4, true, (UInt64)stride);
-            ArrayUtils.WriteIntToByteArray(outputArray, 0x0C, 4, true, (UInt64)this.m_FontHeight);
-            ArrayUtils.WriteIntToByteArray(outputArray, 0x10, 4, true, (UInt64)this.m_FontWidth);
+            ArrayUtils.WriteIntToByteArray(outputArray, 0x0C, 4, true, (UInt64)fontDataHeight);
+            ArrayUtils.WriteIntToByteArray(outputArray, 0x10, 4, true, (UInt64)this.m_FontHeight);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x14, 4, true, (UInt64)curNum);
             ArrayUtils.WriteIntToByteArray(outputArray, 0x18, 4, true, (UInt32)blockLength);
             // currently at 0x1C.

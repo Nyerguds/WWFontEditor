@@ -55,6 +55,7 @@
     <Compile Include="Domain\Csv\CsvColumnAttribute .cs" />
     <Compile Include="Domain\Csv\CsvConverter.cs" />
     <Compile Include="Domain\Csv\CsvParser.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDotWriter.cs" />
     <Compile Include="Domain\FontTypes\FontFileEmo.cs" />
     <Compile Include="Domain\FontTypes\FontFileEsi.cs" />
     <Compile Include="Domain\Utils\EncodingSupport.cs" />

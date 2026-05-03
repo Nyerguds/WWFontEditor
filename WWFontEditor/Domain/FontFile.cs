@@ -108,6 +108,11 @@ namespace WWFontEditor.Domain
         /// <returns>False if the font was not identified as this type.</returns>
         public abstract void LoadFont(Byte[] fileData);
 
+        /// <summary>
+        /// Overload this to get specific options needed for saving a font type.
+        /// </summary>
+        /// <param name="targetFileName"></param>
+        /// <returns></returns>
         public virtual SaveOption[] GetSaveOptions(String targetFileName) { return new SaveOption[0]; }
         
         /// <summary>
@@ -182,180 +187,8 @@ namespace WWFontEditor.Domain
                         this.m_ImageDataList.Add(new FontFileSymbol(this));
             }
         }
-        
-        /// <summary>
-        /// All supported types. Never put types in here that don't derive from FontFile.
-        /// This list is used for open / save / convert dialogs, and should have the items in a logical order.
-        /// </summary>
-        public static Type[] SupportedTypes =
-        {
-            typeof(FontFileWsV1),
-            typeof(FontFileWsV2),
-            typeof(FontFileWsV3),
-            typeof(FontFileWsV4),
-            typeof(FontFileWsBf),
-            typeof(FontFileWsBfNox),
-            typeof(FontFileWsBfUni),
-            typeof(FontFileD2K),
-            typeof(FontFileEsi),
-            typeof(FontFileTran),
-            typeof(FontFileDynV1a),
-            typeof(FontFileDynV1b),
-            typeof(FontFileDynV2),
-            typeof(FontFileDynV3),
-            typeof(FontFileDynV4),
-            typeof(FontFileDynV5),
-            typeof(FontFileDynV6),
-            typeof(FontFileDynSQ5),
-            typeof(FontFileCent),
-            typeof(FontFileKort),
-            typeof(FontFileMythos),
-            typeof(FontFileKotB),
-            typeof(FontFileEmo),
-            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
-        };
 
-        /// <summary>
-        /// All supported types. Never put types in here that don't derive from FontFile.
-        /// Ordered in a logical way for autodetection, starting with those that are easy to identify with certainty,
-        /// and going down to more simple types that rely on size calculations, to prevent false positives.
-        /// </summary>
-        public static Type[] AutoDetectTypes =
-        {
-            // Dynamix fonts starting from v3 have a very specific "FNT:" header start so I prefer putting them first.
-            typeof(FontFileDynV3),
-            typeof(FontFileDynV4),
-            typeof(FontFileDynV5),
-            typeof(FontFileDynV6),
-            // WW BitFont starts with a very specifically cased fonT/FoNt/tNoF string
-            typeof(FontFileWsBf),
-            typeof(FontFileWsBfNox),
-            typeof(FontFileWsBfUni),
-            // These start with their file size.
-            typeof(FontFileWsV4),
-            typeof(FontFileWsV3),
-            typeof(FontFileWsV2),
-            typeof(FontFileD2K),
-            typeof(FontFileKort),
-            typeof(FontFileEsi),
-            // rather weak file size / content based checks.
-            typeof(FontFileEmo),
-            typeof(FontFileDynSQ5),
-            typeof(FontFileCent),
-            typeof(FontFileDynV2),
-            typeof(FontFileDynV1b),
-            typeof(FontFileDynV1a),
-            typeof(FontFileMythos),
-            typeof(FontFileKotB),
-            typeof(FontFileTran),
-            // File size only; leave it at the end.
-            typeof(FontFileWsV1),
-            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
-        };
-
-        /// <summary>
-        /// Attempts to load the given data as one of the known font types.
-        /// </summary>
-        ///<param name="path">Path the file was loaded from.</param>
-        /// <param name="fileData">File data</param>
-        /// <param name="loadErrors">Load errors detailing failed attempts at identification.</param>
-        /// <returns>An instance of the detected font, or null if not found.</returns>
-        public static FontFile LoadFontFile(String path, Byte[] fileData, out List<FileTypeLoadException> loadErrors)
-        {
-            Type fontType = typeof (FontFile);
-            Int32 numTypes = AutoDetectTypes.Length;
-#if DEBUG
-            // Only check this in debug mode.
-            for (Int32 i = 0; i < numTypes; ++i)
-                if (!AutoDetectTypes[i].IsSubclassOf(fontType))
-                    throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
-#endif
-            loadErrors = new List<FileTypeLoadException>();
-            //List<Exception> processErrors = new List<Exception>();
-            FontFile[] possibleTypes = FileDialogGenerator.IdentifyByExtension<FontFile>(AutoDetectTypes, path);
-            Int32 numPossTypes = possibleTypes.Length;
-            for (Int32 i = 0; i < numPossTypes; ++i)
-            {
-                FontFile typeObj = possibleTypes[i];
-                try
-                {
-                    typeObj.LoadFont(fileData);
-                    return typeObj;
-                }
-                catch (FileTypeLoadException e)
-                {
-                    e.AttemptedLoadedType = typeObj.ShortTypeName;
-                    loadErrors.Add(e);
-                }
-            }
-            for (Int32 i = 0; i < numTypes; ++i)
-            {
-                Type type = AutoDetectTypes[i];
-                Boolean knownType = false;
-                foreach (FontFile typeObj in possibleTypes)
-                {
-                    if (typeObj.GetType() == type)
-                    {
-                        knownType = true;
-                        break;
-                    }
-                }
-                if (knownType)
-                    continue;
-                FontFile fontInstance = null;
-                try
-                {
-                    fontInstance = (FontFile) Activator.CreateInstance(type);
-                }
-                catch
-                {
-                    /* Ignore; programmer error. */
-                }
-                if (fontInstance == null)
-                    continue;
-                try
-                {
-                    fontInstance.LoadFont(fileData);
-                    return fontInstance;
-                }
-                catch (FileTypeLoadException e)
-                {
-                    e.AttemptedLoadedType = fontInstance.ShortTypeName;
-                    loadErrors.Add(e);
-                }
-            }
-            return null;
-        }
-
-        public static List<String> GetSupportedExtensions()
-        {
-            List<String> extensions = new List<String>();
-            Type[] types = SupportedTypes.Union(AutoDetectTypes).ToArray();
-            Int32 nrOfTypes = types.Length;
-            for (Int32 i = 0; i < nrOfTypes; ++i)
-            {
-                FontFile fontInstance = null;
-                try
-                {
-                    fontInstance = (FontFile) Activator.CreateInstance(types[i]);
-                }
-                catch
-                {
-                    /* Ignore; programmer error. */
-                }
-                if (fontInstance == null)
-                    continue;
-                String[] fileExts = fontInstance.FileExtensions;
-                Int32 fileExtsLen = fileExts.Length;
-                for (Int32 j = 0; j < fileExtsLen; ++j)
-                {
-                    String ext = fileExts[j];
-                    if (!String.IsNullOrEmpty(ext) && !extensions.Contains(ext))
-                        extensions.Add(ext);
-                }
-            }
-            return extensions;
-        }
+        public String ExtraInfo { get; set; }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
         {
@@ -623,7 +456,6 @@ namespace WWFontEditor.Domain
             }
             return fullBm;
         }
-
         #endregion
 
         #region internal data loading/saving methods
@@ -704,6 +536,187 @@ namespace WWFontEditor.Domain
             return refsList;
         }
         #endregion
+        
+        #region static functions and data
+
+        /// <summary>
+        /// All supported types. Never put types in here that don't derive from FontFile.
+        /// This list is used for open / save / convert dialogs, and should have the items in a logical order.
+        /// </summary>
+        public static Type[] SupportedTypes =
+        {
+            typeof(FontFileWsV1),
+            typeof(FontFileWsV2),
+            typeof(FontFileWsV3),
+            typeof(FontFileWsV4),
+            typeof(FontFileWsBf),
+            typeof(FontFileWsBfNox),
+            typeof(FontFileWsBfUni),
+            typeof(FontFileD2K),
+            typeof(FontFileEsi),
+            typeof(FontFileTran),
+            typeof(FontFileDynV1a),
+            typeof(FontFileDynV1b),
+            typeof(FontFileDynV2),
+            typeof(FontFileDynV3),
+            typeof(FontFileDynV4),
+            typeof(FontFileDynV5),
+            typeof(FontFileDynV6),
+            typeof(FontFileDynSQ5),
+            typeof(FontFileCent),
+            typeof(FontFileKort),
+            typeof(FontFileMythos),
+            typeof(FontFileKotB),
+            typeof(FontFileEmo),
+            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
+        };
+
+        /// <summary>
+        /// All supported types. Never put types in here that don't derive from FontFile.
+        /// Ordered in a logical way for autodetection, starting with those that are easy to identify with certainty,
+        /// and going down to more simple types that rely on size calculations, to prevent false positives.
+        /// </summary>
+        public static Type[] AutoDetectTypes =
+        {
+            // Dynamix fonts starting from v3 have a very specific "FNT:" header start so I prefer putting them first.
+            typeof(FontFileDynV3),
+            typeof(FontFileDynV4),
+            typeof(FontFileDynV5),
+            typeof(FontFileDynV6),
+            // WW BitFont starts with a very specifically cased fonT/FoNt/tNoF string
+            typeof(FontFileWsBf),
+            typeof(FontFileWsBfNox),
+            typeof(FontFileWsBfUni),
+            // These start with their file size.
+            typeof(FontFileWsV4),
+            typeof(FontFileWsV3),
+            typeof(FontFileWsV2),
+            typeof(FontFileD2K),
+            typeof(FontFileKort),
+            typeof(FontFileEsi),
+            typeof(FontFileDotWriter),
+            // rather weak file size / content based checks.
+            typeof(FontFileEmo),
+            typeof(FontFileDynSQ5),
+            typeof(FontFileCent),
+            typeof(FontFileDynV2),
+            typeof(FontFileDynV1b),
+            typeof(FontFileDynV1a),
+            typeof(FontFileMythos),
+            typeof(FontFileKotB),
+            typeof(FontFileTran),
+            // File size only; leave it at the end.
+            typeof(FontFileWsV1),
+            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
+        };
+
+        /// <summary>
+        /// Attempts to load the given data as one of the known font types.
+        /// </summary>
+        ///<param name="path">Path the file was loaded from.</param>
+        /// <param name="fileData">File data</param>
+        /// <param name="loadErrors">Load errors detailing failed attempts at identification.</param>
+        /// <returns>An instance of the detected font, or null if not found.</returns>
+        public static FontFile LoadFontFile(String path, Byte[] fileData, out List<FileTypeLoadException> loadErrors)
+        {
+            Type fontType = typeof(FontFile);
+            Int32 numTypes = AutoDetectTypes.Length;
+#if DEBUG
+            // Only check this in debug mode.
+            for (Int32 i = 0; i < numTypes; ++i)
+                if (!AutoDetectTypes[i].IsSubclassOf(fontType))
+                    throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
+#endif
+            loadErrors = new List<FileTypeLoadException>();
+            //List<Exception> processErrors = new List<Exception>();
+            FontFile[] possibleTypes = FileDialogGenerator.IdentifyByExtension<FontFile>(AutoDetectTypes, path);
+            Int32 numPossTypes = possibleTypes.Length;
+            for (Int32 i = 0; i < numPossTypes; ++i)
+            {
+                FontFile typeObj = possibleTypes[i];
+                try
+                {
+                    typeObj.LoadFont(fileData);
+                    return typeObj;
+                }
+                catch (FileTypeLoadException e)
+                {
+                    e.AttemptedLoadedType = typeObj.ShortTypeName;
+                    loadErrors.Add(e);
+                }
+            }
+            for (Int32 i = 0; i < numTypes; ++i)
+            {
+                Type type = AutoDetectTypes[i];
+                Boolean knownType = false;
+                foreach (FontFile typeObj in possibleTypes)
+                {
+                    if (typeObj.GetType() == type)
+                    {
+                        knownType = true;
+                        break;
+                    }
+                }
+                if (knownType)
+                    continue;
+                FontFile fontInstance = null;
+                try
+                {
+                    fontInstance = (FontFile)Activator.CreateInstance(type);
+                }
+                catch
+                {
+                    /* Ignore; programmer error. */
+                }
+                if (fontInstance == null)
+                    continue;
+                try
+                {
+                    fontInstance.LoadFont(fileData);
+                    return fontInstance;
+                }
+                catch (FileTypeLoadException e)
+                {
+                    e.AttemptedLoadedType = fontInstance.ShortTypeName;
+                    loadErrors.Add(e);
+                }
+            }
+            return null;
+        }
+
+        public static List<String> GetSupportedExtensions()
+        {
+            List<String> extensions = new List<String>();
+            Type[] types = SupportedTypes.Union(AutoDetectTypes).ToArray();
+            Int32 nrOfTypes = types.Length;
+            for (Int32 i = 0; i < nrOfTypes; ++i)
+            {
+                FontFile fontInstance = null;
+                try
+                {
+                    fontInstance = (FontFile)Activator.CreateInstance(types[i]);
+                }
+                catch
+                {
+                    /* Ignore; programmer error. */
+                }
+                if (fontInstance == null)
+                    continue;
+                String[] fileExts = fontInstance.FileExtensions;
+                Int32 fileExtsLen = fileExts.Length;
+                for (Int32 j = 0; j < fileExtsLen; ++j)
+                {
+                    String ext = fileExts[j];
+                    if (!String.IsNullOrEmpty(ext) && !extensions.Contains(ext))
+                        extensions.Add(ext);
+                }
+            }
+            return extensions;
+        }
+
+        #endregion
+
+        #region IEquatable implementation
 
         public Boolean Equals(FontFile other)
         {
@@ -720,5 +733,7 @@ namespace WWFontEditor.Domain
             }
             return true;
         }
+
+        #endregion
     }
 }

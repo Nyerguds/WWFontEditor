@@ -230,6 +230,9 @@ Mythos font
 KotB font (extracted from the decompressed exe file)
 -Kings of the Beach
 
+ESI font
+-Jeopardy! / Family Feud series
+
 --------------------------
 Notes on Dune 2000 support
 --------------------------
@@ -270,6 +273,7 @@ Special thanks to
 -The people of the oldgamesitalia.net forum for getting me interested in game
  fonts beyond the scope of Westwood Studios.
 -夜宇 (yjfyeyu) for helping me test clipboard problems.
+-伤心的 笔 (Sad Pencil), for correcting the RA2 bitfont specs.
 
 
 --------------------
@@ -318,6 +322,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.14.1: (2022/01/23 13:20)
+-Fixed RA2 unicode bitfont's handling of the symbol height.
 
 v1.14.0: (2021/05/01 01:28)
 -Added padding between symbols as actual UI option.

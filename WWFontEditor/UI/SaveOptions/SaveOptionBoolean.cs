@@ -16,9 +16,9 @@ namespace Nyerguds.Util.Ui.SaveOptions
 
         public override void UpdateInfo(SaveOption info)
         {
-            this.m_Info = info;
-            this.chkOption.Text = GeneralUtils.DoubleFirstAmpersand(this.m_Info.UiString);
-            this.chkOption.Checked = GeneralUtils.IsTrueValue(this.m_Info.SaveData);
+            this.Info = info;
+            this.chkOption.Text = GeneralUtils.DoubleFirstAmpersand(this.Info.UiString);
+            this.chkOption.Checked = GeneralUtils.IsTrueValue(this.Info.SaveData);
         }
         
         public override void FocusValue()
@@ -28,11 +28,11 @@ namespace Nyerguds.Util.Ui.SaveOptions
 
         private void chkOption_CheckedChanged(object sender, EventArgs e)
         {
-            if (this.m_Info == null)
+            if (this.Info == null)
                 return;
-            this.m_Info.SaveData = this.chkOption.Checked ? "1" : "0";
+            this.Info.SaveData = this.chkOption.Checked ? "1" : "0";
             if (this.m_Controller != null)
-                this.m_Controller.UpdateControlInfo(m_Info);
+                this.m_Controller.UpdateControlInfo(Info);
         }
     }
 }

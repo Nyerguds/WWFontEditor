@@ -99,6 +99,10 @@ namespace WWFontEditor.UI
             this.chkWrapPreview.Checked = this.m_Settings.EnablePreviewWrap;
             this.txtPreview.Font = this.m_Settings.SymbolPreviewFont;
 
+#if DEBUG
+            this.tsmiDumpFont.Visible = true;
+#endif
+
             // encodings init
             List<EncodingDropDownInfo> encodings = EncodingDropDownInfo.GetAsDropDownItems(TextUtils.GetAsciiCompatibleEncodings());
             // Add standard Dune 2000 text encoding
@@ -345,6 +349,9 @@ namespace WWFontEditor.UI
             this.tsmiPasteSymbol.Enabled = loadOk;
             this.tsmiPasteSymbolTrans.Enabled = loadOk;
             this.tsmiSaveFont.Enabled = loadOk;
+#if DEBUG
+            this.tsmiDumpFont.Enabled = loadOk;
+#endif
             this.tsmiSaveFontAs.Enabled = loadOk;
             this.tsmiRevertFont.Enabled = loadOk;
             this.pxbFullSize.Visible = loadOk;
@@ -368,6 +375,13 @@ namespace WWFontEditor.UI
                 this.RefreshPalettes(newFontLoaded, false);
                 String filename = this.m_FileName == null ? NEWFONTNAME + (this.m_LoadedFont.FileExtensions.FirstOrDefault() ?? "fnt") : Path.GetFileName(this.m_FileName);
                 this.Text = String.Format("{0} - \"{1}\" ({2})", GetTitle(true), filename, this.m_LoadedFont.ShortTypeName);
+                this.toolTip1.SetToolTip(this.lblType, this.m_LoadedFont.ExtraInfo);
+#if DEBUG
+                if ((this.m_LoadedFont.ExtraInfo ?? String.Empty).IndexOf("little", 0, StringComparison.InvariantCultureIgnoreCase) > -1)
+                    this.lblType.ForeColor = Color.Red;
+                else
+                    this.lblType.ForeColor = SystemColors.ControlText;
+#endif
                 this.btnValType.Text = this.m_LoadedFont.ShortTypeName.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.btnValType, this.m_LoadedFont.ShortTypeDescription);
                 this.numSymbols.Minimum = Math.Max(this.m_LoadedFont.SymbolsTypeMin, this.m_LoadedFont.SymbolsTypeFirst);
@@ -390,6 +404,7 @@ namespace WWFontEditor.UI
             {
                 this.m_FileName = null;
                 this.Text = GetTitle(true);
+                this.toolTip1.SetToolTip(this.lblType, null);
                 this.btnValType.Text = "-";
                 this.toolTip1.SetToolTip(this.btnValType, null);
                 this.numSymbols.Maximum = 0;
@@ -1681,11 +1696,41 @@ namespace WWFontEditor.UI
             return null;
         }
         
+        private FontFile DumpFile(FontFile font, String filename)
+        {
+            if (font == null)
+                return null;
+            FontFileSymbol[] allSymbols = font.GetAllSymbols();
+            Int32 len = allSymbols.Length;
+            using (FileStream fs = new FileStream(filename, FileMode.Create))
+            {
+                Byte[] width = new Byte[2];
+                Byte[] height = new Byte[2];
+                Byte[] yoffs = new Byte[2];
+                for (Int32 i = 0; i < len; ++i)
+                {
+                    FontFileSymbol ffs = allSymbols[i];
+                    Byte[] byteData = ffs.ByteData;
+                    ArrayUtils.WriteIntToByteArray(width, 0, 2, true, (UInt64)ffs.Width);
+                    ArrayUtils.WriteIntToByteArray(height, 0, 2, true, (UInt64)ffs.Height);
+                    ArrayUtils.WriteIntToByteArray(yoffs, 0, 2, true, (UInt64)ffs.YOffset);
+                    fs.Write(width, 0, 2);
+                    fs.Write(height, 0, 2);
+                    fs.Write(yoffs, 0, 2);
+                    fs.Write(byteData, 0, byteData.Length);
+                }
+            }
+            return null;
+        }
+        
         /// <summary>
         ///  Executes a threaded operation while locking the UI.
-        ///  Arguments for the thread are: Func returning a FontFile, and a string to indicate the process type being executed (eg. "saving").
+        ///  Arguments for the thread are: Func returning a FontFile, a string to indicate the process type being executed (eg. "saving"), and (optional) an Action to execute after saving is complete.
         /// </summary>
-        /// <param name="parameters">An Object[] containing a Func returning a FontFile, and a string to indicate the process type being executed (eg. "saving").</param>
+        /// <param name="parameters">
+        /// An Object[] containing a Func returning a FontFile, a string to indicate the process type being executed (eg. "saving"),
+        /// and (optional) an Action to execute after saving is complete.
+        /// </param>
         private void ExecuteThreaded(Object parameters)
         {
             this.m_Loading = true;
@@ -2564,6 +2609,25 @@ namespace WWFontEditor.UI
                 this.RepaintPreview();
             }
         }
+
+
+        private void TsmiDumpFont_Click(object sender, EventArgs e)
+        {
+            if (this.m_LoadedFont == null)
+                return;
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.Filter = "Binary dump (*.dat)|*.dat";
+            Boolean noFile = String.IsNullOrEmpty(this.m_FileName);
+            sfd.InitialDirectory = noFile ? Path.GetFullPath(".") : Path.GetDirectoryName(this.m_FileName);
+            sfd.FileName = (noFile ? "dump" : Path.GetFileNameWithoutExtension(this.m_FileName)) + ".dat";
+            DialogResult dlr = sfd.ShowDialog(this);
+            if (dlr != DialogResult.OK)
+                return;
+
+            Object[] arrParams = { new Func<FontFile>(() => this.DumpFile(this.m_LoadedFont, sfd.FileName)), "Dumping", null };
+            this.m_ProcessingThread = new Thread(this.ExecuteThreaded);
+            this.m_ProcessingThread.Start(arrParams);
+        }
         #endregion
 
         #region overrides
@@ -2734,7 +2798,6 @@ namespace WWFontEditor.UI
             }
             return true;
         }
-
         #endregion
 
     }

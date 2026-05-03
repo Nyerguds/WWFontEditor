@@ -1,8 +1,8 @@
-﻿using Nyerguds.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Nyerguds.Util;
 using Nyerguds.FileData.Dynamix;
 using Nyerguds.ImageManipulation;
 

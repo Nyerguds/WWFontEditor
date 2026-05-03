@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Nyerguds.ImageManipulation;
 using Nyerguds.Util;
+using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -114,7 +114,11 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 Byte width = fileData[fontHeaderWidthBlockOffset + i];
                 if (width > this.FontWidth)
-                    throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
+                {
+                    // Font width has no real impact anyway. Lands of Lore 3 has errors in this. Allow this.
+                    this.FontWidth = width;
+                    //throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
+                }
                 widthsList.Add(width);
             }
             List<Byte> yOffsetsList = new List<Byte>();

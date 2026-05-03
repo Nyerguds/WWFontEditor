@@ -37,9 +37,9 @@ namespace Nyerguds.Util.Ui.SaveOptions
 
         public override void UpdateInfo(SaveOption info)
         {
-            this.m_Info = info;
-            this.lblDescription.Text = GeneralUtils.DoubleFirstAmpersand(this.m_Info.UiString);
-            this.txtValue.Text = this.m_Info.SaveData;
+            this.Info = info;
+            this.lblDescription.Text = GeneralUtils.DoubleFirstAmpersand(this.Info.UiString);
+            this.txtValue.Text = this.Info.SaveData;
         }
         
         public override void FocusValue()
@@ -67,11 +67,11 @@ namespace Nyerguds.Util.Ui.SaveOptions
                     textbox.SelectionStart = Math.Min(caret - (len1 - len2), textbox.Text.Length);
                     
                     // Update controller
-                    if (this.m_Info == null)
+                    if (this.Info == null)
                         return;
-                    this.m_Info.SaveData = textbox.Text;
+                    this.Info.SaveData = textbox.Text;
                     if (this.m_Controller != null)
-                        this.m_Controller.UpdateControlInfo(m_Info);
+                        this.m_Controller.UpdateControlInfo(Info);
                 }
                 finally
                 {

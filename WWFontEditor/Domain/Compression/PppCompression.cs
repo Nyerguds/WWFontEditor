@@ -6,7 +6,7 @@ namespace Nyerguds.FileData.EmotionalPictures
     public static class PppCompression
     {
 
-        public static Byte[] DecompressPppRle(Byte[] data)
+        public static Byte[] DecompressPppRle(Byte[] data, Int32 maxSize)
         {
             Int32 len = data.Length;
             UInt32 expandSize = (UInt32)len * 3;
@@ -29,12 +29,17 @@ namespace Nyerguds.FileData.EmotionalPictures
                 else
                 {
                     if (i + 3 >= len)
-                        throw new ArgumentException("Data ends on incomplete repeat command!", "data");
+                        throw new ArgumentException("Data ends on incomplete repeat command.", "data");
                     value = data[++i];
                     Int32 repeat = data[++i] + (data[++i] << 8);
                     Int32 endPoint = repeat + ptr;
                     if (endPoint > bufferOut.Length)
-                        bufferOut = ExpandBuffer(bufferOut, Math.Max(expandSize, (UInt32)repeat));
+                    {
+                        UInt32 expanded = Math.Max(expandSize, (UInt32) repeat);
+                        if (bufferOut.Length + expanded > maxSize)
+                            throw new ArgumentException("Data exceeds expected maximum size.", "data");
+                        bufferOut = ExpandBuffer(bufferOut, expanded);
+                    }
                     for (; ptr < endPoint; ptr++)
                         bufferOut[ptr] = value;
                 }

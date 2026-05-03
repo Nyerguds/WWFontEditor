@@ -5,7 +5,7 @@ namespace Nyerguds.Util.Ui
 {
     public class SaveOptionControl : UserControl
     {
-        protected SaveOption m_Info = null;
+        public SaveOption Info = null;
         protected ListedControlController<SaveOption> m_Controller = null;
 
         protected void Init(SaveOption info, ListedControlController<SaveOption> controller)
@@ -14,6 +14,6 @@ namespace Nyerguds.Util.Ui
             this.m_Controller = controller;
         }
         public virtual void FocusValue() { this.Focus(); }
-        public virtual void UpdateInfo(SaveOption info) { this.m_Info = info; }
+        public virtual void UpdateInfo(SaveOption info) { this.Info = info; }
     }
 }

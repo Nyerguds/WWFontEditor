@@ -1,9 +1,7 @@
-﻿using Nyerguds.Util;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
-using Nyerguds.ImageManipulation;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {

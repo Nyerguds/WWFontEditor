@@ -1,17 +1,13 @@
-﻿using Nyerguds.ImageManipulation;
-using Nyerguds.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Nyerguds.ImageManipulation;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
-    class FontFileEsi : FontFile
+    public class FontFileEsi : FontFile
     {
-        const Int32 ImgWidth = 0x11;
-        const Int32 ImgHeight = 0x11;
-        const Int32 ImgSize = ImgWidth * ImgHeight;
         public override Int32 SymbolsTypeMin { get { return 0x21; } }
         public override Int32 SymbolsTypeMax { get { return 0x80; } }
         public override Int32 SymbolsTypeFirst { get { return 0x20; } }
@@ -69,14 +65,22 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_NOHEADER);
             this._unknown0x00 = fileData[0];
             Byte nrOfSymbols = fileData[1];
+            if (nrOfSymbols == 0)
+                throw new FileTypeLoadException("No symbols in font file.");
             SByte charsShift = (SByte)fileData[2];
             this._unknown0x03 = fileData[3];
             this._unknown0x04 = fileData[4];
             Byte height = fileData[5];
+            if (height == 0)
+                throw new FileTypeLoadException("Height value is zero.");
             this.FontHeight = height;
             Int32 fontWidthBytes = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 6, 2, true);
+            if (fontWidthBytes == 0)
+                throw new FileTypeLoadException("Width value is zero.");
             this.FontWidth = fontWidthBytes * 8;
             Int32 bytesPerSymbol = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 8, 2, true);
+            if (bytesPerSymbol == 0)
+                throw new FileTypeLoadException("Symbol size is zero.");
             Int32 dataSize = bytesPerSymbol * nrOfSymbols;
             // Why is this usually larger than fileData[5]?? Makes no sense.
             Int32 symbolheight = bytesPerSymbol / fontWidthBytes;
@@ -92,7 +96,6 @@ namespace WWFontEditor.Domain.FontTypes
             // End of FileTypeLoadExceptions. After this, assume the type is identified.
             Byte[] graphicsData = new Byte[dataSize];
             Array.Copy(fileData, 0x6D, graphicsData, 0, dataSize);
-            
             Int32 xorSize = XorKey.Length;
             for (Int32 i = 0; i < dataSize; i++)
                 graphicsData[i] = (Byte)(graphicsData[i] ^ XorKey[i % xorSize]);

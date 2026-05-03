@@ -36,11 +36,11 @@ namespace Nyerguds.Util.Ui.SaveOptions
 
         public override void UpdateInfo(SaveOption info)
         {
-            this.m_Info = info;
-            this.lblDescription.Text = GeneralUtils.DoubleFirstAmpersand(this.m_Info.UiString);
-            String[] options = this.m_Info.InitValue.Split(',');
+            this.Info = info;
+            this.lblDescription.Text = GeneralUtils.DoubleFirstAmpersand(this.Info.UiString);
+            String[] options = this.Info.InitValue.Split(',');
             Int32 select;
-            Int32.TryParse(this.m_Info.SaveData, out select);
+            Int32.TryParse(this.Info.SaveData, out select);
             for (Int32 i = 0; i < options.Length; ++i)
                 options[i] = options[i].Trim(" \t\r\n".ToCharArray());
             this.cmbChoices.DataSource = options;
@@ -56,11 +56,11 @@ namespace Nyerguds.Util.Ui.SaveOptions
         private void cmbChoices_SelectedIndexChanged(object sender, EventArgs e)
         {
             // Update controller
-            if (this.m_Info == null)
+            if (this.Info == null)
                 return;
-            this.m_Info.SaveData = this.cmbChoices.SelectedIndex.ToString();
+            this.Info.SaveData = this.cmbChoices.SelectedIndex.ToString();
             if (this.m_Controller != null)
-                this.m_Controller.UpdateControlInfo(m_Info);
+                this.m_Controller.UpdateControlInfo(Info);
         }
         
         private void SaveOptionChoices_Resize(object sender, EventArgs e)

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nyerguds.Util;
 using Nyerguds.FileData.EmotionalPictures;
 using Nyerguds.ImageManipulation;
-using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -34,14 +34,20 @@ namespace WWFontEditor.Domain.FontTypes
             // For each index for 0 to 254, check in the first block of 0x100 which image to use,
             // then check in the second block of 0x100 how much width to take from that image.
             // Index 255 is unused, but the width data seems to holds the width of the space character.
+            Int32 maxSize = ImgSize * 255 + 0x200;
             Byte[] decompressedData;
             try
             {
-                decompressedData = PppCompression.DecompressPppRle(fileData);
+                decompressedData = PppCompression.DecompressPppRle(fileData, maxSize);
             }
-            catch (ArgumentException)
+            catch (ArgumentException e)
             {
-                throw new FileTypeLoadException(ERR_DECOMPRESS);
+                String msg = GeneralUtils.RecoverArgExceptionMessage(e, false);
+                if (msg == null)
+                    msg = ERR_DECOMPRESS;
+                else
+                    msg = ERR_DECOMPRESS.TrimEnd('.') + ": " + msg;
+                throw new FileTypeLoadException(msg);
             }
 
             if (decompressedData.Length < 0x200)
