@@ -96,9 +96,9 @@ namespace WWFontEditor.Domain.FontTypes
                     // TODO: LZW MAGIC! ...or not. Bah.
 
                     // Draw a nice little "Nope" box instead...
-                    for (int i = 0; i < imageData.Length; i++)
+                    for (Int32 i = 0; i < imageData.Length; i++)
                         imageData[i] = this.TransparencyColor;
-                    Byte drawColor = (Byte)(TransparencyColor + 1);
+                    Byte drawColor = (Byte)(this.TransparencyColor + 1);
                     Int32 crossDim = Math.Min(symbHeight, symbWidth);
                     Int32 skipW = (symbWidth - crossDim) / 2;
                     Int32 skipH = (symbHeight - crossDim) / 2;
@@ -130,15 +130,15 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            Int32 actualLen = m_ImageDataList.Count - SymbolsTypeFirst;
+            Int32 actualLen = this.m_ImageDataList.Count - this.SymbolsTypeFirst;
             Byte[][] symbolData = new Byte[actualLen][];
             Int32[] widths = new Int32[actualLen];
             Int32[] heighths = new Int32[actualLen];
             Byte[] yOffsets = new Byte[actualLen];
-            for (Int32 i = SymbolsTypeFirst; i < m_ImageDataList.Count; i++)
+            for (Int32 i = this.SymbolsTypeFirst; i < this.m_ImageDataList.Count; i++)
             {
-                Int32 writeIndex = i - SymbolsTypeFirst;
-                FontFileSymbol ffs = m_ImageDataList[i];
+                Int32 writeIndex = i - this.SymbolsTypeFirst;
+                FontFileSymbol ffs = this.m_ImageDataList[i];
                 if (ffs.Width > 0 && ffs.Height > 0)
                 {
                     symbolData[writeIndex] = ffs.ByteData;
@@ -158,7 +158,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < actualLen; i++)
             {
                 // Skip 127. It does not get written to the file.
-                if (i == 127 - SymbolsTypeFirst)
+                if (i == 127 - this.SymbolsTypeFirst)
                     continue;
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 0, 2, true, (UInt32)(widths[i] - 1));
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 2, 2, true, (UInt32)(heighths[i]-1));

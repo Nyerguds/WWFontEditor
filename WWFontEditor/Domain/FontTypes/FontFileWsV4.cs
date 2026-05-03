@@ -27,7 +27,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            LoadV3V4Font(fileData, true);
+            this.LoadV3V4Font(fileData, true);
         }
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
@@ -41,7 +41,7 @@ namespace WWFontEditor.Domain.FontTypes
         protected override void PostConvertCleanup()
         {
             // Y-optimization.
-            foreach (FontFileSymbol ffs in m_ImageDataList)
+            foreach (FontFileSymbol ffs in this.m_ImageDataList)
                 ffs.OptimizeYHeight(this.YOffsetTypeMax);
         }
 

@@ -59,18 +59,18 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
+            Int32 fileSize = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileLength)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             Byte dataFormat = fileData[0x02];
             //Byte unknown03 = fileData[0x03];
-            //this.Unknown04 = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 2, true);
-            Int16 fontDataOffsetsListOffset = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x06, 2, true);
-            Int16 widthsListOffset = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 2, true);
+            //this.Unknown04 = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 2, true);
+            Int32 fontDataOffsetsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x06, 2, true);
+            Int32 widthsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 2, true);
             // use this for pos on TS format
-            Int16 fontDataOffset = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0A, 2, true);
-            Int16 heightsListOffset = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 2, true);
-            //Int16 unknown0E = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0E, 2, true);
+            Int32 fontDataOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0A, 2, true);
+            Int32 heightsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 2, true);
+            //UInt16 unknown0E = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0E, 2, true);
             //Byte AlwaysZero = fileData[0x10];
             Int32 length;
             Boolean isV4 = dataFormat == 0x02;
@@ -105,7 +105,7 @@ namespace WWFontEditor.Domain.FontTypes
             //FontDataOffset
             Int32[] fontDataOffsetsList = new Int32[length];
             for (Int32 i = 0; i < length; i++)
-                fontDataOffsetsList[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, fontDataOffsetsListOffset + i * 2, 2, true) + (isV4 ? fontDataOffset : 0);
+                fontDataOffsetsList[i] = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, fontDataOffsetsListOffset + i * 2, 2, true) + (isV4 ? fontDataOffset : 0);
             List<Byte> widthsList = new List<Byte>();
             for (Int32 i = 0; i < length; i++)
             {
@@ -149,17 +149,17 @@ namespace WWFontEditor.Domain.FontTypes
         protected Byte[] SaveV3V4Font(Boolean forV4)
         {
             // Y-optimization.
-            foreach (FontFileSymbol ffs in m_ImageDataList)
+            foreach (FontFileSymbol ffs in this.m_ImageDataList)
                 ffs.OptimizeYHeight(this.YOffsetTypeMax);
             Int32 imagesCount = this.m_ImageDataList.Count;
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
             Byte[] heightsList = new Byte[imagesCount * 2];
-            // header + Int16 index + Byte heights
+            // header + UInt16 index + Byte heights
             Int32 offsetsListOffset = 0x14;
             Int32 widthsListOffset = offsetsListOffset + imagesCount * 2;
             Int32 heightsListOffset = 0;
-            // V3 (TS) has its Y/height list before the image data.
+            // V4 (TS) has its Y/height list before the image data.
             if (forV4)
                 heightsListOffset = widthsListOffset + imagesCount;
             Int32 fontOffsetStart = (!forV4) ? widthsListOffset + imagesCount : heightsListOffset + imagesCount * 2;
@@ -180,8 +180,8 @@ namespace WWFontEditor.Domain.FontTypes
                 heightsList[i * 2 + 1] = imgHeight;
             }
             Int32 fontOffset = forV4 ? 0 : fontOffsetStart;
-            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref fontOffset, true, true);
-            // V3 (C&C) has its Y/height list before the image data.
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref fontOffset, true, true, true);
+            // V3 (C&C/RA) has its Y/height list after the image data.
             if (!forV4)
                 heightsListOffset = fontOffset;
             Int32 fullLength = !forV4 ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
@@ -191,23 +191,23 @@ namespace WWFontEditor.Domain.FontTypes
             ArrayUtils.WriteIntToByteArray(fullData, 0, 2, true, (UInt32)fullLength);
             fullData[0x02] = (Byte)(forV4 ? 0x02 : 0x00);       // Byte DataFormat
             fullData[0x03] = (Byte)(forV4 ? 0 : 5);             // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
-            fullData[0x04] = 0x0e;                              // Int16 Unknown04, low byte; (always 0x0e)
-            fullData[0x05] = 0x00;                              // Int16 Unknown04, high byte; (always 0x00)
-            ArrayUtils.WriteIntToByteArray(fullData, 0x06, 2, true, (UInt32)offsetsListOffset);
-            ArrayUtils.WriteIntToByteArray(fullData, 0x08, 2, true, (UInt32)widthsListOffset);
-            ArrayUtils.WriteIntToByteArray(fullData, 0x0A, 2, true, (UInt32)fontOffsetStart);
-            ArrayUtils.WriteIntToByteArray(fullData, 0x0C, 2, true, (UInt32)heightsListOffset);
-            ArrayUtils.WriteIntToByteArray(fullData, 0x0E, 2, true, (UInt32)(forV4 ? 0 : 0x1012));
+            fullData[0x04] = 0x0e;                              // UInt16 Unknown04, low byte; (always 0x0e)
+            fullData[0x05] = 0x00;                              // UInt16 Unknown04, high byte; (always 0x00)
+            ArrayUtils.WriteIntToByteArray(fullData, 0x06, 2, true, (UInt16)offsetsListOffset);
+            ArrayUtils.WriteIntToByteArray(fullData, 0x08, 2, true, (UInt16)widthsListOffset);
+            ArrayUtils.WriteIntToByteArray(fullData, 0x0A, 2, true, (UInt16)fontOffsetStart);
+            ArrayUtils.WriteIntToByteArray(fullData, 0x0C, 2, true, (UInt16)heightsListOffset);
+            ArrayUtils.WriteIntToByteArray(fullData, 0x0E, 2, true, (UInt16)(forV4 ? 0 : 0x1012));
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
             fullData[0x11] = (Byte)(forV4 ? 0 : imagesCount - 1);  // Byte LastSymbolIndex (for non-TS)
-            fullData[0x12] = (Byte)m_FontHeight;                // Byte FontHeight
-            fullData[0x13] = (Byte)m_FontWidth;                 // Byte FontWidth
+            fullData[0x12] = (Byte) this.m_FontHeight;                // Byte FontHeight
+            fullData[0x13] = (Byte) this.m_FontWidth;                 // Byte FontWidth
             Array.Copy(fontDataOffsetsList, 0, fullData, offsetsListOffset, fontDataOffsetsList.Length);
             Array.Copy(widthsList, 0, fullData, widthsListOffset, widthsList.Length);
             Int32 imageDataOffs = fontOffsetStart;
             foreach (Byte[] symbolImgData in imageData)
             {
-                if (symbolImgData.Length == 0)
+                if (symbolImgData == null || symbolImgData.Length == 0)
                     continue;
                 Array.Copy(symbolImgData, 0, fullData, imageDataOffs, symbolImgData.Length);
                 imageDataOffs += symbolImgData.Length;
@@ -226,7 +226,7 @@ namespace WWFontEditor.Domain.FontTypes
         protected override void PostConvertCleanup()
         {
             // Y-optimization.
-            foreach (FontFileSymbol ffs in m_ImageDataList)
+            foreach (FontFileSymbol ffs in this.m_ImageDataList)
                 ffs.OptimizeYHeight(this.YOffsetTypeMax);
         }
     }

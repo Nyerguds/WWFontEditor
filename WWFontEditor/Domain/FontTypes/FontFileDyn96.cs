@@ -40,7 +40,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int32 symbols = fileData[offset + 2];
             // Not sure but I'll just preserve it...
-            m_lineHeight = fileData[offset + 4];
+            this.m_lineHeight = fileData[offset + 4];
             this.m_FontHeight = 0;
             this.m_FontWidth = 0;
             Int32 indexOffset = offset + 6;
@@ -53,10 +53,10 @@ namespace WWFontEditor.Domain.FontTypes
                 Int32 symbolWidth = fileData[symbolOffset];
                 Int32 symbolHeight = fileData[symbolOffset + 1];
                 // This font type has no fixed overall size. To make the editor work right we just take the maximum in the symbols.
-                if (symbolWidth > m_FontWidth)
-                    m_FontWidth = symbolWidth;
-                if (symbolHeight > m_FontHeight)
-                    m_FontHeight = symbolHeight;
+                if (symbolWidth > this.m_FontWidth)
+                    this.m_FontWidth = symbolWidth;
+                if (symbolHeight > this.m_FontHeight)
+                    this.m_FontHeight = symbolHeight;
                 Int32 symbolStride = (symbolWidth + 7) / 8;
                 Int32 symbolSize = symbolStride * symbolHeight;
                 if (fileData.Length < symbolOffset + 2 + symbolSize)

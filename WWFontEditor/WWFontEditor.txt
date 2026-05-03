@@ -301,6 +301,12 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.12.1: (2018/02/05 14:00)
+-Fixed bug where 16-bit indices in some Westwood and Dynamix fonts were seen
+ as signed values, restricting the font data size to 32k instead of 64k.
+-Fixed bug where increasing the number of symbols would add new symbols with
+ 0x0 dimensions even for font types without individual symbol dimensions.
+
 v1.12: (2018/02/02 23:20)
 -Added the ability to create completely new files.
 -Fixed a crash that happened when the preview tried to draw a 0-width symbol.

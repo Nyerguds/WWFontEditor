@@ -28,8 +28,8 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            m_FontWidth = 8;
-            m_FontHeight = 15;
+            this.m_FontWidth = 8;
+            this.m_FontHeight = 15;
             Int32 dataSize = this.m_FontWidth * this.m_FontHeight;
             // There should be a check on fail conditions here, but the file itself doesn't match an exact multiple of 8*15 bytes.
             for (Int32 i = 0; i < 0x20; i++)

@@ -22,33 +22,33 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 1; } }
         public override Boolean CustomSymbolWidthsForType { get { return false; } }
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
-        public override String LongTypeDescription { get { return "An 8-pixel wide, 96-symbol, 1 BPP font, which is saved as " + InternalBpp + "bpp, but with 0 and " + MaxValue.ToString("X") + " as only used value. Doesn't have any kind of file header."; } }
+        public override String LongTypeDescription { get { return "An 8-pixel wide, 96-symbol, 1 BPP font, which is saved as " + this.InternalBpp + "bpp, but with 0 and " + this.MaxValue.ToString("X") + " as only used value. Doesn't have any kind of file header."; } }
 
         public abstract Int32 InternalBpp { get; }
-        protected Byte MaxValue { get { return (Byte)((1 << InternalBpp) - 1); } }
+        protected Byte MaxValue { get { return (Byte)((1 << this.InternalBpp) - 1); } }
         
         public override void LoadFont(Byte[] fileData)
         {
-            if (fileData.Length == 0 || fileData.Length % (InternalBpp * 0x60) != 0)
+            if (fileData.Length == 0 || fileData.Length % (this.InternalBpp * 0x60) != 0)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             this.m_FontWidth = 8;
-            this.m_FontHeight = fileData.Length / (InternalBpp * 0x60);
+            this.m_FontHeight = fileData.Length / (this.InternalBpp * 0x60);
             Byte startSymbol = 32;
             Byte nrOfSymbols = 0x60;
             // fill in dummy symbols. Will need to be trimmed on save.
             for (Int32 i = 0; i < startSymbol; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[m_FontHeight * m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            Int32 symbolsize = m_FontHeight * InternalBpp;
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[this.m_FontHeight *this.m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
+            Int32 symbolsize = this.m_FontHeight *this.InternalBpp;
             for (Int32 i = 0; i < nrOfSymbols; i++)
             {
-                Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, symbolsize * i, InternalBpp, true);
+                Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, this.m_FontWidth, this.m_FontHeight, symbolsize * i, this.InternalBpp, true);
                 for (Int32 b = 0; b < curData8bit.Length; b++)
                 {
                     Byte val = curData8bit[b];
                     if (val != 0)
                     {
-                        if (val != MaxValue)
-                            throw new FileTypeLoadException(ShortTypeDescription + " only accepts 0 and " + MaxValue + " as values");
+                        if (val != this.MaxValue)
+                            throw new FileTypeLoadException(this.ShortTypeDescription + " only accepts 0 and " + this.MaxValue + " as values");
                         else
                             curData8bit[b] = 1;
                     }
@@ -67,11 +67,11 @@ namespace WWFontEditor.Domain.FontTypes
                 for (Int32 b = 0; b < eightBitData.Length; b++)
                 {
                     if (eightBitData[b] != 0)
-                        eightBitData[b] = MaxValue;
+                        eightBitData[b] = this.MaxValue;
                 }
-                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, InternalBpp, true);
+                imageData[i] = ImageUtils.ConvertFrom8Bit(eightBitData, this.m_FontWidth, this.m_FontHeight, this.InternalBpp, true);
             }
-            Int32 symbolsize = m_FontWidth * InternalBpp;
+            Int32 symbolsize = this.m_FontWidth *this.InternalBpp;
             Byte[] fullData = new Byte[symbolsize * 0x60];
             for (Int32 i = 0; i < 0x60; i++)
                 Array.Copy(imageData[i], 0, fullData, i * symbolsize, symbolsize);

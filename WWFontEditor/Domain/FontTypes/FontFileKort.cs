@@ -59,7 +59,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             for (Int32 i = 0; i < StartSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (int i = 0; i < NrOfSymbols; i++)
+            for (Int32 i = 0; i < NrOfSymbols; i++)
             {
                 Byte[] curData8bit;
                 try
@@ -70,7 +70,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
                 }
-                FontFileSymbol fc = new FontFileSymbol(curData8bit, characterWidths[i], this.m_FontHeight, m_FontHeight - characterYOffsets[i], this.BitsPerPixel, this.TransparencyColor);
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, characterWidths[i], this.m_FontHeight, this.m_FontHeight - characterYOffsets[i], this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
             }
         }
@@ -95,9 +95,9 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 imageData[i] = ffsBytes;
                 characterWidths[i] = (Byte)ffs.Width;
-                characterYOffsets[i] = (Byte)Math.Min(Math.Max(0, m_FontHeight - ffs.YOffset), this.m_FontHeight);
+                characterYOffsets[i] = (Byte)Math.Min(Math.Max(0, this.m_FontHeight - ffs.YOffset), this.m_FontHeight);
             }
-            Byte[] fullData = new Byte[NrOfSymbols * (2 + (m_FontHeight * fontStride)) + 2];
+            Byte[] fullData = new Byte[NrOfSymbols * (2 + (this.m_FontHeight * fontStride)) + 2];
             fullData[0x00] = (Byte)fontStride;
             fullData[0x01] = (Byte)this.m_FontHeight;
             Int32 fontDataOffset = 2;

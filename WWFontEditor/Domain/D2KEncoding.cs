@@ -37,7 +37,7 @@ namespace WWFontEditor.Domain
 
         public D2KEncoding()
         {
-            m_RemapTable = new Byte[0x100];
+            this.m_RemapTable = new Byte[0x100];
             Array.Copy(OriginalRemapTable, this.m_RemapTable, 0x100);
         }
 
@@ -45,7 +45,7 @@ namespace WWFontEditor.Domain
             :this()
         {
             if (encName != null)
-                m_EncodingName = encName;
+                this.m_EncodingName = encName;
         }
 
         public D2KEncoding(Byte[] remapTable, String encName)
@@ -54,24 +54,25 @@ namespace WWFontEditor.Domain
                 throw new ArgumentNullException("remapTable");
             if (remapTable.Length != 0x100)
                 throw new ArgumentException("Array size does not match! Needs to be exactly 256 bytes!", "remapTable");
-            m_RemapTable = new Byte[0x100];
+            this.m_RemapTable = new Byte[0x100];
             Array.Copy(remapTable, this.m_RemapTable, 0x100);
             if (encName != null)
-                m_EncodingName = encName;
+                this.m_EncodingName = encName;
         }
         
         public D2KEncoding(Byte[] remapTable, String encName, Encoding baseEncoding)
             : this(remapTable, encName)
         {
-            if (baseEncoding == null)
-                throw new ArgumentNullException("baseEncoding");
-            if (!baseEncoding.IsSingleByte)
-                throw new ArgumentException("The base needs to be a single byte encoding!", "baseEncoding");
-            m_BaseEncoding = baseEncoding;
+            if (baseEncoding != null)
+            {
+                if (!baseEncoding.IsSingleByte)
+                    throw new ArgumentException("The base needs to be a single byte encoding!", "baseEncoding");
+                this.m_BaseEncoding = baseEncoding;
+            }
         }
 
-        public override String EncodingName { get { return m_EncodingName; } }
-        public override String WebName { get { return m_EncodingName; } }
+        public override String EncodingName { get { return this.m_EncodingName; } }
+        public override String WebName { get { return this.m_EncodingName; } }
         public override String HeaderName { get { return "Dune-2000-enc"; } }
         public override Boolean IsSingleByte { get { return true; } }
 
@@ -79,9 +80,9 @@ namespace WWFontEditor.Domain
         {
             // Not really necessary; input for d2k is Windows-1252.
             // But, it gives the symbol index to use for a character, I guess. Could be useful if I implement previews.
-            Int32 retval = m_BaseEncoding.GetBytes(chars, charIndex, charCount, bytes, byteIndex);
+            Int32 retval = this.m_BaseEncoding.GetBytes(chars, charIndex, charCount, bytes, byteIndex);
             for (Int32 i = byteIndex; i < byteIndex + charCount; i++)
-                bytes[i] = m_RemapTable[bytes[i]];
+                bytes[i] = this.m_RemapTable[bytes[i]];
             return retval;
         }
 
@@ -91,9 +92,9 @@ namespace WWFontEditor.Domain
             Byte[] bytesCopy = new Byte[bytes.Length];
             Array.Copy(bytes, 0, bytesCopy, 0, bytes.Length);
             for (Int32 i = byteIndex; i < byteIndex + byteCount; i++)
-                bytesCopy[i] = FindIndexInList(bytesCopy[i]);
+                bytesCopy[i] = this.FindIndexInList(bytesCopy[i]);
             // call parent method with adapted copy
-            Int32 retval = m_BaseEncoding.GetChars(bytesCopy, byteIndex, byteCount, chars, charIndex);
+            Int32 retval = this.m_BaseEncoding.GetChars(bytesCopy, byteIndex, byteCount, chars, charIndex);
             // transform here?
             return retval;
         }
@@ -110,22 +111,22 @@ namespace WWFontEditor.Domain
 
         public override Int32 GetByteCount(Char[] chars, Int32 index, Int32 count)
         {
-            return m_BaseEncoding.GetByteCount(chars, index, count);
+            return this.m_BaseEncoding.GetByteCount(chars, index, count);
         }
 
         public override Int32 GetCharCount(Byte[] bytes, Int32 index, Int32 count)
         {
-            return m_BaseEncoding.GetCharCount(bytes, index, count);
+            return this.m_BaseEncoding.GetCharCount(bytes, index, count);
         }
 
         public override Int32 GetMaxByteCount(Int32 charCount)
         {
-            return m_BaseEncoding.GetMaxByteCount(charCount);
+            return this.m_BaseEncoding.GetMaxByteCount(charCount);
         }
 
         public override Int32 GetMaxCharCount(Int32 byteCount)
         {
-            return m_BaseEncoding.GetMaxCharCount(byteCount);
+            return this.m_BaseEncoding.GetMaxCharCount(byteCount);
         }
     }
 }

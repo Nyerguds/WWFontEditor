@@ -29,12 +29,12 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
-            LoadFont(fileData, 0x08);
+            this.LoadFont(fileData, 0x08);
         }
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(saveOptions, true);
+            return this.SaveFont(saveOptions, true);
         }
 
     }

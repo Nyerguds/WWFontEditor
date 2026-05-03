@@ -21,12 +21,12 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            LoadFont(fileData, true);
+            this.LoadFont(fileData, true);
         }
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(saveOptions, true);
+            return this.SaveFont(saveOptions, true);
         }
 
     }

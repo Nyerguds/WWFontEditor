@@ -31,34 +31,34 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            LoadFont(fileData, false);
+            this.LoadFont(fileData, false);
         }
 
         public void LoadFont(Byte[] fileData, Boolean extendedFormat)
         {
-            if (fileData.Length < SymbolsTypeMax * 2 + 4)
+            if (fileData.Length < this.SymbolsTypeMax * 2 + 4)
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
             if (fileSize != fileData.Length - 2)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
-            Int16[] fontDataOffsetsList = new Int16[SymbolsTypeMax];
-            for (Int32 i = 0; i < SymbolsTypeMax; i++)
+            Int16[] fontDataOffsetsList = new Int16[this.SymbolsTypeMax];
+            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
                 fontDataOffsetsList[i] = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, 2 + i * 2, 2, true);
             // Detect modified type
             if (fontDataOffsetsList[0] == 0x204 && !extendedFormat)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             // the height of a symbol in pixel
-            this.m_FontHeight = fileData[SymbolsTypeMax * 2 + 2];
+            this.m_FontHeight = fileData[this.SymbolsTypeMax * 2 + 2];
             // the width of a symbol in pixel
-            this.m_FontWidth = fileData[SymbolsTypeMax * 2 + 3];
-            for (Int32 i = 0; i < SymbolsTypeMax; i++)
+            this.m_FontWidth = fileData[this.SymbolsTypeMax * 2 + 3];
+            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
             {
                 Int32 start = fontDataOffsetsList[i];
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, start, this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, this.m_FontWidth, this.m_FontHeight, start, this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -76,28 +76,28 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            Byte[][] imageData = new Byte[SymbolsTypeMax][];
-            for (Int32 i = 0; i < SymbolsTypeMax; i++)
+            Byte[][] imageData = new Byte[this.SymbolsTypeMax][];
+            for (Int32 i = 0; i < this.SymbolsTypeMax; i++)
             {
-                FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
+                FontFileSymbol fc = this.m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this);
                 imageData[i] = ImageUtils.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
-            Int32 afterIndex = SymbolsTypeMax * 2;
+            Int32 afterIndex = this.SymbolsTypeMax * 2;
             Int32 fontDataOffset = afterIndex + 4;
             Int32 dataOffset = fontDataOffset;
             // Not sure if this is legal; the original fonts seem unoptimised.
-            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref dataOffset, false, optimise);
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, 0, false, ref dataOffset, false, optimise, true);
             Byte[] fullData = new Byte[dataOffset];
             Int32 headerFileSize = dataOffset - 2;
             fullData[0x00] = (Byte)(headerFileSize & 0xFF);         //Int16 FileSize, low byte;
             fullData[0x01] = (Byte)((headerFileSize >> 8) & 0xFF);  //Int16 FileSize, high byte;
             Array.Copy(fontDataOffsetsList, 0, fullData, 0x02, fontDataOffsetsList.Length);
-            fullData[afterIndex + 2] = (Byte)m_FontHeight;          // Byte FontHeight
-            fullData[afterIndex + 3] = (Byte)m_FontWidth;           // Byte FontWidth
+            fullData[afterIndex + 2] = (Byte) this.m_FontHeight;          // Byte FontHeight
+            fullData[afterIndex + 3] = (Byte) this.m_FontWidth;           // Byte FontWidth
             foreach (Byte[] symbolImgData in imageData)
             {
-                if (symbolImgData.Length == 0)
+                if (symbolImgData == null || symbolImgData.Length == 0)
                     continue;
                 Array.Copy(symbolImgData, 0, fullData, fontDataOffset, symbolImgData.Length);
                 fontDataOffset += symbolImgData.Length;

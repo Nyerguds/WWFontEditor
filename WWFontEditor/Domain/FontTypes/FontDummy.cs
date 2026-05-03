@@ -35,8 +35,8 @@ namespace WWFontEditor.Domain.FontTypes
 
         public FontDummy()
         {
-            m_FontWidth = 8;
-            m_FontHeight = 8;
+            this.m_FontWidth = 8;
+            this.m_FontHeight = 8;
             // Byte data inside a FontFileSymbol gets copied anyway so we only need to define this array once.
             Byte[] byteData = new Byte[this.m_FontWidth * this.m_FontHeight];
             // There should be a check on fail conditions here, but the file itself doesn't match an exact multiple of 8*15 bytes.
@@ -49,7 +49,7 @@ namespace WWFontEditor.Domain.FontTypes
             throw new NotSupportedException();
         }
 
-        public override byte[] SaveFont(Nyerguds.Util.SaveOption[] saveOptions)
+        public override Byte[] SaveFont(Nyerguds.Util.SaveOption[] saveOptions)
         {
             throw new NotSupportedException();
         }

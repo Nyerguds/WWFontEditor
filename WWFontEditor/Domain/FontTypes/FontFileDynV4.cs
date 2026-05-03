@@ -50,7 +50,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override void LoadFont(Byte[] fileData)
         {
-            LoadFont(fileData, false);
+            this.LoadFont(fileData, false);
         }
 
         public void LoadFont(Byte[] fileData, Boolean asV5)
@@ -69,13 +69,13 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 if (fileData[dataOffset] != 0xFD)
                     throw new FileTypeLoadException("Not a v5 Dynamix font!");
-                m_bpp = 8;
+                this.m_bpp = 8;
             }
             else
             {
                 if (fileData[dataOffset] != 0xFF)
                     throw new FileTypeLoadException("Not a v4 Dynamix font!");
-                m_bpp = 1;
+                this.m_bpp = 1;
             }
             this.m_FontWidth = fileData[dataOffset + 1];
             this.m_FontHeight = fileData[dataOffset + 2];
@@ -122,7 +122,7 @@ namespace WWFontEditor.Domain.FontTypes
             // fill in dummy symbols. Will need to be checked and trimmed on save (until 0x20 that is.)
             for (Int32 i = 0; i < startSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (int i = 0; i < offsets.Length; i++)
+            for (Int32 i = 0; i < offsets.Length; i++)
             {
                 Byte[] curData8bit;
                 try
@@ -131,7 +131,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", ShortTypeName, i));
+                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", this.ShortTypeName, i));
                 }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
@@ -143,7 +143,7 @@ namespace WWFontEditor.Domain.FontTypes
             // Line height. Default calculation uses the most commonly used lowest point in the font.
             Int32 lHeight = this.lineHeight;
             if (lHeight == 0)
-                lHeight = CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax);
+                lHeight = CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax);
 
             return new SaveOption[]
             {
@@ -156,7 +156,7 @@ namespace WWFontEditor.Domain.FontTypes
             
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            return SaveFont(saveOptions, false);
+            return this.SaveFont(saveOptions, false);
         }
 
         public Byte[] SaveFont(SaveOption[] saveOptions, Boolean asV5)
@@ -169,13 +169,13 @@ namespace WWFontEditor.Domain.FontTypes
             Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
             Boolean foundStart = false;
             Int32 startSymbol = 0;
-            Int32 fullNrOfSymbols = m_ImageDataList.Count;
+            Int32 fullNrOfSymbols = this.m_ImageDataList.Count;
             Byte[][] imageData = new Byte[fullNrOfSymbols][];
             Byte[] imageWidths = new Byte[fullNrOfSymbols];
             //Int32 fontDataSize = 0;
             for (Int32 i = 0; i < fullNrOfSymbols; i++)
             {
-                FontFileSymbol ffs = m_ImageDataList[i];
+                FontFileSymbol ffs = this.m_ImageDataList[i];
                 if (!foundStart)
                 {
                     if (i < 0x20 && ffs.Width == 0)
@@ -187,7 +187,7 @@ namespace WWFontEditor.Domain.FontTypes
                 imageWidths[i] = (Byte)ffs.Width;
             }
             Int32 fontOffset = 0;
-            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, startSymbol, true, ref fontOffset, true, optimise);
+            Byte[] fontDataOffsetsList = this.CreateImageIndex(imageData, startSymbol, true, ref fontOffset, true, optimise, true);
             Int32 nrOfSymbols = fullNrOfSymbols - startSymbol;
             //fontOffset now contains the size of the actual font data.
             Int32 fullDataSize = fontOffset + fontDataOffsetsList.Length + nrOfSymbols;

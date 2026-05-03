@@ -509,9 +509,11 @@ namespace WWFontEditor.Domain
         /// <param name="fontOffset">Start offset of the addressing. Adjusted to the end offset.</param>
         /// <param name="usesNullOffset">Use 0 value for symbols with no data.</param>
         /// <param name="optimise">Optimise to remove duplicate indices.</param>
+        /// <param name="unsigned">True if the Int16 values in the index are seen as unsigned.</param>
         /// <returns>The list of reference addresses, relative to the given font offset.</returns>
-        protected Byte[] CreateImageIndex(Byte[][] imageData, Int32 startIndex, Boolean reduce, ref Int32 fontOffset, Boolean usesNullOffset, Boolean optimise)
+        protected Byte[] CreateImageIndex(Byte[][] imageData, Int32 startIndex, Boolean reduce, ref Int32 fontOffset, Boolean usesNullOffset, Boolean optimise, Boolean unsigned)
         {
+            Int32 maxValue = unsigned ? (Int32)UInt16.MaxValue : Int16.MaxValue;
             Int32[] refslist = optimise ? this.CreateOptimizedRefsList(imageData, startIndex) : null;
             Int32 symbols = imageData.Length;
             Int32 writeDiff = reduce ? -startIndex : 0;
@@ -528,6 +530,8 @@ namespace WWFontEditor.Domain
                 }
                 else if (replacei == i)
                 {
+                    if (fontOffset > maxValue)
+                        throw new IndexOutOfRangeException("Data too large: this format cannot address data that exceeds " + maxValue + " bytes!");
                     // Data is not null and not a duplicate: write offset and advance offset ptr.
                     ArrayUtils.WriteIntToByteArray(fontDataOffsetsList, (i + writeDiff) * 2, 2, true, (UInt32)fontOffset);
                     fontOffset += imageData[i].Length;

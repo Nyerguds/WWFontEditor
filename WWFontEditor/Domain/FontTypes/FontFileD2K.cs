@@ -63,7 +63,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolData.Length);
                 // should happen after the currentSymbol byte wraps around to 0
                 FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel, this.TransparencyColor);
-                if (m_ImageDataList.Count > currentSymbol)
+                if (this.m_ImageDataList.Count > currentSymbol)
                     this.m_ImageDataList[currentSymbol] = ffs;
                 else
                     this.m_ImageDataList.Add(ffs);
@@ -75,7 +75,7 @@ namespace WWFontEditor.Domain.FontTypes
             if (interval > 0)
             {
                 this.m_FontWidth += interval;
-                foreach (FontFileSymbol fs in m_ImageDataList)
+                foreach (FontFileSymbol fs in this.m_ImageDataList)
                     if (fs.Width != 0 || fs.Height != 0)
                         fs.ChangeWidth(fs.Width + interval, this.TransparencyColor);
             }
@@ -83,7 +83,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            FontFileSymbol[] baseList = new List<FontFileSymbol>(m_ImageDataList).ToArray();
+            FontFileSymbol[] baseList = new List<FontFileSymbol>(this.m_ImageDataList).ToArray();
             FontFileSymbol[] newList = new FontFileSymbol[255];
             Byte spaceWidth = (Byte)this.m_ImageDataList[0x20].Width;
             Byte firstSymbol = 0x21;
@@ -96,7 +96,7 @@ namespace WWFontEditor.Domain.FontTypes
             // This space is trimmed off and added in the header instead.
             // Start from max that can be trimmed off the space, since it's not in the list.
             Int32 globalOpenSpace = spaceWidth;
-            foreach (FontFileSymbol fs in m_ImageDataList)
+            foreach (FontFileSymbol fs in this.m_ImageDataList)
             {
                 // ignore completely empty characters; they'd reduce it to 0 for no reason.
                 if (fs.Width == 0 && fs.Height == 0)
@@ -135,7 +135,7 @@ namespace WWFontEditor.Domain.FontTypes
             fileData[1] = spaceWidth; // space width
             fileData[2] = firstSymbol;
             fileData[3] = (Byte)globalOpenSpace; // space between characters
-            fileData[4] = (Byte)m_FontHeight;
+            fileData[4] = (Byte) this.m_FontHeight;
             //fileData[5] = 0x00;
             //fileData[6] = 0x00;
             //fileData[7] = 0x00;

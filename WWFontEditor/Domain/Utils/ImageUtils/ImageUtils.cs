@@ -1005,18 +1005,52 @@ namespace Nyerguds.ImageManipulation
             }
             return images.ToArray();
         }
+        
+        /// <summary>Trims empty lines off the bottom of an image buffer.</summary>
+        /// <param name="buffer">Image data buffer</param>
+        /// <param name="width">Image width (technically stride).</param>
+        /// <param name="height">Image height. Will be adjusted by this function.</param>
+        /// <param name="valueToTrim">Value to trim.</param>
+        /// <returns>The trimmed image, if adjustBuffer is true.</returns>
+        public static Byte[] TrimYHeight(Byte[] buffer, Int32 width, ref Int32 height, Int32 valueToTrim)
+        {
+            // nothing to optimize.
+            if (height == 0)
+                return new Byte[0];
+            // Nothing to process
+            if (width == 0)
+            {
+                height = 0;
+                return new Byte[0];
+            }
+            Int32 newHeight;
+            Byte[] tempArray = new Byte[width];
+            for (newHeight = height; newHeight > 0; newHeight--)
+            {
+                Array.Copy(buffer, width * (newHeight - 1), tempArray, 0, width);
+                if (tempArray.All(x => x == valueToTrim))
+                    continue;
+                break;
+            }
+            // Vertical reduce is a simple array copy.
+            Byte[] buffer2 = new Byte[newHeight * width];
+            Array.Copy(buffer, 0, buffer2, 0, newHeight * width);
+            buffer = buffer2;
+            height = newHeight;
+            return buffer;
+        }
 
         /// <summary>Calculate the amount an image can be cropped in Y-dimension, and adjust the given height and Y offset to compensate.</summary>
         /// <param name="buffer">Image data buffer</param>
         /// <param name="width">Image width (technically stride).</param>
         /// <param name="height">Image height. Will be adjusted by this function.</param>
         /// <param name="yOffset">Current Y-offset to increase.</param>
-        /// <param name="AlsoTrimBottom">Trim both top and bottom of the image.</param>
+        /// <param name="alsoTrimBottom">Trim both top and bottom of the image.</param>
         /// <param name="valueToTrim">Value to trim.</param>
         /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
         /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
         /// <returns>The trimmed image, if adjustBuffer is true.</returns>
-        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean AlsoTrimBottom, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
+        public static Byte[] OptimizeYHeight(Byte[] buffer, Int32 width, ref Int32 height, ref Int32 yOffset, Boolean alsoTrimBottom, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (height == 0)
@@ -1038,7 +1072,7 @@ namespace Nyerguds.ImageManipulation
                 if (!tempArray.All(x => x == valueToTrim))
                     break;
             }
-            if (AlsoTrimBottom)
+            if (alsoTrimBottom)
             {
                 for (trimmedYBottom = height; trimmedYBottom > trimmedYTop; trimmedYBottom--)
                 {
@@ -1073,6 +1107,46 @@ namespace Nyerguds.ImageManipulation
             return buffer;
         }
 
+        /// <summary>Trims empty columns off the right side of an image buffer.</summary>
+        /// <param name="buffer">Image data buffer.</param>
+        /// <param name="width">Image width (technically stride). Will be adjusted by this function.</param>
+        /// <param name="height">Image height.</param>
+        /// <param name="valueToTrim">Value to trim.</param>
+        /// <returns>The trimmed image.</returns>
+        public static Byte[] TrimXWidth(Byte[] buffer, ref Int32 width, Int32 height, Int32 valueToTrim)
+        {
+            // nothing to optimize.
+            if (width == 0)
+                return new Byte[0];
+            // Nothing to process
+            if (height == 0)
+            {
+                width = 0;
+                return new Byte[0];
+            }
+            Int32 trimmedXRight = 0;
+            for (Int32 x = width - 1; x >= 0; x--)
+            {
+                Boolean empty = true;
+                for (Int32 y = 0; y < height; y++)
+                {
+                    if (buffer[y * width + x] != valueToTrim)
+                    {
+                        empty = false;
+                        break;
+                    }
+                }
+                if (!empty)
+                    break;
+                trimmedXRight++;
+            }
+            
+            Int32 newWidth = width - trimmedXRight;
+            buffer = CopyFrom8bpp(buffer, width, height, width, new Rectangle(0, 0, newWidth, height));
+            width = newWidth;
+            return buffer;
+        }
+
         /// <summary>
         /// Crop the image in X-dimension and adjust the X offset to compensate.
         /// </summary>
@@ -1080,22 +1154,22 @@ namespace Nyerguds.ImageManipulation
         /// <param name="width">Image width (technically stride). Will be adjusted by this function.</param>
         /// <param name="height">Image height.</param>
         /// <param name="xOffset">Current X-offset to increase.</param>
-        /// <param name="AlsoTrimRight">Trim both left and right side of the image.</param>
+        /// <param name="alsoTrimRight">Trim both left and right side of the image.</param>
         /// <param name="valueToTrim">Value to trim.</param>
         /// <param name="maxOffset">Maximum value that Y can contain in the file format it'll be saved to. Leave 0 to ignore.</param>
         /// <param name="adjustBuffer">True to actually apply the change to the given buffer. False to only adjust the ref parameters.</param>
         /// <returns>The trimmed image, if adjustBuffer is true.</returns>
-        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean AlsoTrimRight, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
+        public static Byte[] OptimizeXWidth(Byte[] buffer, ref Int32 width, Int32 height, ref Int32 xOffset, Boolean alsoTrimRight, Int32 valueToTrim, Int32 maxOffset, Boolean adjustBuffer)
         {
             // nothing to optimize.
             if (width == 0)
-                return adjustBuffer ? buffer : new Byte[0];
+                return adjustBuffer ? new Byte[0] : buffer;
             // Nothing to process
             if (height == 0)
             {
                 width = 0;
                 xOffset = 0;
-                return adjustBuffer ? buffer : new Byte[0];
+                return adjustBuffer ? new Byte[0] : buffer;
             }
             Int32 trimXMax = maxOffset != 0 ? Math.Min(maxOffset - xOffset, width) : width;
             Int32 trimmedXLeft = 0;
@@ -1121,7 +1195,7 @@ namespace Nyerguds.ImageManipulation
                 xOffset = 0;
                 return new Byte[0];
             }
-            if (AlsoTrimRight)
+            if (alsoTrimRight)
             {
                 for (Int32 x = width - 1; x >= 0; x--)
                 {

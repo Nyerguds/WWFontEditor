@@ -34,14 +34,14 @@ namespace WWFontEditor.Domain.FontTypes
         {
             if (fileData.Length != m_FontSize)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
-            m_FontWidth = 8;
-            m_FontHeight = 8;
+            this.m_FontWidth = 8;
+            this.m_FontHeight = 8;
             for (Int32 i = 0; i < m_FontSize; i += 8)
             {
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, i, this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, this.m_FontWidth, this.m_FontHeight, i, this.BitsPerPixel, true);
                 }
                 catch (IndexOutOfRangeException)
                 {
@@ -63,7 +63,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Byte[] data8bit = this.m_ImageDataList[i].ByteData;
                 if (data8bit == null)
                     continue;
-                Byte[] curData1bit = ImageUtils.ConvertFrom8Bit(data8bit, m_FontWidth, m_FontHeight, this.BitsPerPixel, true);
+                Byte[] curData1bit = ImageUtils.ConvertFrom8Bit(data8bit, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
                 Array.Copy(curData1bit, 0, fileData, i*8, Math.Min(curData1bit.Length, 8));
             }
             return fileData;

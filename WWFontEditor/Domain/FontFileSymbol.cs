@@ -25,10 +25,10 @@ namespace WWFontEditor.Domain
         public FontFileSymbol(FontFile source)
         {
             this.ByteData = new Byte[0];
-            this.Width = source.FontWidthTypeMin;
+            this.Width = source.CustomSymbolWidthsForType ? source.FontWidthTypeMin : source.FontWidth;
             this.Height = 0;
             // only need to do this from 1 dimension since you start from (?)x0
-            this.ChangeHeight(source.FontHeightTypeMin, source.TransparencyColor);
+            this.ChangeHeight(source.CustomSymbolHeightsForType ? source.FontHeightTypeMin : source.FontHeight, source.TransparencyColor);
             this.BitsPerPixel = source.BitsPerPixel;
             this.TransparencyColor = source.TransparencyColor;
         }
@@ -139,6 +139,12 @@ namespace WWFontEditor.Domain
                 symbol.ChangeHeight(newFont.FontHeight, newFont.TransparencyColor);
         }
 
+        /// <summary>
+        /// Converts the data to the maximum value restrictions of a new bits per pixel value.
+        /// This will not compact the array to that bpp format; the buffer remains 8-bit.
+        /// </summary>
+        /// <param name="defaultValue">Default value when exceeding the maximum of the target format.</param>
+        /// <param name="targetBpp">Target bits per pixel format.</param>
         public void ConvertToBpp(Byte? defaultValue, Int32 targetBpp)
         {
             if (this.BitsPerPixel == targetBpp)
@@ -147,6 +153,13 @@ namespace WWFontEditor.Domain
             this.BitsPerPixel = targetBpp;
         }
 
+        /// <summary>
+        /// Converts the data to the maximum value restrictions of a new bits per pixel value.
+        /// This will not compact the array to that bpp format; the buffer remains 8-bit.
+        /// </summary>
+        /// <param name="defaultValue">Default value when exceeding the maximum of the target format.</param>
+        /// <param name="targetBpp">Target bits per pixel format.</param>
+        /// <returns>The adapted buffer.</returns>
         private Byte[] ConvertDataToBpp(Byte? defaultValue, Int32 targetBpp)
         {
             Int32 myBpp = this.BitsPerPixel;
@@ -168,9 +181,9 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// Gets a bitmap of the symbol at full font height.
         /// </summary>
-        /// <param name="palette"></param>
-        /// <param name="baseFont"></param>
-        /// <param name="expandToY"></param>
+        /// <param name="palette">Colour palette for the image.</param>
+        /// <param name="baseFont">The base font, so transparency colour and overall dimensions can be fetched.</param>
+        /// <param name="expandToY">True to expand the image to the full shifted-down size, false to cut it off at the original font height.</param>
         /// <returns></returns>
         public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont, Boolean expandToY)
         {
@@ -313,6 +326,45 @@ namespace WWFontEditor.Domain
             this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor, yOffsetMax, true);
             this.Height = height;
             this.YOffset = yoffSet;
+        }
+
+
+        /// <summary>
+        /// Crop the image in x-dimension and return the amount it was shifted to the left.
+        /// This can not be performed on fonts that don't support custom width!
+        /// </summary>
+        /// <returns>The amound the image was shifted to the left.</returns>
+        public Int32 OptimizeXWidth(Boolean alsoTrimRight)
+        {
+            Int32 width = this.Width;
+            Int32 xoffSet = 0;
+            this.ByteData = ImageUtils.OptimizeXWidth(this.ByteData, ref width, this.Height, ref xoffSet, alsoTrimRight, TransparencyColor, 0, true);
+            this.Width = width;
+            return xoffSet;
+        }
+
+        /// <summary>
+        /// Crop the right side of the image in x-dimension.
+        /// This can not be performed on fonts that don't support custom width!
+        /// </summary>
+        /// <returns>The amound the image was shifted to the left.</returns>
+        public void CropRightSide()
+        {
+            Int32 width = this.Width;
+            this.ByteData = ImageUtils.TrimXWidth(this.ByteData, ref width, this.Height, TransparencyColor);
+            this.Width = width;
+        }
+
+        /// <summary>
+        /// Crop the bottom side of the image in x-dimension.
+        /// This can not be performed on fonts that don't support custom width!
+        /// </summary>
+        /// <returns>The amound the image was shifted to the left.</returns>
+        public void CropBottomSide()
+        {
+            Int32 height = this.Height;
+            this.ByteData = ImageUtils.TrimYHeight(this.ByteData, this.Width, ref height, TransparencyColor);
+            this.Height= height;
         }
 
         internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Color[] transparencyGuide)

@@ -29,8 +29,8 @@ namespace WWFontEditor.Domain.FontTypes
             get { return new String[] { "Front Page Sports Football Pro" }; }
         }
 
-        protected Byte m_unkn1 = 0;
-        protected Byte m_lineHeight = 0;
+        protected Byte m_unkn1;
+        protected Byte m_lineHeight;
         
         public override void LoadFont(Byte[] fileData)
         {
@@ -54,17 +54,17 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 symbolDataStartOffset = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 8, 4, true) + dataOffset;
             if (symbolDataStartOffset < 0 || symbolDataStartOffset > fileData.Length)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
-            m_unkn1 = fileData[dataOffset + 0x0C];
-            m_lineHeight = fileData[dataOffset + 0x0D];
+            this.m_unkn1 = fileData[dataOffset + 0x0C];
+            this.m_lineHeight = fileData[dataOffset + 0x0D];
             Int32 startSymbol = fileData[dataOffset + 0x0E];
             Int32 nrOfSymbols = fileData[dataOffset + 0x0F];
             if (startSymbol < 0 || nrOfSymbols < 0)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
             if(startSymbol + nrOfSymbols > 0x100)
                 throw new FileTypeLoadException(ERR_SYMBCHECK);
-            m_FontWidth = fileData[dataOffset + 0x10];
-            m_FontHeight = fileData[dataOffset + 0x11];
-            if (m_FontWidth <= 0 || m_FontHeight <= 0)
+            this.m_FontWidth = fileData[dataOffset + 0x10];
+            this.m_FontHeight = fileData[dataOffset + 0x11];
+            if (this.m_FontWidth <= 0 || this.m_FontHeight <= 0)
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
             // Read symbol information
             Int16[] offsets = new Int16[nrOfSymbols];
@@ -75,7 +75,7 @@ namespace WWFontEditor.Domain.FontTypes
             // Read symbols
             for (Int32 i = 0; i < startSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (int i = 0; i < offsets.Length; i++)
+            for (Int32 i = 0; i < offsets.Length; i++)
             {
                 Byte[] curData8bit;
                 try
@@ -84,7 +84,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", ShortTypeName, i));
+                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", this.ShortTypeName, i));
                 }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, widths[i], this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
@@ -93,7 +93,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
-            this.m_lineHeight = (Byte)FontFileDynV4.CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
+            this.m_lineHeight = (Byte)FontFileDynV4.CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
             Int32 len = this.m_ImageDataList.Count;
             Int32[] symbolOffsets = new Int32[len];
             Byte[] symbolWidths = new Byte[len];
@@ -127,12 +127,12 @@ namespace WWFontEditor.Domain.FontTypes
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x00, 4, true, (UInt32)(offsetsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x04, 4, true, (UInt32)(widthsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x08, 4, true, (UInt32)(dataIndex));
-            fileData[chunkOffset + 0x0C] = (Byte)(m_FontWidth - m_lineHeight);
-            fileData[chunkOffset + 0x0D] = m_lineHeight;
+            fileData[chunkOffset + 0x0C] = (Byte)(this.m_FontWidth - this.m_lineHeight);
+            fileData[chunkOffset + 0x0D] = this.m_lineHeight;
             fileData[chunkOffset + 0x0E] = (Byte)startSymbol;
             fileData[chunkOffset + 0x0F] = (Byte)(actualSymbols);
-            fileData[chunkOffset + 0x10] = (Byte)m_FontWidth;
-            fileData[chunkOffset + 0x11] = (Byte)m_FontHeight;
+            fileData[chunkOffset + 0x10] = (Byte) this.m_FontWidth;
+            fileData[chunkOffset + 0x11] = (Byte) this.m_FontHeight;
             Array.Copy(symbolWidths, startSymbol, fileData, chunkOffset + widthsIndex, actualSymbols);
             for (Int32 i = startSymbol; i < len; i++)
             {
