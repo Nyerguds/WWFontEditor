@@ -263,6 +263,7 @@ Special thanks to
 -Moon Flower for the help with the design of the palettes manager.
 -The people of the oldgamesitalia.net forum for getting me interested in game
  fonts beyond the scope of Westwood Studios.
+-夜宇 (yjfyeyu) for helping me test clipboard problems.
 
 
 --------------------
@@ -310,6 +311,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.12.7: (2019/03/14 11:26)
+-Fixed pasting of DIB images from clipboard.
 
 v1.12.6: (2019/01/25 11:15)
 -Fixed Mythos font support: fixed saving bugs, added compression support.

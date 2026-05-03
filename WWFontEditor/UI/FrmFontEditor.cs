@@ -340,10 +340,13 @@ namespace WWFontEditor.UI
                 this.numFontWidth.Value = 0;
                 this.numWidth.Maximum = 0;
                 this.numWidth.Value = 0;
+                this.numWidth.EnteredValue = 0;
                 this.numHeight.Maximum = 0;
                 this.numHeight.Value = 0;
+                this.numHeight.EnteredValue = 0;
                 this.numYOffset.Maximum = 0;
                 this.numYOffset.Value = 0;
+                this.numYOffset.EnteredValue = 0;
                 this.tsmiOptimizeWidths.Enabled = false;
             }
             this.ReloadImageInfo(true);
@@ -631,9 +634,12 @@ namespace WWFontEditor.UI
                     this.m_CurYOffset = 0;
                     this.numHeight.Maximum = 0;
                     this.numHeight.Value = 0;
+                    this.numHeight.EnteredValue = 0;
                     this.numWidth.Maximum = 0;
                     this.numWidth.Value = 0;
+                    this.numWidth.EnteredValue = 0;
                     this.numYOffset.Value = 0;
+                    this.numYOffset.EnteredValue = 0;
                     this.RepaintPreview();
                     return;
                 }
@@ -643,9 +649,12 @@ namespace WWFontEditor.UI
                 this.m_CurYOffset = this.m_LoadedFont.GetSymbolYOffset(curIndex);
                 this.numHeight.Maximum = this.m_LoadedFont.FontHeight;
                 this.numHeight.Value = this.m_CurHeight;
+                this.numHeight.EnteredValue = this.m_CurHeight;
                 this.numWidth.Maximum = this.m_LoadedFont.FontWidth;
                 this.numWidth.Value = this.m_CurWidth;
+                this.numWidth.EnteredValue = this.m_CurWidth;
                 this.numYOffset.Value = this.m_CurYOffset;
+                this.numYOffset.EnteredValue = this.m_CurYOffset;
                 this.AdjustRevertButton();
                 this.RepaintPreview();
                 if (refreshEditor)
@@ -1592,7 +1601,6 @@ namespace WWFontEditor.UI
                 clipboard = this.GetClipboardData(retrievedData);
             if (clipboard == null)
             {
-                this.ToggleTempColorSelect(false);
                 MessageBox.Show("No image data found on the clipboard.", GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -1603,7 +1611,6 @@ namespace WWFontEditor.UI
             // if there are unsaved changes, or the image is new and not empty, ask specifically
             if (!pasteCombined && !this.CheckIsEqual() && !(this.m_LoadedFontBackup != null && this.m_LoadedFontBackup.Length <= curIndex) && fc.Width > 0 && fc.Height > 0)
             {
-                this.ToggleTempColorSelect(false);
                 DialogResult dr = MessageBox.Show("This will completely overwrite the current symbol.\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
                     return;
@@ -1633,7 +1640,6 @@ namespace WWFontEditor.UI
             }
             catch (InvalidOperationException ex)
             {
-                this.ToggleTempColorSelect(false);
                 MessageBox.Show(ex.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             this.ReloadImageInfo(true);

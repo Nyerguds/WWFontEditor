@@ -884,6 +884,21 @@ namespace Nyerguds.Ini
         }
 
         /// <summary>
+        /// Removes a section from the ini file, and marks it for deletion on the next rewrite.
+        /// </summary>
+        /// <param name="sectionName">The name of the section.</param>
+        public Boolean ContainsSection(String sectionName)
+        {
+            for (Int32 i = 0; i < this.m_IniSections.Count; i++)
+            {
+                String secname = this.m_IniSections[i].GetName();
+                if (secname.Equals(sectionName, StringComparison.InvariantCultureIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Clears a section's keys.
         /// </summary>
         /// <param name="sectionName">The name of the section.</param>

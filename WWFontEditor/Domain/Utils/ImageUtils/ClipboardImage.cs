@@ -3,9 +3,9 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using Nyerguds.ImageManipulation;
+using Nyerguds.Util;
 
-namespace Nyerguds.Util
+namespace Nyerguds.ImageManipulation
 {
     public class ClipboardImage
     {
@@ -35,7 +35,7 @@ namespace Nyerguds.Util
             if (clipboardimage == null && formats.Contains("Format17"))
             {
                 Byte[] dibdata = TryGetStreamDataFromClipboard(retrievedData, "Format17");
-                clipboardimage = DibHandler.ImageFromDib5(dibdata);
+                clipboardimage = DibHandler.ImageFromDib5(dibdata, true);
                 // ImageFromClipboardDib5 builds the image in local memory.
                 if (clipboardimage != null) built = true;
             }
@@ -46,8 +46,8 @@ namespace Nyerguds.Util
                 // ImageFromClipboardDib builds the image in local memory.
                 if (clipboardimage != null) built = true;
             }
-            if (clipboardimage == null && formats.Contains(DataFormats.Bitmap))
-                clipboardimage = retrievedData.GetData(DataFormats.Bitmap) as Bitmap;
+            if (clipboardimage == null && formats.Contains(DataFormats.Bitmap)){
+                clipboardimage = retrievedData.GetData(DataFormats.Bitmap) as Bitmap;}
             if (clipboardimage == null && formats.Contains(typeof(Bitmap).FullName))
                 clipboardimage = retrievedData.GetData(typeof(Bitmap)) as Bitmap;
             if (clipboardimage == null && formats.Contains(typeof(Image).FullName))
@@ -56,10 +56,13 @@ namespace Nyerguds.Util
                 if (clipImage != null)
                     clipboardimage = new Bitmap(clipImage);
             }
-            // Clone to separate it from any backing sources
-            if (clipboardimage != null && !built)
-                clipboardimage = ImageUtils.CloneImage(clipboardimage);
-            return clipboardimage;
+            // If the image wasn't specifically built using BuildImage already, clone it to separate it from any backing sources.
+            if (clipboardimage == null || built)
+                return clipboardimage;
+            Bitmap returnImage = ImageUtils.CloneImage(clipboardimage);
+            try { clipboardimage.Dispose(); }
+            catch { /* Ignore */ }
+            return returnImage;
         }
 
         /// <summary>
@@ -81,11 +84,11 @@ namespace Nyerguds.Util
                 // As standard bitmap, without transparency support
                 data.SetData(DataFormats.Bitmap, true, imageNoTr);
                 // As PNG. Gimp will prefer this over the other two.
-                Byte[] pngData = BitmapHandler.GetPngImageData(image, 0, false);
+                Byte[] pngData = BitmapHandler.GetPngImageData(image, 0, true);
                 pngMemStream.Write(pngData, 0, pngData.Length);
                 data.SetData("PNG", false, pngMemStream);
                 // As DIBv5. This supports transparency when using BITFIELDS.
-                Byte[] dib5Data = DibHandler.ConvertToDib5(image, false);
+                Byte[] dib5Data = DibHandler.ConvertToDib5(image);
                 dib5MemStream.Write(dib5Data, 0, dib5Data.Length);
                 data.SetData("Format17", false, dib5MemStream);
                 // As DIB. This is (wrongly) accepted as ARGB by many applications.
@@ -100,10 +103,6 @@ namespace Nyerguds.Util
         public static Byte[] TryGetStreamDataFromClipboard(DataObject retrievedData, String identifier)
         {
             if (!retrievedData.GetDataPresent(identifier))
-                return null;
-            // Get the dib header
-            Object data = retrievedData.GetData(identifier);
-            if (!(data is MemoryStream))
                 return null;
             MemoryStream ms = retrievedData.GetData(identifier) as MemoryStream;
             if (ms == null)

@@ -39,6 +39,8 @@ namespace WWFontEditor.Domain.FontTypes
             "Bodyworks Voyager: Missions in Anatomy",
         }; } }
 
+        private Boolean _skip127 = false;
+
         public override void LoadFont(Byte[] fileData)
         {
             // 01 00 06 00 00 00 00 01
@@ -58,7 +60,7 @@ namespace WWFontEditor.Domain.FontTypes
             while (offset + 4 < fileData.Length)
             {
                 // Dummy symbol after 126
-                if (this.m_ImageDataList.Count == 127)
+                if (this._skip127 && this.m_ImageDataList.Count == 127)
                     this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, 0, 0, this.BitsPerPixel, this.TransparencyColor));
 
                 Int32 symbWidth = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset + 0, 2, true) + 1;
@@ -113,6 +115,14 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     Array.Copy(fileData, offset, imageData, 0, dataLen);
                 }
+                /*/
+                if (symbWidth == 1 && symbHeight == 1 && yOffset == 0 && imageData.Length == 1 && imageData[0] == this.TransparencyColor)
+                {
+                    imageData = new Byte[] {this.TransparencyColor, 0, 0, this.TransparencyColor };
+                    symbWidth = 2;
+                    symbHeight = 2;
+                }
+                //*/
                 FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel, this.TransparencyColor);
                 this.m_ImageDataList.Add(fc);
                 offset += skipLen;
@@ -124,6 +134,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Byte[] SaveFont(SaveOption[] saveOptions)
         {
             Int32 actualLen = this.m_ImageDataList.Count - this.SymbolsTypeFirst;
+            Int32 saveLen = this._skip127 ? actualLen - 1 : actualLen;
             Byte[][] symbolData = new Byte[actualLen][];
             Int32[] widths = new Int32[actualLen];
             Int32[] heighths = new Int32[actualLen];
@@ -133,7 +144,7 @@ namespace WWFontEditor.Domain.FontTypes
                 Int32 writeIndex = i - this.SymbolsTypeFirst;
                 FontFileSymbol ffs = this.m_ImageDataList[i];
 
-                if (i == 127)
+                if (this._skip127 && i == 127)
                 {
                     symbolData[writeIndex] = new Byte[0];
                     widths[writeIndex] = 0;
@@ -149,19 +160,19 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 else
                 {
-                    symbolData[writeIndex] = new Byte[1];
+                    symbolData[writeIndex] = new Byte[] { this.TransparencyColor };
                     widths[writeIndex] = 1;
                     heighths[writeIndex] = 1;
                 }
                 yOffsets[writeIndex] = (Byte)ffs.YOffset;
             }
-            Byte[] finalData = new Byte[(actualLen - 1) * 8 + symbolData.Sum(sd => sd.Length)];
+            Byte[] finalData = new Byte[(saveLen) * 8 + symbolData.Sum(sd => sd.Length)];
             Int32 offset = 0;
             Int32 skipIndex = 127 - this.SymbolsTypeFirst;
             for (Int32 i = 0; i < actualLen; i++)
             {
                 // Skip 127. It does not get written to the file.
-                if (i == skipIndex)
+                if (this._skip127 && i == skipIndex)
                     continue;
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 0, 2, true, (UInt32)(widths[i] - 1));
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 2, 2, true, (UInt32)(heighths[i]-1));

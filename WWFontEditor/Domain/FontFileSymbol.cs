@@ -232,7 +232,7 @@ namespace WWFontEditor.Domain
         {
             if (this.Height == newHeight)
                 return;
-            this.ByteData = ImageUtils.ChangeHeight(this.ByteData, this.Width, this.Height, newHeight, false, this.TransparencyColor);
+            this.ByteData = ImageUtils.ChangeHeight(this.ByteData, this.Width, this.Height, newHeight, false, backColor);
             this.Height = newHeight;
         }
 
