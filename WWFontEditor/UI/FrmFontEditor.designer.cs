@@ -192,6 +192,9 @@
             this.lblPaintColor1.Name = "lblPaintColor1";
             this.lblPaintColor1.Size = new System.Drawing.Size(20, 20);
             this.lblPaintColor1.TabIndex = 119;
+            this.lblPaintColor1.DoubleClick += new System.EventHandler(this.LblPaintColor1_DoubleClick);
+            this.lblPaintColor1.MouseEnter += new System.EventHandler(this.LblPaintColor1_MouseEnter);
+            this.lblPaintColor1.MouseLeave += new System.EventHandler(this.LblPaintColor_MouseLeave);
             // 
             // lblPaintColor2
             // 
@@ -202,6 +205,9 @@
             this.lblPaintColor2.Name = "lblPaintColor2";
             this.lblPaintColor2.Size = new System.Drawing.Size(20, 20);
             this.lblPaintColor2.TabIndex = 122;
+            this.lblPaintColor2.DoubleClick += new System.EventHandler(this.LblPaintColor2_DoubleClick);
+            this.lblPaintColor2.MouseEnter += new System.EventHandler(this.LblPaintColor2_MouseEnter);
+            this.lblPaintColor2.MouseLeave += new System.EventHandler(this.LblPaintColor_MouseLeave);
             // 
             // toolTip1
             // 

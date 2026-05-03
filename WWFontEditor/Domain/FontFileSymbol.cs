@@ -44,7 +44,8 @@ namespace WWFontEditor.Domain
 
         public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel)
         {
-            this.ByteData = byteData;
+            this.ByteData = new Byte[byteData.Length];
+            Array.Copy(byteData, 0, this.ByteData, 0, byteData.Length);
             this.Width = width;
             this.Height = height;
             this.YOffset = yOffset;
@@ -104,10 +105,10 @@ namespace WWFontEditor.Domain
                 // Remove Y offset; it's been replaced by actual offset
                 newSymbol.YOffset = 0;
             }
-            if (!targetVersion.CustomSymbSizesForType && targetVersion.FontHeight != newSymbol.Height)
+            if (!targetVersion.CustomSymbYForType && targetVersion.FontHeight != newSymbol.Height)
                 newSymbol.ChangeHeight(targetVersion.FontHeight);
             // Reduce width if needed
-            if (targetVersion.FontWidth < newSymbol.Width || !targetVersion.CustomSymbSizesForType)
+            if (targetVersion.FontWidth < newSymbol.Width || !targetVersion.CustomSymbXForType)
                 newSymbol.ChangeWidth(targetVersion.FontWidth);
             if (targetVersion.FontWidthTypeMin > newSymbol.Width)
                 newSymbol.ChangeWidth(targetVersion.FontWidthTypeMin);
@@ -116,7 +117,7 @@ namespace WWFontEditor.Domain
 
             // If all sizes in the font are fixed (V1, V2) expand symbol to full size.
             // At this point, this should only increase the size.
-            if (!targetVersion.CustomSymbSizesForType && targetVersion.FontWidth != newSymbol.Width)
+            if (!targetVersion.CustomSymbXForType && targetVersion.FontWidth != newSymbol.Width)
                 newSymbol.ChangeWidth(targetVersion.FontWidth);
             return newSymbol;
         }
@@ -355,7 +356,11 @@ namespace WWFontEditor.Domain
             for (Int32 i = 0; i < addedY; i++)
                 this.ShiftImageData(ShiftDirection.Up, false);
             this.ChangeHeight(this.Height - addedY - cutHeightBottom);
-            this.YOffset += addedY;
+            // Optimization: no need to keep Y if data is empty.
+            if (this.Height == 0)
+                this.YOffset = 0;
+            else
+                this.YOffset += addedY;
         }
 
         internal static FontFileSymbol Combine(FontFileSymbol firstLayer, FontFileSymbol secondLayer, FontFile fontFile, Color[] transparencyGuide)

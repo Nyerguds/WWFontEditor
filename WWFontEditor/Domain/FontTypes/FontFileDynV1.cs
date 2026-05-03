@@ -12,11 +12,12 @@ namespace WWFontEditor.Domain.FontTypes
     public class FontFileDynV1 : FontFile
     {
         public override Int32 SymbolsTypeMax { get { return 0x100; } }
-        public override Int32 FontWidthTypeMax { get { return 0x8; } }
+        public override Int32 FontWidthTypeMax { get { return 0xFF; } }
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override Boolean CustomSymbSizesForType { get { return false; } }
+        public override Boolean CustomSymbXForType { get { return false; } }
+        public override Boolean CustomSymbYForType { get { return false; } }
         public override String ShortTypeName { get { return "DYN v1"; } }
         public override String ShortTypeDescription { get { return "Dynamix Font v1"; } }
         public override String LongTypeDescription { get { return "A 1 BPP font with the file header specifying the global width and height for all symbols and the amount of symbols. It is optimized by only saving the used range of symbols."; } }
@@ -29,21 +30,19 @@ namespace WWFontEditor.Domain.FontTypes
         {
             if (fileData.Length < 0x0C)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => x < 128 ? (Char)x : '?').ToArray())))
-                throw new FileTypeLoadException(ERR_NOHEADER);
+            // Poor Man's bytes-to-string conversion. Will give incorrect chars on values > 0x7F,
+            // but it doesn't matter here since the string that is compared with doesn't contain those.
+            if (!"FNT:".Equals(new String(fileData.Take(4).Select(x => (Char)x).ToArray())))
+                throw new FileTypeLoadException(ERR_BADHEADER);
             Int32 fileSize = ArrayUtils.GetBEIntFromByteArray(fileData, 0x04);
             if (fileSize != fileData.Length - 8)
                 throw new FileTypeLoadException(ERR_SIZECHECK);
             Int32 dataOffset = 0x08;
             if (fileData[dataOffset] == 0xFF)
-            {
-                throw new NotSupportedException("The editor does not support compressed Dynamix fonts!");
-                // If supported later, keep boolean, and shift data offset for reading the remaining header:
-                //dataOffset++;
-            }
+                throw new FileTypeLoadException("Complex Dynamix font detected.");
             this.m_FontWidth = fileData[dataOffset];
-
             this.m_FontHeight = fileData[dataOffset+1];
+            //if (newType) dataOffset++;
             Byte startSymbol = fileData[dataOffset+2];
             Byte nrOfSymbols = fileData[dataOffset+3];
             Int32 symbolSize = ((m_FontWidth + 7) / 8) * m_FontHeight;

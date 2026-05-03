@@ -45,35 +45,65 @@ namespace Nyerguds.Util.UI
         }
 
         /// <summary>
-        /// generates a file save dialog with automatically generated types list. Returns the chosen filename, or null if user cancelled.
+        /// Generates a file save dialog with automatically generated types list. Returns the chosen filename, or null if user cancelled.
         /// The output parameter "selectedItem" will contain a (blank) object of the chosen type that can be used to determine how to save the data.
         /// </summary>
         /// <typeparam name="T">The basic type of which subtypes populate the typesList. Needs to inherit from FileTypeBroadcaster.</typeparam>
         /// <param name="owner">Owner window for the dialog</param>
         /// <param name="currentType">Type of the currently loaded file, to select in the dropdown as default.</param>
         /// <param name="typesList">List of class types that inherit from T.</param>
+        /// <param name="defaultSaveType">Default type to save as if the type was not found in the types list.</param>
+        /// <param name="skipOtherExtensions">Only use first extension of each type.</param>
         /// <param name="currentPath">Path and filename to set as default in the save dialog.</param>
-        /// <param name="generaltypedesc">General description of the type, to be used in "All supported ???". Defaults to "files" if left blank.</param>
-        /// <param name="generaltypeExt">Specific extension to always be supported. Can be left blank. for none</param>
         /// <param name="selectedItem">Returns a (blank) object of the chosen type, or null if "all files" or "all supported types" was selected. Can be used for loading in the file's data.</param>
         /// <returns>The chosen filename, or null if the user cancelled.</returns>
-        public static String ShowSaveFileFialog<T>(IWin32Window owner, Type currentType, Type[] typesList, Boolean skipOtherExtensions, String currentPath, out T selectedItem) where T : FileTypeBroadcaster
+        public static String ShowSaveFileFialog<T>(IWin32Window owner, Type currentType, Type[] typesList, Type defaultSaveType, Boolean skipOtherExtensions, String currentPath, out T selectedItem) where T : FileTypeBroadcaster
         {
             selectedItem = default(T);
             SaveFileDialog sfd = new SaveFileDialog();
-            FileDialogItem<T>[] items = typesList.Select(x => new FileDialogItem<T>(x)).ToArray();
+            List<FileDialogItem<T>> items = new List<FileDialogItem<T>>();
+            foreach (Type type in typesList)
+            {
+                FileDialogItem<T> fdi = new FileDialogItem<T>(type);
+                if (fdi.ItemObject.CanSave)
+                    items.Add(fdi);
+            }
             Int32 filterIndex;
-            for (filterIndex = 0; filterIndex < items.Length; filterIndex++)
-                if (currentType == items[filterIndex].ItemType)
+            Boolean typeFound = false;
+            for (filterIndex = 0; filterIndex < items.Count; filterIndex++)
+            {
+                if (currentType != items[filterIndex].ItemType)
+                    continue;
+                typeFound = true;
+                break;
+            }
+            if (!typeFound)
+            {
+                for (filterIndex = 0; filterIndex < items.Count; filterIndex++)
+                {
+                    if (defaultSaveType != items[filterIndex].ItemType)
+                        continue;
+                    typeFound = true;
                     break;
+                }
+            }
+            if (!typeFound)
+                filterIndex = 0;
+            String[] filterExt = items[filterIndex].Extensions;
             filterIndex++;
             T[] correspondingObjects;
-            sfd.Filter = GetFileFilterForSave<T>(items, skipOtherExtensions, out correspondingObjects);
+            sfd.Filter = GetFileFilterForSave(items.ToArray(), skipOtherExtensions, out correspondingObjects);
             sfd.FilterIndex = filterIndex;
             //sfd.Filter = "Westwood font file (*.fnt)|*.fnt";
             sfd.InitialDirectory = String.IsNullOrEmpty(currentPath) ? Path.GetFullPath(".") : Path.GetDirectoryName(currentPath);
             if (!String.IsNullOrEmpty(currentPath))
-                sfd.FileName = Path.GetFileName(currentPath);
+            {
+                String ext = Path.GetExtension(currentPath).TrimStart('.');
+                if (filterExt.Length > 0 && !filterExt.Contains(ext, StringComparer.InvariantCultureIgnoreCase))
+                    sfd.FileName = Path.GetFileNameWithoutExtension(currentPath) + "." + filterExt[0];
+                else
+                    sfd.FileName = Path.GetFileName(currentPath);
+            }
             DialogResult res = sfd.ShowDialog(owner);
             if (res != System.Windows.Forms.DialogResult.OK)
                 return null;

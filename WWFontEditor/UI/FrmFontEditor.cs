@@ -16,6 +16,7 @@ using Nyerguds.Ini;
 using WWFontEditor.UI.Wrappers;
 using WWFontEditor.UI.Tools;
 using Nyerguds.Util;
+using WWFontEditor.Domain.FontTypes;
 
 namespace WWFontEditor
 {
@@ -188,17 +189,15 @@ namespace WWFontEditor
         private void Frm_DragDrop(object sender, DragEventArgs e)
         {
             String[] files = (String[])e.Data.GetData(DataFormats.FileDrop);
-            if (files.Length == 1)
-            {
-                String path = files[0];
-                String ext = Path.GetExtension(path);
-                if (".fnt".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
-                        return;
-                    LoadFontFile(path, null);
-                }
-            }
+            if (files.Length != 1)
+                return;
+            String path = files[0];
+            //String ext = Path.GetExtension(path).TrimStart('.');
+            //List<String> supportedExtensions = FontFile.GetSupportedExtensions();
+            //if (!supportedExtensions.Any(x => x.Equals(ext, StringComparison.InvariantCultureIgnoreCase))) return;
+            if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
+                return;
+            this.LoadFontFile(path, null);
         }
 
         private void LoadFontFile(String path, FontFile fontFile)
@@ -264,8 +263,8 @@ namespace WWFontEditor
             this.numSymbols.Enabled = loadOk && this.m_LoadedFont.SymbolsTypeMin < this.m_LoadedFont.SymbolsTypeMax;
             this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
             this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
-            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbSizesForType && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
-            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbSizesForType && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
+            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbXForType && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
+            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbYForType && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
             this.numYOffset.Enabled = loadOk && this.m_LoadedFont.YOffsetTypeMax > 0;
             this.btnShiftUp.Enabled = loadOk;
             this.btnShiftLeft.Enabled = loadOk;
@@ -501,7 +500,10 @@ namespace WWFontEditor
 
         private void SaveFontFile()
         {
-            SaveFontFile(this.m_FileName);
+            if (!this.m_LoadedFont.CanSave)
+                SaveFontAs();
+            else
+                SaveFontFile(this.m_FileName);
         }
 
         private void SaveFontFile(String fileName)
@@ -789,14 +791,9 @@ namespace WWFontEditor
             else if (this.chkPicker.Checked)
             {
                 Byte val = this.m_LoadedFont.GetSymbol(curIndex).GetPixelValue(picX, picY);
-                // if the label is too small, remove the letter on it to more clearly show the colour.
-                if (val == 0 && palColorSelector.LabelSize.Width < 10)
-                    this.palColorSelector.TransItemCharColor = Color.Empty;
-                else
-                    this.palColorSelector.TransItemCharColor = Color.Blue;
-                this.palColorSelector.ColorSelectMode = ColorSelMode.Single;
-                this.palColorSelector.SelectedIndices = new Int32[] { val };
-                Color c = this.m_CurrentPaintColor1 < m_CurrentPalette.Length ? m_CurrentPalette[val] : Color.Black;
+                SetColorPickHighlight(val);
+                
+                Color c = this.GetPaletteColor(val);
                 String toolTip = String.Format("#{0} ({1},{2},{3})", val, c.R, c.G, c.B);
                 this.toolTip1.SetToolTip(this.pxbEditGridFront, toolTip);
                 if (m_Clicking)
@@ -849,8 +846,7 @@ namespace WWFontEditor
             if (CheckIsEqual(index))
                 return false;
             // different dimensions; can't revert. Would never be equal to original.
-            if (!m_LoadedFont.CustomSymbSizesForType
-                && (m_LoadedFont.FontWidth != m_LoadedFontBackup.FontWidth || m_LoadedFont.FontHeight != m_LoadedFontBackup.FontHeight))
+            if ((!m_LoadedFont.CustomSymbXForType && m_LoadedFont.FontWidth != m_LoadedFontBackup.FontWidth) || (!m_LoadedFont.CustomSymbYForType && m_LoadedFont.FontHeight != m_LoadedFontBackup.FontHeight))
                 return false;
             if (m_LoadedFont.FontWidth < rawData2.Width || m_LoadedFont.FontHeight < rawData2.Height)
                 return false;
@@ -870,7 +866,7 @@ namespace WWFontEditor
         /// </summary>
         private void WipeEditGridFront()
         {
-            Color col = this.m_CurrentPaintColor1 < m_CurrentPalette.Length ? m_CurrentPalette[this.m_CurrentPaintColor1] : Color.Black;
+            Color col = this.GetPaletteColor(this.m_CurrentPaintColor1);
             Color paintColor = Color.FromArgb(0xFF, col);
             pxbEditGridFront.Image = ImageUtils.GenerateBlankImage(this.m_CurWidth, this.m_CurHeight, new Color[] { Color.Transparent, paintColor }, 0);
         }
@@ -878,8 +874,29 @@ namespace WWFontEditor
         private void WipeColorPickInfo()
         {
             this.toolTip1.SetToolTip(this.pxbEditGridFront, null);
+            WipeColorPickHighlight();
+        }
+
+        private void WipeColorPickHighlight()
+        {
             this.palColorSelector.TransItemCharColor = Color.Blue;
             this.palColorSelector.ColorSelectMode = ColorSelMode.None;
+        }
+
+        private void SetColorPickHighlight(Int32 index)
+        {
+            Color c = this.GetPaletteColor(index);
+            if (c.A != 0xFF && palColorSelector.LabelSize.Width < 10)
+                this.palColorSelector.TransItemCharColor = Color.Empty;
+            else
+                this.palColorSelector.TransItemCharColor = Color.Blue;
+            this.palColorSelector.ColorSelectMode = ColorSelMode.Single;
+            this.palColorSelector.SelectedIndices = new Int32[] { index };
+        }
+
+        private Color GetPaletteColor(Int32 index)
+        {
+            return index < m_CurrentPalette.Length ? m_CurrentPalette[index] : Color.Black;
         }
 
         private void palColorSelector_ColorLabelMouseClick(object sender, PaletteClickEventArgs e)
@@ -941,6 +958,23 @@ namespace WWFontEditor
             Int32 colindex = e.Index;
             ColorDialog cdl = new ColorDialog();
             cdl.Color = e.Color;
+            OpenColorEditDialog(colindex, palpanel);
+        }
+
+        private void LblPaintColor1_DoubleClick(object sender, EventArgs e)
+        {
+            OpenColorEditDialog(this.m_CurrentPaintColor1, this.palColorSelector);
+        }
+
+        private void LblPaintColor2_DoubleClick(object sender, EventArgs e)
+        {
+            OpenColorEditDialog(this.m_CurrentPaintColor2, this.palColorSelector);
+        }
+
+        private void OpenColorEditDialog(Int32 colindex, PalettePanel palpanel)
+        {
+            ColorDialog cdl = new ColorDialog();
+            cdl.Color = GetPaletteColor(colindex);
             cdl.FullOpen = true;
             cdl.CustomColors = this.m_CustomColors;
             DialogResult res = cdl.ShowDialog(this);
@@ -949,8 +983,11 @@ namespace WWFontEditor
             {
                 Color paletteColor = Color.FromArgb(colindex == 0 ? 0x00 : 0xFF, cdl.Color);
                 m_CurrentPalette[colindex] = paletteColor;
-                palpanel.Palette[colindex] = paletteColor;
-                palpanel.Invalidate();
+                if (palpanel != null)
+                {
+                    palpanel.Palette[colindex] = paletteColor;
+                    palpanel.Invalidate();
+                }
                 if (colindex == m_CurrentPaintColor1)
                     lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[m_CurrentPaintColor1]);
                 if (colindex == m_CurrentPaintColor2)
@@ -996,7 +1033,7 @@ namespace WWFontEditor
             if (this.m_LoadedFont == null)
                 return;
             FontFile selectedItem;
-            String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, true, m_FileName, out selectedItem);
+            String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, typeof(FontFileV3), true, m_FileName, out selectedItem);
             if (filename == null || selectedItem == null)
                 return;
             if (m_LoadedFont.GetType() != selectedItem.GetType() && !ChangeFontType(selectedItem))
@@ -1791,6 +1828,20 @@ namespace WWFontEditor
                 return null;
             return res == System.Windows.Forms.DialogResult.Yes;
         }
-        
+
+        private void LblPaintColor1_MouseEnter(object sender, EventArgs e)
+        {
+            SetColorPickHighlight(this.m_CurrentPaintColor1);
+        }
+
+        private void LblPaintColor2_MouseEnter(object sender, EventArgs e)
+        {
+            SetColorPickHighlight(this.m_CurrentPaintColor2);
+        }
+
+        private void LblPaintColor_MouseLeave(object sender, EventArgs e)
+        {
+            WipeColorPickHighlight();
+        }
     }
 }

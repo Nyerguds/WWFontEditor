@@ -152,7 +152,7 @@ WWFont v4
 IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
 
-Dynamix Font v1
+Dynamix Font v1 & v2
 -Rise of the Dragon
 -Heart of China
 -The Adventures of Willy Beamish
@@ -215,15 +215,38 @@ code in something, go ahead. I just made this font editor so it would exist.
 
 Just, do please adhere to Wheaton's Law: don't be a dick :)
 
+
+Further attribution, for the sake of completeness:
+
+The Dynamix v2 format was figured out thanks to code from ScummVM. ScummVM is
+licensed under the GNU General Public License, but I only used it as reference
+and didn't copy or use their actual code.
+
+The Dynamix decompression code was converted from the C++ code of VOGONS.org
+user tikalat's Midi Tools. It contains no license but I assume the fact he
+included the code implies that he doesn't mind it being useful to more people.
+https://www.vogons.org/viewtopic.php?p=273448#p273448
+
+
 ---------------
 Version history
 ---------------
 
+v1.9: (2017/07/12 12:05)
+-Removed extension filter on drag-and-drop. You can try to load any file.
+-Hovering over the chosen colors highlights them on the palette.
+-Double-clicking the chosen colors edits them on the palette.
+-Save As dialog adapts loaded file name's extension to suggested save type.
+-A default save type (WW v3) is suggested if the loaded type can't be saved.
+-Added support for Dynamix font v2, though it doesn't compress on save.
+
 v1.8.1: (2017/07/10 11:00)
--Specifically identifies and rejects compressed Dynamix font type.
+-Specifically identifies and rejects 'FF'-typed Dynamix font type.
 
 v1.8: (2017/07/10 10:32)
 -Added support for basic Dynamix/Sierra 1-bit font.
+-Split autodetect list and supported files list, so the supported files can be
+ in an order that's more logical than the auto-detect order.
 
 v1.7.1: (2017/05/23 18:40)
 -Added new "Paste on symbol" option (Ctrl+Shift+V) that pastes with

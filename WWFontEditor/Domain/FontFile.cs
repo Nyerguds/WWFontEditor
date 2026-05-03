@@ -43,10 +43,12 @@ namespace WWFontEditor.Domain
         /// <summary>Upper limit for the Y-offset of the symbols in the font. Zero means the font format does not support Y offsets</summary>
         public abstract Int32 YOffsetTypeMax { get; }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
-        public virtual Boolean CustomSymbSizesForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax || this.FontWidthTypeMin != this.FontWidthTypeMax; } }
+        public virtual Boolean CustomSymbXForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
+        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
+        public virtual Boolean CustomSymbYForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
-        /// <summary>File extension typically used for this font type.</summary>
+        /// <summary>File extensions typically used for this font type.</summary>
         public virtual String[] FileExtensions { get { return new String[] { "fnt" }; } }
         /// <summary>File extension set for this specific file.</summary>
         public String FileExtension { get; set; }
@@ -60,6 +62,8 @@ namespace WWFontEditor.Domain
         public abstract String LongTypeDescription { get; }
         /// <summary>List of games and other programs this font type is used by.</summary>
         public abstract String[] GamesListForType { get; }
+        /// <summary>Supported types can always be loaded, but this indicates if save functionality to this type is also available.</summary>
+        public virtual Boolean CanSave { get { return true; } }
 
         /// <summary>
         /// Loads the font from file data. Throws a FileTypeLoadException if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
@@ -88,7 +92,7 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Height > m_FontHeight || !this.CustomSymbSizesForType)
+                    if (symbol.Height > m_FontHeight || !this.CustomSymbXForType)
                         symbol.ChangeHeight(m_FontHeight);
             }
         }
@@ -101,7 +105,7 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Width > m_FontWidth || !this.CustomSymbSizesForType)
+                    if (symbol.Width > m_FontWidth || !this.CustomSymbXForType)
                         symbol.ChangeWidth(m_FontWidth);
             }
         }
@@ -131,12 +135,14 @@ namespace WWFontEditor.Domain
         /// </summary>
         public static Type[] SupportedTypes =
         {
-            typeof (FontFileV1),
-            typeof (FontFileV2),
-            typeof (FontFileV3),
-            typeof (FontFileV4),
-            typeof (FontFileD2K),
-            typeof (FontFileDynV1)
+            typeof(FontFileV1),
+            typeof(FontFileV2),
+            typeof(FontFileV3),
+            typeof(FontFileV4),
+            typeof(FontFileD2K),
+            typeof(FontFileDynV1),
+            typeof(FontFileDynV2),
+            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
         };
 
         /// <summary>
@@ -147,13 +153,15 @@ namespace WWFontEditor.Domain
         {
             // Dynamix fonts have a very specific "FNT:" header start so I prefer putting them first.
             typeof(FontFileDynV1),
-            typeof (FontFileV4),
-            typeof (FontFileV3),
-            typeof (FontFileV2),
+            typeof(FontFileV4),
+            typeof(FontFileV3),
+            typeof(FontFileV2),
             // V1's "check" is file size only; leave it at the end.
-            typeof (FontFileV1),
+            typeof(FontFileV1),
             // Can safely be put behind V1, since its minimum size is more than V1's fixed size.
-            typeof (FontFileD2K)
+            typeof(FontFileD2K),
+            typeof(FontFileDynV2),
+            //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
         };
 
         /// <summary>
@@ -192,6 +200,27 @@ namespace WWFontEditor.Domain
                 }
             }
             return null;
+        }
+
+        public static List<String> GetSupportedExtensions()
+        {
+            List<String> extensions = new List<String>();
+            List<Type> types = SupportedTypes.Union(AutoDetectTypes).ToList();
+            foreach (Type type in types)
+            {
+                FontFile fontInstance = null;
+                try
+                {
+                    fontInstance = (FontFile)Activator.CreateInstance(type);
+                }
+                catch { /* Ignore; programmer error. */ }
+                if (fontInstance == null)
+                    continue;
+                foreach (String ext in fontInstance.FileExtensions)
+                    if (!String.IsNullOrEmpty(ext) && !extensions.Contains(ext))
+                        extensions.Add(ext);
+            }
+            return extensions;
         }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
