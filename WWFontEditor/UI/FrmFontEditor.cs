@@ -39,6 +39,7 @@ namespace WWFontEditor
 
 
         private Boolean m_loading = true;
+        private String m_TitleText;
         private String m_FileName;
         private FontFile m_LoadedFont;
         private FontFile m_LoadedFontBackup;
@@ -76,26 +77,8 @@ namespace WWFontEditor
             // Select DOS-437 encoding, the one all original C&C fonts are based on.
             cmbEncodings.SelectedItem = encodings.Find(e => e.Encoding.CodePage == 437);
             
-            // Colors init. This might need to become a function of its own, called on file load, if Dune 2000 palettes are supported.
-
-            m_CurrentPalette = PaletteRainbow;
-            //m_CurrentPalette = ImageUtils.MakePalette(null, PixelFormat.Format4bppIndexed, false).Entries;
-            //m_CurrentPalette = m_CurrentPalette.Reverse().ToArray();
-            m_CurrentPalette[0] = Color.FromArgb(0x00, m_CurrentPalette[0]);
-            palColorSelector.MaxColors = m_CurrentPalette.Length;
-            Int32 aimDim = 134;
-            Int32 squaresPerRow = (Int32)Math.Sqrt(m_CurrentPalette.Length);
-            Int32 sqrWidth = (Int32)Math.Ceiling(aimDim * 7.5 / 8.5 / squaresPerRow);
-            Int32 padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
-            while (aimDim < squaresPerRow * sqrWidth + (squaresPerRow - 1) * padding)
-            {
-                sqrWidth--;
-                padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
-            }
-            palColorSelector.ColorTableWidth = squaresPerRow;
-            palColorSelector.LabelSize = new Size(sqrWidth, sqrWidth);
-            palColorSelector.PadBetween = new Point(padding, padding);
-            palColorSelector.Palette = m_CurrentPalette;
+            // Colors init.
+            InitColorPalette(PixelFormat.Format4bppIndexed);
 
             // PixelBox hierarchy init            
             pxbEditGridBehind.Parent = pxbFullSize;
@@ -109,12 +92,10 @@ namespace WWFontEditor
             pxbEditGridFront.BackColor = Color.Transparent;
             pxbEditGridFront.Location = new Point(0, 0);
 
-            this.chkGrid.Tag = true;
-            this.chkOutline.Tag = true;
-
             this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor1]);
             this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor2]);
-            this.Text = "Westwood Font Editor " + GeneralUtils.ProgramVersion() + " - Created by Nyerguds";
+            m_TitleText = "Westwood Font Editor " + GeneralUtils.ProgramVersion() + " - Created by Nyerguds";
+            this.Text = m_TitleText;
             this.m_loading = false;
         }
 
@@ -182,25 +163,28 @@ namespace WWFontEditor
                 this.pxbFullSize.Visible = loadOk;
                 if (loadOk)
                 {
+                    InitColorPalette(this.m_LoadedFont.GetPixelFormat());
                     this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
-                    this.lblValFilename.Text = Path.GetFileName(path);
-                    this.numCharacters.Value = this.m_LoadedFont.Length;
+                    this.Text = m_TitleText + " - \"" + Path.GetFileName(path) + "\" (" + m_LoadedFont.GetShortTypeCode() + ")";
+                    this.lblValType.Text = m_LoadedFont.GetShortTypeCode().Replace("&", "&&");
                     this.numCharacters.Maximum = 0x100;
-                    this.numFontHeight.Value = this.m_LoadedFont.FontHeight;
+                    this.numCharacters.Value = this.m_LoadedFont.Length;
                     this.numFontHeight.Maximum = 0xFF;
-                    this.numFontWidth.Value = this.m_LoadedFont.FontWidth;
+                    this.numFontHeight.Value = this.m_LoadedFont.FontHeight;
                     this.numFontWidth.Maximum = 0xFF;
+                    this.numFontWidth.Value = this.m_LoadedFont.FontWidth;
                 }
                 else
                 {
                     this.m_FileName = null;
-                    this.lblValFilename.Text = "-";
-                    this.numCharacters.Value = 0;
+                    this.Text = m_TitleText;
+                    this.lblValType.Text = "-";
                     this.numCharacters.Maximum = 0;
-                    this.numFontHeight.Value = 0;
+                    this.numCharacters.Value = 0;
                     this.numFontHeight.Maximum = 0;
-                    this.numFontWidth.Value = 0;
+                    this.numFontHeight.Value = 0;
                     this.numFontWidth.Maximum = 0;
+                    this.numFontWidth.Value = 0;
                 }
                 this.ReloadImageInfo(true);
                 this.ReloadDataGrid();
@@ -220,6 +204,33 @@ namespace WWFontEditor
             {
                 this.m_loading = false;
             }
+        }
+        
+        private void InitColorPalette(PixelFormat pixelFormat)
+        {
+            if (pixelFormat == PixelFormat.Format4bppIndexed)
+                m_CurrentPalette = PaletteRainbow;
+            else
+            {
+                m_CurrentPalette = ImageUtils.MakePalette(null, pixelFormat, false).Entries.Select(c => Color.FromArgb(0XFF, c)) //.ToArray();
+                                    .Reverse().ToArray();
+                m_CurrentPalette[0] = Color.Black;
+            }
+            m_CurrentPalette[0] = Color.FromArgb(0x00, m_CurrentPalette[0]);
+            palColorSelector.MaxColors = m_CurrentPalette.Length;
+            Int32 aimDim = 134;
+            Int32 squaresPerRow = (Int32)Math.Sqrt(m_CurrentPalette.Length);
+            Int32 sqrWidth = (Int32)Math.Ceiling(aimDim * 7.5 / 8.5 / squaresPerRow);
+            Int32 padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
+            while (aimDim < squaresPerRow * sqrWidth + (squaresPerRow - 1) * padding)
+            {
+                sqrWidth--;
+                padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
+            }
+            palColorSelector.ColorTableWidth = squaresPerRow;
+            palColorSelector.LabelSize = new Size(sqrWidth, sqrWidth);
+            palColorSelector.PadBetween = new Point(padding, padding);
+            palColorSelector.Palette = m_CurrentPalette;
         }
 
         private void ReloadDataGrid()
@@ -310,10 +321,10 @@ namespace WWFontEditor
                     m_CurHeight = 0;
                     m_CurWidth = 0;
                     m_CurYOffset = 0;
-                    numHeight.Value = 0;
                     numHeight.Maximum = 0;
-                    numWidth.Value = 0;
+                    numHeight.Value = 0;
                     numWidth.Maximum = 0;
+                    numWidth.Value = 0;
                     numYOffset.Value = 0;
                     return;
                 }
@@ -322,10 +333,10 @@ namespace WWFontEditor
                 m_CurHeight = this.m_LoadedFont.GetCharHeight(curIndex);
                 m_CurWidth = this.m_LoadedFont.GetCharWidth(curIndex);
                 m_CurYOffset = this.m_LoadedFont.GetCharYOffset(curIndex);
-                numHeight.Value = m_CurHeight;
                 numHeight.Maximum = this.m_LoadedFont.FontHeight;
-                numWidth.Value = m_CurWidth;
+                numHeight.Value = m_CurHeight;
                 numWidth.Maximum = this.m_LoadedFont.FontWidth;
+                numWidth.Value = m_CurWidth;
                 this.numYOffset.Value = m_CurYOffset;
                 this.CheckCanRevert();
                 if (refreshEditor)

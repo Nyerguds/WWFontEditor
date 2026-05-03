@@ -32,8 +32,8 @@
             this.lblZoom = new System.Windows.Forms.Label();
             this.lblFontMax = new System.Windows.Forms.Label();
             this.lblCharacters = new System.Windows.Forms.Label();
-            this.lblFilename = new System.Windows.Forms.Label();
-            this.lblValFilename = new System.Windows.Forms.Label();
+            this.lblType = new System.Windows.Forms.Label();
+            this.lblValType = new System.Windows.Forms.Label();
             this.lblFontMaxX = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
@@ -47,10 +47,10 @@
             this.btnShiftDown = new System.Windows.Forms.Button();
             this.btnShiftRight = new System.Windows.Forms.Button();
             this.btnShiftUp = new System.Windows.Forms.Button();
+            this.chkPicker = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.chkPaint = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkOutline = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.chkGrid = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.chkPaint = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.chkPicker = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.btnRevert = new System.Windows.Forms.Button();
             this.cmbEncodings = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -127,23 +127,23 @@
             this.lblCharacters.Text = "Characters:";
             this.lblCharacters.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblFilename
+            // lblType
             // 
-            this.lblFilename.Location = new System.Drawing.Point(12, 31);
-            this.lblFilename.Name = "lblFilename";
-            this.lblFilename.Size = new System.Drawing.Size(62, 20);
-            this.lblFilename.TabIndex = 29;
-            this.lblFilename.Text = "Filename:";
-            this.lblFilename.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblType.Location = new System.Drawing.Point(12, 31);
+            this.lblType.Name = "lblType";
+            this.lblType.Size = new System.Drawing.Size(62, 20);
+            this.lblType.TabIndex = 29;
+            this.lblType.Text = "Type:";
+            this.lblType.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblValFilename
+            // lblValType
             // 
-            this.lblValFilename.AutoSize = true;
-            this.lblValFilename.Location = new System.Drawing.Point(80, 38);
-            this.lblValFilename.Name = "lblValFilename";
-            this.lblValFilename.Size = new System.Drawing.Size(10, 13);
-            this.lblValFilename.TabIndex = 30;
-            this.lblValFilename.Text = "-";
+            this.lblValType.AutoSize = true;
+            this.lblValType.Location = new System.Drawing.Point(80, 35);
+            this.lblValType.Name = "lblValType";
+            this.lblValType.Size = new System.Drawing.Size(10, 13);
+            this.lblValType.TabIndex = 30;
+            this.lblValType.Text = "-";
             // 
             // lblFontMaxX
             // 
@@ -280,34 +280,18 @@
             this.btnShiftUp.UseVisualStyleBackColor = true;
             this.btnShiftUp.Click += new System.EventHandler(this.btnShiftUp_Click);
             // 
-            // chkOutline
+            // chkPicker
             // 
-            this.chkOutline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkOutline.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chkOutline.Checked = true;
-            this.chkOutline.Image = global::WWFontEditor.Properties.Resources.icon_editarea;
-            this.chkOutline.Location = new System.Drawing.Point(540, 390);
-            this.chkOutline.Margin = new System.Windows.Forms.Padding(2);
-            this.chkOutline.Name = "chkOutline";
-            this.chkOutline.Size = new System.Drawing.Size(21, 21);
-            this.chkOutline.TabIndex = 43;
-            this.chkOutline.Toggle = false;
-            this.toolTip1.SetToolTip(this.chkOutline, "Toggle editable area");
-            this.chkOutline.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
-            // 
-            // chkGrid
-            // 
-            this.chkGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkGrid.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chkGrid.Checked = true;
-            this.chkGrid.Image = global::WWFontEditor.Properties.Resources.icon_grid;
-            this.chkGrid.Location = new System.Drawing.Point(514, 390);
-            this.chkGrid.Name = "chkGrid";
-            this.chkGrid.Size = new System.Drawing.Size(21, 21);
-            this.chkGrid.TabIndex = 42;
-            this.chkGrid.Toggle = false;
-            this.toolTip1.SetToolTip(this.chkGrid, "Toggle grid");
-            this.chkGrid.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
+            this.chkPicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkPicker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chkPicker.Image = global::WWFontEditor.Properties.Resources.icon_colpicker;
+            this.chkPicker.Location = new System.Drawing.Point(656, 385);
+            this.chkPicker.Name = "chkPicker";
+            this.chkPicker.Size = new System.Drawing.Size(21, 21);
+            this.chkPicker.TabIndex = 311;
+            this.chkPicker.Toggle = false;
+            this.toolTip1.SetToolTip(this.chkPicker, "Color picker");
+            this.chkPicker.CheckStateChanged += new System.EventHandler(this.chkPick_CheckStateChanged);
             // 
             // chkPaint
             // 
@@ -323,18 +307,32 @@
             this.toolTip1.SetToolTip(this.chkPaint, "Pencil");
             this.chkPaint.CheckStateChanged += new System.EventHandler(this.chkPaint_CheckStateChanged);
             // 
-            // chkPicker
+            // chkOutline
             // 
-            this.chkPicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkPicker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chkPicker.Image = global::WWFontEditor.Properties.Resources.icon_colpicker;
-            this.chkPicker.Location = new System.Drawing.Point(656, 385);
-            this.chkPicker.Name = "chkPicker";
-            this.chkPicker.Size = new System.Drawing.Size(21, 21);
-            this.chkPicker.TabIndex = 311;
-            this.chkPicker.Toggle = false;
-            this.toolTip1.SetToolTip(this.chkPicker, "Color picker");
-            this.chkPicker.CheckStateChanged += new System.EventHandler(this.chkPick_CheckStateChanged);
+            this.chkOutline.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkOutline.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chkOutline.Checked = true;
+            this.chkOutline.Image = global::WWFontEditor.Properties.Resources.icon_editarea;
+            this.chkOutline.Location = new System.Drawing.Point(540, 390);
+            this.chkOutline.Margin = new System.Windows.Forms.Padding(2);
+            this.chkOutline.Name = "chkOutline";
+            this.chkOutline.Size = new System.Drawing.Size(21, 21);
+            this.chkOutline.TabIndex = 43;
+            this.toolTip1.SetToolTip(this.chkOutline, "Toggle editable area");
+            this.chkOutline.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
+            // 
+            // chkGrid
+            // 
+            this.chkGrid.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkGrid.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chkGrid.Checked = true;
+            this.chkGrid.Image = global::WWFontEditor.Properties.Resources.icon_grid;
+            this.chkGrid.Location = new System.Drawing.Point(514, 390);
+            this.chkGrid.Name = "chkGrid";
+            this.chkGrid.Size = new System.Drawing.Size(21, 21);
+            this.chkGrid.TabIndex = 42;
+            this.toolTip1.SetToolTip(this.chkGrid, "Toggle grid");
+            this.chkGrid.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
             // 
             // btnRevert
             // 
@@ -769,7 +767,7 @@
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(707, 416);
+            this.ClientSize = new System.Drawing.Size(707, 417);
             this.Controls.Add(this.chkPicker);
             this.Controls.Add(this.chkPaint);
             this.Controls.Add(this.numFontHeight);
@@ -783,14 +781,14 @@
             this.Controls.Add(this.lblPaintColor1);
             this.Controls.Add(this.lblPaintColor2);
             this.Controls.Add(this.palColorSelector);
-            this.Controls.Add(this.lblFilename);
+            this.Controls.Add(this.lblType);
             this.Controls.Add(this.lblCharacters);
             this.Controls.Add(this.lblFontMax);
             this.Controls.Add(this.lblFontMaxX);
             this.Controls.Add(this.lblZoom);
             this.Controls.Add(this.numZoom);
             this.Controls.Add(this.pnlImageScroll);
-            this.Controls.Add(this.lblValFilename);
+            this.Controls.Add(this.lblValType);
             this.Controls.Add(this.menuStrip1);
             this.Icon = global::WWFontEditor.Properties.Resources.wwfont;
             this.MainMenuStrip = this.menuStrip1;
@@ -829,8 +827,8 @@
         private System.Windows.Forms.Label lblZoom;
         private System.Windows.Forms.Label lblFontMax;
         private System.Windows.Forms.Label lblCharacters;
-        private System.Windows.Forms.Label lblFilename;
-        private System.Windows.Forms.Label lblValFilename;
+        private System.Windows.Forms.Label lblType;
+        private System.Windows.Forms.Label lblValType;
         private System.Windows.Forms.Label lblFontMaxX;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;

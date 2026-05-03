@@ -10,7 +10,7 @@ namespace Nyerguds.Util.UI
     public class ImageButtonCheckBox : Label
     {
         private Boolean m_Checked = false;
-        private Boolean m_Toggle = false;
+        private Boolean m_Toggle = true;
         private Boolean m_Clicking = false;
         public Boolean m_TabStop = true;
         public event EventHandler CheckStateChanged;
@@ -34,7 +34,11 @@ namespace Nyerguds.Util.UI
         [Bindable(true)]
         [DefaultValue(true)]
         [SettingsBindable(true)]
-        public Boolean Toggle { get; set; }
+        public Boolean Toggle
+        {
+            get { return this.m_Toggle; }
+            set { this.m_Toggle = value; }
+        }
 
         [Browsable(true)]
         [DefaultValue(true)]

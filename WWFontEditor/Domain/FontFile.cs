@@ -9,49 +9,30 @@ namespace WWFontEditor.Domain
 {
     public class FontFile
     {
-        /// <summary>Size of the file</summary>
-        public Int16 FileSize { get; private set; }
-        /// <summary>Data format for the image data: 00 for 4-bit image data, 02 for 8-bit.</summary>
-        public Byte DataFormat { get; private set; }
-        /// <summary>Unknown entry (0x05 in C&amp;C/RA1, 0x00 in TS)</summary>
-        public Byte Unknown03 { get; private set; }
-        /// <summary>[Unused?] Unknown entry (always 0x000e) (font version position?)</summary>
-        public Int16 Unknown04 { get; private set; }
-        /// <summary>Absolute offset of the start of FontDataList (Normally 0x14)</summary>
-        public Int16 FontDataOffsetsListOffset { get; private set; }
-        /// <summary>Absolute offset of the start of WidthsList</summary>
-        public Int16 WidthsListOffset { get; private set; }
-        /// <summary>[Unused?] Start of the actual font data? Should equals the first entry in FontDataList, but doesn't in TS.</summary>
-        public Int16 FontDataOffset { get; private set; }
-        /// <summary>Absolute offset of the start of HeightsList</summary>
-        public Int16 HeightsListOffset { get; private set; }
-        /// <summary>[Unused?] Unknown entry (always 0x1011 or 0x1012; 0x0000 in TS) (font version?)</summary>
-        public Int16 Unknown0E { get; private set; }
-        /// <summary>[Unused?] Align byte. Always 0x00</summary>
-        public Byte AlwaysZero { get; private set; }
-
-        protected Byte m_fontHeight;
+        public FontFileType FontFileType { get; set; }
+        
+        protected Byte m_FontHeight;
         /// <summary>Overall maximum font height.</summary>
         public Byte FontHeight
         {
-            get { return m_fontHeight; }
+            get { return m_FontHeight; }
             set
             {
-                this.m_fontHeight = value;
+                this.m_FontHeight = value;
                 foreach (FontFileCharacter fontchar in this.m_ImageDataList)
                     if (fontchar.Height > value)
                         fontchar.ChangeHeight(value);
             }
         }
 
-        protected Byte m_fontWidth;
+        protected Byte m_FontWidth;
         /// <summary>Overall maximum font width.</summary>
         public Byte FontWidth
         {
-            get { return m_fontWidth; }
+            get { return m_FontWidth; }
             set
             {
-                this.m_fontWidth = value;
+                this.m_FontWidth = value;
                 foreach (FontFileCharacter fontchar in this.m_ImageDataList)
                     if (fontchar.Width > value)
                         fontchar.ChangeWidth(value);
@@ -77,6 +58,23 @@ namespace WWFontEditor.Domain
             foreach (FontFileCharacter image in this.m_ImageDataList)
                 clone.m_ImageDataList.Add(image.Clone());
             return clone;
+        }
+
+
+        public String GetShortTypeCode()
+        {
+            switch (this.FontFileType)
+            {
+                case FontFileType.WWClassic1:
+                    return "LOL/KYR/D2";
+                case FontFileType.WWClassicCnC:
+                    return "C&C1/RA1";
+                case FontFileType.WWTibSun:
+                    return "TS";
+                case FontFileType.EDDune2k:
+                    return "D2K";
+            }
+            return String.Empty;
         }
 
         public void RestorePicFromBackup(Int32 index, FontFile backup)
@@ -176,39 +174,49 @@ namespace WWFontEditor.Domain
         public Byte[] WriteFntFile()
         {
             Int32 imagesCount = this.m_ImageDataList.Count;
+            FontFileType fft = this.FontFileType;
+            Boolean isTibSun = fft == FontFileType.WWTibSun;
             Byte[] fontDataOffsetsList = new Byte[imagesCount*2];
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
             Byte[] heightsList = new Byte[imagesCount*2];
             // header + Int16 index + Byte heights
             Int32 offsetsListOffset = 0x14;
-            Int32 widthListOffset = offsetsListOffset + imagesCount * 2;
-            Int32 fontOffsetStart = widthListOffset + imagesCount;
+            Int32 widthsListOffset = offsetsListOffset + imagesCount * 2;
+            Int32 heightsListOffset = 0;
+            if (isTibSun)
+                heightsListOffset = widthsListOffset + +imagesCount;
+
+            Int32 fontOffsetStart = (!isTibSun) ? widthsListOffset + imagesCount : heightsListOffset + imagesCount * 2;
             for (Int32 i = 0; i < imagesCount; i++)
             {
                 FontFileCharacter fc = this.m_ImageDataList[i];
                 Byte[] imgData8bit = fc.ByteData;
                 Byte imgWidth = fc.Width;
                 Byte imgHeight = fc.Height;
-                Int32 stride = (imgWidth / 2) + (imgWidth % 2);
-                Int32 dubstride = stride * 2;
-                Byte[] imgData4bit = new Byte[stride*imgHeight];
-                for (Int32 y = 0; y < imgHeight; y++)
+                if (!isTibSun)
                 {
-                    for (Int32 x = 0; x < dubstride; x += 2)
+                    Int32 stride = (imgWidth / 2) + (imgWidth % 2);
+                    Int32 dubstride = stride * 2;
+                    Byte[] imgData4bit = new Byte[stride*imgHeight];
+                    for (Int32 y = 0; y < imgHeight; y++)
                     {
-                        Int32 nybLo = (imgData8bit[y * imgWidth + x] & 0x0F);
-                        Int32 nybHi = (x + 1) == imgWidth ? 0 : ((imgData8bit[y * imgWidth + x + 1] << 0x4) & 0xF0);
-                        imgData4bit[y * stride + x / 2] = (Byte)(nybHi | nybLo);
+                        for (Int32 x = 0; x < dubstride; x += 2)
+                        {
+                            Int32 nybLo = (imgData8bit[y * imgWidth + x] & 0x0F);
+                            Int32 nybHi = (x + 1) == imgWidth ? 0 : ((imgData8bit[y * imgWidth + x + 1] << 0x4) & 0xF0);
+                            imgData4bit[y * stride + x / 2] = (Byte)(nybHi | nybLo);
+                        }
                     }
+                    imageData[i] = imgData4bit;
                 }
-                imageData[i] = imgData4bit;
+                imageData[i] = imgData8bit.ToArray();
                 widthsList[i] = imgWidth;
                 heightsList[i * 2] = fc.YOffset;
                 heightsList[i * 2 + 1] = imgHeight;
             }
             Int32[] refslist = CreateRefsList(imageData);
-            Int32 fontOffset = fontOffsetStart;
+            Int32 fontOffset = isTibSun ? 0 : fontOffsetStart;
             for (Int32 i = 0; i < imagesCount; i++)
             {
                 Int32 replacei = refslist[i];
@@ -225,32 +233,42 @@ namespace WWFontEditor.Domain
                     fontDataOffsetsList[i * 2 + 1] = fontDataOffsetsList[replacei * 2 + 1];
                 }
             }
-            Int32 heightsListOffset = fontOffset;
-            Int32 fullLength = heightsListOffset + imagesCount * 2;
+            if (!isTibSun)
+                heightsListOffset = fontOffset;
+            Int32 fullLength = !isTibSun ? (heightsListOffset + imagesCount * 2) : (fontOffset + fontOffsetStart);
             Byte[] fullData = new Byte[fullLength];
+
+            Byte unknown03 = (Byte)(isTibSun ? 0 : 5);
+            Int16 unknown0E;
+            if (fft == FontFileType.WWClassic1)
+                unknown0E = 0x1011;
+            else if (fft == FontFileType.WWClassicCnC)
+                unknown0E = 0x1012;
+            else
+                unknown0E = 0;
             // write header
             fullData[0x00] = (Byte)(fullLength & 0xFF);         //Int16 FileSize, low byte;
             fullData[0x01] = (Byte)((fullLength >> 8) & 0xFF);  //Int16 FileSize, high byte;
-            fullData[0x02] = 0x00;                              // Byte DataFormat
-            fullData[0x03] = Unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
-            fullData[0x04] = (Byte)(Unknown04 & 0xFF);          // Int16 Unknown04, low byte; (always 0x0e)
-            fullData[0x05] = (Byte)((Unknown04 >> 8) & 0xFF);   // Int16 Unknown04, high byte; (always 0x00)
+            fullData[0x02] = (Byte)(isTibSun? 0x02 : 0x00);     // Byte DataFormat
+            fullData[0x03] = unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
+            fullData[0x04] = (Byte)0x0e;                        // Int16 Unknown04, low byte; (always 0x0e)
+            fullData[0x05] = (Byte)0x00;                        // Int16 Unknown04, high byte; (always 0x00)
             fullData[0x06] = (Byte)(offsetsListOffset & 0xFF);        // Int16 FontDataListOffset, low byte;
             fullData[0x07] = (Byte)((offsetsListOffset >> 8) & 0xFF); // Int16 FontDataListOffset, high byte;
-            fullData[0x08] = (Byte)(widthListOffset & 0xFF);          // Int16 WidthsListOffset, low byte
-            fullData[0x09] = (Byte)((widthListOffset >> 8) & 0xFF);   // Int16 WidthsListOffset, high byte
-            fullData[0x0A] = fontDataOffsetsList[0];            // Int16 FontDataOffset, low byte
-            fullData[0x0B] = fontDataOffsetsList[1];             // Int16 FontDataOffset, high byte
+            fullData[0x08] = (Byte)(widthsListOffset & 0xFF);         // Int16 WidthsListOffset, low byte
+            fullData[0x09] = (Byte)((widthsListOffset >> 8) & 0xFF);  // Int16 WidthsListOffset, high byte
+            fullData[0x0A] = (Byte)(fontOffsetStart & 0xFF);          // Int16 FontDataOffset, low byte
+            fullData[0x0B] = (Byte)((fontOffsetStart >> 8) & 0xFF);   // Int16 FontDataOffset, high byte
             fullData[0x0C] = (Byte)(heightsListOffset & 0xFF);        // Int16 HeightsListOffset, low byte
             fullData[0x0D] = (Byte)((heightsListOffset >> 8) & 0xFF); // Int16 HeightsListOffset, high byte
-            fullData[0x0E] = (Byte)(Unknown0E & 0xFF);          // Int16 Unknown0E, low byte (0x11 for pre-C&C WW games?)
-            fullData[0x0F] = (Byte)((Unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, high byte (always 0x10)
+            fullData[0x0E] = (Byte)(unknown0E & 0xFF);          // Int16 Unknown0E, low byte (0x11 for pre-C&C WW games?)
+            fullData[0x0F] = (Byte)((unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, high byte (always 0x10)
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
-            fullData[0x11] = (Byte)(imagesCount - 1);           // Byte LastCharIndex
-            fullData[0x12] = FontHeight;                        // Byte FontHeight
-            fullData[0x13] = FontWidth;                         // Byte FontWidth
+            fullData[0x11] = (Byte)(isTibSun? 0 : imagesCount - 1); // Byte LastCharIndex (for non-TS)
+            fullData[0x12] = m_FontHeight;                        // Byte FontHeight
+            fullData[0x13] = m_FontWidth;                         // Byte FontWidth
             Array.Copy(fontDataOffsetsList, 0, fullData, offsetsListOffset, fontDataOffsetsList.Length);
-            Array.Copy(widthsList, 0, fullData, widthListOffset, widthsList.Length);
+            Array.Copy(widthsList, 0, fullData, widthsListOffset, widthsList.Length);
             Int32 imageDataOffs = fontOffsetStart;
             foreach (Byte[] charImgData in imageData)
             {
@@ -297,10 +315,15 @@ namespace WWFontEditor.Domain
         /// <returns>the pixel format of the loaded font.</returns>
         public PixelFormat GetPixelFormat()
         {
-            if (this.DataFormat == 0)
-                return PixelFormat.Format4bppIndexed;
-            if (this.DataFormat == 2)
-                return PixelFormat.Format8bppIndexed;
+            switch(this.FontFileType)
+            {
+                case FontFileType.WWClassic1:
+                case FontFileType.WWClassicCnC:
+                    return PixelFormat.Format4bppIndexed;
+                case FontFileType.WWTibSun:
+                case FontFileType.EDDune2k:
+                    return PixelFormat.Format8bppIndexed;
+            }
             throw new NotSupportedException("Not supported!");
         }
 
@@ -309,25 +332,65 @@ namespace WWFontEditor.Domain
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
                 throw new Exception("File data too short enough to be a valid FNT file.");
-            Int32 length = this.ReadHeaderAndGetLastIndex(fileData) + 1;
-            if (this.FileSize != fileLength)
+                     
+            Int16 fileSize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
+            if (fileSize != fileLength)
+            {
+                // put checks for D2K file format here.
+                // Will require UI updates though, to support a start index for the characters.
+                // Though that could be automated by detecting empty entries if the game doesn't count on a specific start offset.
                 throw new Exception("File size in header does not match file data!");
-            if (this.DataFormat != 0x00)
-                throw new NotImplementedException(String.Format("Font type {0} is not supported.", this.DataFormat));
-            if (this.FontDataOffsetsListOffset + length * 2 > fileLength)
+            }
+            Byte dataFormat = fileData[0x02];
+            //Byte unknown03 = fileData[0x03];
+            //this.Unknown04 = ArrayUtils.GetLEShortFromByteArray(fileData, 0x04);
+            Int16 fontDataOffsetsListOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x06);
+            Int16 widthsListOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x08);
+            // use this for pos on TS format
+            Int16 fontDataOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0A);
+            Int16 heightsListOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0C);
+            Int16 unknown0E = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0E);
+            //Byte AlwaysZero = fileData[0x10];
+            Byte lastIndex = fileData[0x11];
+            this.m_FontHeight = fileData[0x12];
+            this.m_FontWidth = fileData[0x13];
+
+            Int32 length = lastIndex;
+            Boolean isTibSun = dataFormat == 0x02;
+            if (isTibSun)
+            {
+                this.FontFileType = FontFileType.WWTibSun;
+                // isn't in the header? Calculate.
+                Int32[] headerVals = new Int32[] { fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset }.OrderBy(n => n).Take(2).ToArray();
+                Int32 divval = 1;
+                if (headerVals[0] == fontDataOffsetsListOffset || headerVals[0] == heightsListOffset)
+                    divval = 2;
+                length = (headerVals[1] - headerVals[0]) / divval;
+            }
+            else
+            {
+                if (unknown0E == 0x1011)
+                    this.FontFileType = FontFileType.WWClassic1;
+                else
+                    this.FontFileType = FontFileType.WWClassicCnC;
+                length++;
+            }
+            if (dataFormat != 0x00 && !isTibSun)
+                throw new NotImplementedException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
+            if (fontDataOffsetsListOffset + length * 2 > fileLength)
                 throw new Exception("File data too short for offsets list!");
-            if (WidthsListOffset + length > fileLength)
+            if (widthsListOffset + length > fileLength)
                 throw new Exception("File data too short for character widths list starting from offset !");
-            if (HeightsListOffset + length * 2 > fileLength)
+            if (heightsListOffset + length * 2 > fileLength)
                 throw new Exception("File data too short for character heights list!");
             //FontDataOffset
-            Int16[] fontDataOffsetsList = new Int16[length];
+            Int32[] fontDataOffsetsList = new Int32[length];
             for (Int32 i = 0; i < length; i++)
-                fontDataOffsetsList[i] = ArrayUtils.GetLEShortFromByteArray(fileData, this.FontDataOffsetsListOffset + i * 2);
+                fontDataOffsetsList[i] = ArrayUtils.GetLEShortFromByteArray(fileData, fontDataOffsetsListOffset + i * 2) + (isTibSun ? fontDataOffset: 0);
             List<Byte> widthsList = new List<Byte>();
             for (Int32 i = 0; i < length; i++)
             {
-                Byte width = fileData[this.WidthsListOffset + i];
+                Byte width = fileData[widthsListOffset + i];
                 if (width > this.FontWidth)
                     throw new Exception(String.Format("Illegal value '{0}' in character widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
                 widthsList.Add(width);
@@ -336,8 +399,8 @@ namespace WWFontEditor.Domain
             List<Byte> heightsList = new List<Byte>();
             for (Int32 i = 0; i < length; i++)
             {
-                yOffsetsList.Add(fileData[this.HeightsListOffset + i * 2]);
-                Byte height = fileData[this.HeightsListOffset + i * 2 + 1];
+                yOffsetsList.Add(fileData[heightsListOffset + i * 2]);
+                Byte height = fileData[heightsListOffset + i * 2 + 1];
                 if (height > this.FontHeight)
                     throw new Exception(String.Format("Illegal value '{0}' in character heights list at entry #{1}: the value is larger than global height '{2}'.", height, i, this.FontHeight));
                 heightsList.Add(height);
@@ -350,24 +413,31 @@ namespace WWFontEditor.Domain
                 Byte height = heightsList[i];
                 Int32 stride = Image.GetPixelFormatSize(this.GetPixelFormat()) * width;
                 stride = (stride / 8) + ((stride % 8) > 0 ? 1 : 0);
-                Int32 size = height * stride;
+                Int32 size = stride * height;
                 if (start + size > fileLength)
                     throw new Exception(String.Format("Data for font entry #{0} exceeds file bounds!", i));
-                Byte[] curData = new Byte[size];
-                // Convert to 8-bit data. So much easier to edit the data as one byte per pixel.
                 Byte[] curData8bit = new Byte[width*height];
-                Array.Copy(fileData, start, curData, 0, size);
-                for (Int32 y = 0; y < height; y++)
+                if (!isTibSun)
                 {
-                    for (Int32 x = 0; x < width; x++)
+                    // Convert to 8-bit data. So much easier to edit the data as one byte per pixel.
+                    Byte[] curData = new Byte[size];
+                    Array.Copy(fileData, start, curData, 0, size);
+                    for (Int32 y = 0; y < height; y++)
                     {
-                        Int32 index4bit = y * stride + x / 2;
-                        Int32 index8bit = y * width + x;
-                        if (x % 2 == 0)
-                            curData8bit[index8bit] = (Byte)(curData[index4bit] & 0x0F);
-                        else
-                            curData8bit[index8bit] = (Byte)((curData[index4bit] & 0xF0) >> 4);
+                        for (Int32 x = 0; x < width; x++)
+                        {
+                            Int32 index4bit = y * stride + x / 2;
+                            Int32 index8bit = y * width + x;
+                            if (x % 2 == 0)
+                                curData8bit[index8bit] = (Byte)(curData[index4bit] & 0x0F);
+                            else
+                                curData8bit[index8bit] = (Byte)((curData[index4bit] & 0xF0) >> 4);
+                        }
                     }
+                }
+                else
+                {
+                    Array.Copy(fileData, start, curData8bit, 0, size);
                 }
                 FontFileCharacter fc = new FontFileCharacter();
                 fc.Width = width;
@@ -377,28 +447,18 @@ namespace WWFontEditor.Domain
                 this.m_ImageDataList.Add(fc);
             }
         }
+    }
 
-
-        protected Byte ReadHeaderAndGetLastIndex(Byte[] headerBytes)
-        {
-            if (headerBytes.Length < 0x14)
-                return (Byte)0x00;
-            this.FileSize = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x00);
-            this.DataFormat = headerBytes[0x02];
-            this.Unknown03 = headerBytes[0x03];
-            this.Unknown04 = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x04);
-            this.FontDataOffsetsListOffset = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x06);
-            this.WidthsListOffset = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x08);
-            this.FontDataOffset = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x0A);
-            this.HeightsListOffset = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x0C);
-            this.Unknown0E = ArrayUtils.GetLEShortFromByteArray(headerBytes, 0x0E);
-            this.AlwaysZero = headerBytes[0x10];
-            Byte lastIndex = headerBytes[0x11];
-            this.FontHeight = headerBytes[0x12];
-            this.FontWidth = headerBytes[0x13];
-            return lastIndex;
-        }
-
+    public enum FontFileType
+    {
+        /// <summary>Legend of Kyrandia and other older games</summary>
+        WWClassic1,
+        /// <summary>command & Conquer, Red Alert, etc.</summary>
+        WWClassicCnC,
+        /// <summary>command & Conquer Tiberian Sun</summary>
+        WWTibSun,
+        /// <summary>Dune 2000</summary>
+        EDDune2k
     }
 
 }

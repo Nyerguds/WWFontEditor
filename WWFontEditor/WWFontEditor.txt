@@ -1,0 +1,36 @@
+Version history:
+
+v1.1:
+-Implemented TS font support.
+-Fixed bug that sometimes occurred when larger fonts were loaded after smaller ones.
+-Fixed bug that prevented disabling the grids.
+
+v1.0:
+-Added list of editable characters, with hex ID, decimal id, character and image preview.
+-Added text encoding dropdown, to change the comparison characters in the list.
+-Amount of characters is editable.
+-Overall font width and height are editable.
+-Width, height and Y-offset are editable.
+-Added buttons to shift the image data up / left / right / down.
+-Added Revert option for reloading a character to the original loaded state.
+-Added Copy & Paste options for copying whole characters.
+-Modified palette control to support both 16 and 256 colour for later TS/D2k support.
+-Added edit mode buttons for normal drawing and color picker.
+
+v0.4:
+-Added 16-color palette to select left and right mouse button colors.
+
+v0.3:
+-Saving implemented.
+
+v0.2:
+-Basic 2-button pixel editing implemented, but no palette selector yet, limiting to the set colors.
+-Split grid and editable area into two options
+-Shows current edit foreground color (but it can't be changed)
+
+v0.1:
+-Basic viewing implemented, including Y-offset. No editing.
+-Shows amount of characters, font width/height, character width / height / Y-offset
+-Can open Lands of Lore / Kegend of Kyrandia / Dune II / C&C1 / Red Alert font format.
+-Basic zoomable viewer with grid
+-Numeric up/down control for changing indices

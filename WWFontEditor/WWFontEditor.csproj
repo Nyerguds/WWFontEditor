@@ -143,6 +143,9 @@
     <Content Include="Resources\icon_paste.png" />
     <Content Include="Resources\icon_pencil.png" />
     <Content Include="wwfont.ico" />
+    <Content Include="WWFontEditor.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
