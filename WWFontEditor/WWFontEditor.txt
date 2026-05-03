@@ -299,6 +299,12 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.10.2: (2017/08/14 08:15)
+-Tweaked the Mythos Software font to act as 8-bit
+-Implemented support for fonts with a different transparency index.
+-Added the autodetect optimization by extension from the CnC64FileConverter.
+-Fixed some more errors caused by to fonts with a limited start symbol.
+
 v1.10.1: (2017/08/08 22:45)
 -Fixed errors in copied symbol height for fonts with Y-offsets.
 -Preview no longer cuts off symbols with Y that makes them exceed font height.

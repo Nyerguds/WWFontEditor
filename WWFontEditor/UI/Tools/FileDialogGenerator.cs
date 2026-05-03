@@ -168,7 +168,6 @@ namespace Nyerguds.Util.UI
         public static T[] IdentifyByExtension<T>(Type[] typesList, String receivedPath) where T : FileTypeBroadcaster
         {
             List<T> possibleMatches = new List<T>();
-            String filename = receivedPath;
             String ext = Path.GetExtension(receivedPath).TrimStart('.');
             FileDialogItem<T>[] items = typesList.Select(x => new FileDialogItem<T>(x)).ToArray();
             foreach (FileDialogItem<T> item in items)

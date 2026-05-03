@@ -13,7 +13,6 @@ namespace WWFontEditor.Domain.FontTypes
     {
         public override Int32 SymbolsTypeMin { get { return 0x80; } }
         public override Int32 SymbolsTypeMax { get { return 0x80; } }
-        public override Int32 SymbolsTypeFirst { get { return 0x0; } }
         public override Int32 FontWidthTypeMax { get { return 0xFF; } }
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }

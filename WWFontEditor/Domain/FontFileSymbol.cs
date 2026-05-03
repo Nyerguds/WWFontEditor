@@ -26,7 +26,7 @@ namespace WWFontEditor.Domain
             this.Width = source.FontWidthTypeMin;
             this.Height = 0;
             // only need to do this from 1 dimension since you start from (?)x0
-            this.ChangeHeight(source.FontHeightTypeMin);
+            this.ChangeHeight(source.FontHeightTypeMin, source.TransparencyColor);
             this.BitsPerPixel = source.BitsPerPixel;
         }
 
@@ -99,18 +99,18 @@ namespace WWFontEditor.Domain
             if (this.YOffset > newFont.YOffsetTypeMax)
             {
                 Int32 diff = symbol.YOffset - newFont.YOffsetTypeMax;
-                symbol.ChangeHeight(this.Height + diff);
+                symbol.ChangeHeight(this.Height + diff, newFont.TransparencyColor);
                 symbol.YOffset = 0;
                 // Not ideal, I know, but I haven't adapted the shift function to accept an amount to shift.
                 for (Int32 i = 0; i < diff; i++)
-                    symbol.ShiftImageData(ShiftDirection.Down, false);
+                    symbol.ShiftImageData(ShiftDirection.Down, false, newFont.TransparencyColor);
             }
             // Adapt to font width
             if (!newFont.CustomSymbolWidthsForType || newFont.FontWidth < symbol.Width)
-                symbol.ChangeWidth(newFont.FontWidth);
+                symbol.ChangeWidth(newFont.FontWidth, newFont.TransparencyColor);
             // Adapt to font height
             if (!newFont.CustomSymbolHeightsForType || newFont.FontHeight < symbol.Height)
-                symbol.ChangeHeight(newFont.FontHeight);
+                symbol.ChangeHeight(newFont.FontHeight, newFont.TransparencyColor);
         }
 
         public void ConvertToBpp(Byte? defaultValue, Int32 targetBpp)
@@ -149,11 +149,11 @@ namespace WWFontEditor.Domain
         public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont, Boolean expandToY)
         {
             FontFileSymbol ffs = this.Clone();
-            ffs.ChangeHeight(baseFont.FontHeight + ffs.YOffset);
+            ffs.ChangeHeight(baseFont.FontHeight + ffs.YOffset, baseFont.TransparencyColor);
             for (Int32 i = 0; i < ffs.YOffset; i++)
-                ffs.ShiftImageData(ShiftDirection.Down, false);
+                ffs.ShiftImageData(ShiftDirection.Down, false, baseFont.TransparencyColor);
             ffs.YOffset = 0;
-            ffs.ChangeHeight(expandToY ? Math.Max(baseFont.FontHeight, this.Height + this.YOffset) : baseFont.FontHeight);
+            ffs.ChangeHeight(expandToY ? Math.Max(baseFont.FontHeight, this.Height + this.YOffset) : baseFont.FontHeight, baseFont.TransparencyColor);
             return ffs.GetBitmap(palette);
         }
 
@@ -187,21 +187,25 @@ namespace WWFontEditor.Domain
             return this.ByteData[y * Width + x];
         }
 
-        public void ChangeHeight(Int32 newHeight)
+        public void ChangeHeight(Int32 newHeight, Byte backColor)
         {
             if (this.Height == newHeight)
                 return;
-            Byte[] newData = new Byte[this.Width * newHeight];
+            Int32 newSize = this.Width * newHeight;
+            Byte[] newData = new Byte[newSize];
+            if (backColor != 0)
+                for (Int32 i = 0; i < newSize; i++)
+                    newData[i] = backColor;
             Array.Copy(this.ByteData, 0, newData, 0, Math.Min(this.ByteData.Length, newData.Length));
             this.ByteData = newData;
             this.Height = newHeight;
         }
 
-        public void ChangeWidth(Int32 newWidth)
+        public void ChangeWidth(Int32 newWidth, Byte backColor)
         {
             if (Width == newWidth)
                 return;
-            Byte[] newData = ChangeStride(this.ByteData, this.Width, this.Height, newWidth, false);
+            Byte[] newData = ChangeStride(this.ByteData, this.Width, this.Height, newWidth, false, backColor);
             this.ByteData = newData;
             this.Width = newWidth;
         }
@@ -215,13 +219,13 @@ namespace WWFontEditor.Domain
                 case ShiftDirection.Up:
                     if (this.Height >= maxHeight || this.YOffset <= 0)
                         return false;
-                    ChangeHeight(this.Height + 1);
+                    ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
                     this.YOffset--;
                     return false;
                 case ShiftDirection.Down:
                     if (this.Height >= maxHeight)
                         return false;
-                    ChangeHeight(this.Height + 1);
+                    ChangeHeight(this.Height + 1, parentFont.TransparencyColor);
                     break;
                 case ShiftDirection.Left:
                     // can't expand to the left.
@@ -229,13 +233,13 @@ namespace WWFontEditor.Domain
                 case ShiftDirection.Right:
                     if (this.Width >= maxWidth)
                         return false;
-                    ChangeWidth(this.Width + 1);
+                    ChangeWidth(this.Width + 1, parentFont.TransparencyColor);
                     break;
             }
             return true;
         }
 
-        public void ShiftImageData(ShiftDirection direction, Boolean wrap)
+        public void ShiftImageData(ShiftDirection direction, Boolean wrap, Byte backColor)
         {
             if (ByteData.Length == 0)
                 return;
@@ -243,11 +247,11 @@ namespace WWFontEditor.Domain
             {
                 case ShiftDirection.Up:
                 case ShiftDirection.Down:
-                    ShiftRowVert(this.ByteData, this.Width, direction == ShiftDirection.Up, wrap);
+                    ShiftRowVert(this.ByteData, this.Width, direction == ShiftDirection.Up, wrap, backColor);
                     break;
                 case ShiftDirection.Left:
                 case ShiftDirection.Right:
-                    ShiftRowHor(this.ByteData, this.Width, direction == ShiftDirection.Left, wrap);
+                    ShiftRowHor(this.ByteData, this.Width, direction == ShiftDirection.Left, wrap, backColor);
                     break;
             }
         }
@@ -261,10 +265,13 @@ namespace WWFontEditor.Domain
             this.ByteData = this.ByteData.Select(x => x == sourceVal? targetVal : x).ToArray();
         }
 
-        private static void ShiftRowVert(Byte[] source, Int32 stride, Boolean up, Boolean wrap)
+        private static void ShiftRowVert(Byte[] source, Int32 stride, Boolean up, Boolean wrap, Byte backColor)
         {
             Byte[] newSource = source.ToArray();
             Byte[] emptyRow = new Byte[stride];
+            if (backColor != 0)
+                for (Int32 i = 0; i < stride; i++)
+                    emptyRow[i] = backColor;
             Int32 length = source.Length - stride;
             Int32 srcStart = up ? stride : 0;
             Int32 tarStart = up ? 0 : stride;
@@ -275,7 +282,7 @@ namespace WWFontEditor.Domain
             Array.Copy(emptyRow, 0, source, up ? length : 0, stride);
         }
 
-        private static void ShiftRowHor(Byte[] source, Int32 stride, Boolean left, Boolean wrap)
+        private static void ShiftRowHor(Byte[] source, Int32 stride, Boolean left, Boolean wrap, Byte backColor)
         {
             Byte[] newSource = source.ToArray();
             Int32 length = stride -1;
@@ -283,20 +290,24 @@ namespace WWFontEditor.Domain
             Int32 tarStart = left ? 0 : 1;
             for (Int32 i = 0; i < source.Length; i += stride)
             {
-                Byte fill = (Byte)(wrap ? newSource[i + (left ? 0 : length)] : 0);
+                Byte fill = (Byte)(wrap ? newSource[i + (left ? 0 : length)] : backColor);
                 Array.Copy(newSource, i + srcStart, source, i + tarStart, length);
                 // clear shifted pixel
                 source[i + length * srcStart] = fill;
             }
         }
 
-        private static Byte[] ChangeStride(Byte[] source, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft)
+        private static Byte[] ChangeStride(Byte[] source, Int32 origStride, Int32 height, Int32 targetStride, Boolean fromLeft, Byte backColor)
         {
             Int32 sourcePos = 0;
             Int32 destPos = 0;
             Int32 minStride = Math.Min(origStride, targetStride);
             Int32 length = source.Length;
-            Byte[] target = new Byte[height * targetStride];
+            Int32 targetSize = height * targetStride;
+            Byte[] target = new Byte[targetSize];
+            if (backColor != 0)
+                for (Int32 i = 0; i < targetSize; i++)
+                    target[i] = backColor;
             Int32 diff = origStride - targetStride;
             while (length >= origStride && length > 0)
             {
@@ -360,9 +371,10 @@ namespace WWFontEditor.Domain
                 else
                     break;
             }
+            // Color doesn't matter here since this should only reduce.
             for (Int32 i = 0; i < addedY; i++)
-                this.ShiftImageData(ShiftDirection.Up, false);
-            this.ChangeHeight(this.Height - addedY - cutHeightBottom);
+                this.ShiftImageData(ShiftDirection.Up, false, 0);
+            this.ChangeHeight(this.Height - addedY - cutHeightBottom, 0);
             // Optimization: no need to keep Y if data is empty.
             if (this.Height == 0)
                 this.YOffset = 0;
@@ -378,7 +390,8 @@ namespace WWFontEditor.Domain
             Int32 newHeight = Math.Max(trueClHeight, trueFcHeight);
             Byte[] newSymbolData = new Byte[newWidth * newHeight];
             Color[] pal = transparencyGuide.ToArray();
-            pal[0] = Color.FromArgb(0, pal[0]);
+            //No need for that... it's already given from higher level. Trust it.
+            //pal[0] = Color.FromArgb(0, pal[0]);
             newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, firstLayer.ByteData, firstLayer.Width, firstLayer.Height, firstLayer.Width,
                 new Rectangle(0, firstLayer.YOffset, firstLayer.Width, firstLayer.Height), null);
             newSymbolData = ImageUtils.PasteOn8bpp(newSymbolData, newWidth, newHeight, newWidth, secondLayer.ByteData, secondLayer.Width, secondLayer.Height, secondLayer.Width,

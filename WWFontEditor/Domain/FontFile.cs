@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
+using Nyerguds.Util.UI;
 using WWFontEditor.Domain.FontTypes;
 
 namespace WWFontEditor.Domain
@@ -37,9 +38,9 @@ namespace WWFontEditor.Domain
         public abstract Int32 SymbolsTypeMax { get; }
         /// <summary>The first symbol that is saved. This hides all symbols before this index from the editor.</summary>
         public virtual Int32 SymbolsTypeFirst { get { return 0; } }
-        /// <summary>Lower limit for the width of the overall font. This does not mean symbols themselves are mimited to this minimum.</summary>
+        /// <summary>Lower limit for the width of the overall font. This does not mean symbols themselves are limited to this minimum.</summary>
         public virtual Int32 FontWidthTypeMin { get { return 0; } }
-        /// <summary>Lower limit for the width of the overall font.</summary>
+        /// <summary>Upper limit for the width of the overall font.</summary>
         public abstract Int32 FontWidthTypeMax { get; }
         /// <summary>Lower limit for the overall height of the overall font.</summary>
         public virtual Int32 FontHeightTypeMin { get { return 0; } }
@@ -47,6 +48,8 @@ namespace WWFontEditor.Domain
         public abstract Int32 FontHeightTypeMax { get; }
         /// <summary>Upper limit for the Y-offset of the symbols in the font. Zero means the font format does not support Y offsets</summary>
         public abstract Int32 YOffsetTypeMax { get; }
+        /// <summary>The index on the font that is treated as transparent colour.</summary>
+        public virtual Byte TransparencyColor { get { return 0;} }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
         public virtual Boolean CustomSymbolWidthsForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
@@ -103,7 +106,7 @@ namespace WWFontEditor.Domain
                 this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
                     if (symbol.Height > m_FontHeight || !this.CustomSymbolHeightsForType)
-                        symbol.ChangeHeight(m_FontHeight);
+                        symbol.ChangeHeight(m_FontHeight, this.TransparencyColor);
             }
         }
 
@@ -116,7 +119,7 @@ namespace WWFontEditor.Domain
                 this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
                     if (symbol.Width > m_FontWidth || !this.CustomSymbolWidthsForType)
-                        symbol.ChangeWidth(m_FontWidth);
+                        symbol.ChangeWidth(m_FontWidth, this.TransparencyColor);
             }
         }
 
@@ -198,10 +201,11 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// Attempts to load the given data as one of the known font types.
         /// </summary>
+        ///<param name="path">Path the file was loaded from.</param>
         /// <param name="fileData">File data</param>
         /// <param name="loadErrors">Load errors detailing failed attempts at identification.</param>
         /// <returns>An instance of the detected font, or null if not found.</returns>
-        public static FontFile LoadFontFile(Byte[] fileData, out List<FileTypeLoadException> loadErrors)
+        public static FontFile LoadFontFile(String path, Byte[] fileData, out List<FileTypeLoadException> loadErrors)
         {
             Type fontType = typeof (FontFile);
             foreach (Type t in AutoDetectTypes)
@@ -209,8 +213,33 @@ namespace WWFontEditor.Domain
                     throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
             loadErrors = new List<FileTypeLoadException>();
             //List<Exception> processErrors = new List<Exception>();
+            FontFile[] possibleTypes = FileDialogGenerator.IdentifyByExtension<FontFile>(AutoDetectTypes, path);
+            foreach (FontFile typeObj in possibleTypes)
+            {
+                try
+                {
+                    typeObj.LoadFont(fileData);
+                    return typeObj;
+                }
+                catch (FileTypeLoadException e)
+                {
+                    e.AttemptedLoadedType = typeObj.ShortTypeName;
+                    loadErrors.Add(e);
+                }
+            }
             foreach (Type type in AutoDetectTypes)
             {
+                Boolean knownType = false;
+                foreach (FontFile typeObj in possibleTypes)
+                {
+                    if (typeObj.GetType() == type)
+                    {
+                        knownType = true;
+                        break;
+                    }
+                }
+                if (knownType)
+                    continue;
                 FontFile fontInstance = null;
                 try
                 {
@@ -353,18 +382,18 @@ namespace WWFontEditor.Domain
             return this.m_ImageDataList.ToArray();
         }
 
-        public Bitmap GetBitmap(Int32 index, Color[] colors, Boolean addTransparentZero)
+        public Bitmap GetBitmap(Int32 index, Color[] colors, Boolean addTransparentcy)
         {
             if (index < 0 || index >= this.Length)
                 return null;
-            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero, Color.Black);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, PaletteUtils.MakeTransparencyGuide(this.BitsPerPixel, this.TransparencyColor), Color.Black);
             return this.m_ImageDataList[index].GetBitmap(palette);
         }
 
         public Bitmap[] GetAllBitmaps(Color[] colors, Boolean addTransparentZero)
         {
             Bitmap[] allPics = new Bitmap[this.Length];
-            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, PaletteUtils.MakeTransparencyGuide(this.BitsPerPixel, this.TransparencyColor));
             for (Int32 i = 0; i < allPics.Length; i++)
                 allPics[i] = this.m_ImageDataList[i].GetBitmap(palette);
             return allPics;
@@ -425,12 +454,12 @@ namespace WWFontEditor.Domain
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
             fullHeight = Math.Max(1, fullHeight);
-            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, true);
+            Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, PaletteUtils.MakeTransparencyGuide(this.BitsPerPixel, this.TransparencyColor));
             Bitmap fullBm = new Bitmap(fullWidth, fullHeight, PixelFormat.Format32bppPArgb);
             using (Graphics g = Graphics.FromImage(fullBm))
             {
                 g.CompositingMode = CompositingMode.SourceOver;
-                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg? 0x00 : 0xFF, colors[0])))
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg? 0x00 : 0xFF, colors[this.TransparencyColor])))
                     g.FillRectangle(brush, 0, 0, fullWidth, fullHeight);
                 curWidth = 0;
                 Int32 curHeight = 0;

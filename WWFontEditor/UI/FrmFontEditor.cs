@@ -230,7 +230,7 @@ namespace WWFontEditor
                     else
                     {
                         List<FileTypeLoadException> loadErrors;
-                        this.m_LoadedFont = FontFile.LoadFontFile(data, out loadErrors);
+                        this.m_LoadedFont = FontFile.LoadFontFile(path, data, out loadErrors);
                         if (this.m_LoadedFont == null)
                         {
                             String errors = String.Join("\n", loadErrors.Select(er => er.AttemptedLoadedType + ": " + er.Message).ToArray());
@@ -263,7 +263,7 @@ namespace WWFontEditor
             this.m_Loading = true;
             Boolean loadOk = this.m_LoadedFont != null;
             this.btnValType.Enabled = loadOk;
-            this.numSymbols.Enabled = loadOk && this.m_LoadedFont.SymbolsTypeMin < this.m_LoadedFont.SymbolsTypeMax;
+            this.numSymbols.Enabled = loadOk && Math.Max(this.m_LoadedFont.SymbolsTypeMin, this.m_LoadedFont.SymbolsTypeFirst) < this.m_LoadedFont.SymbolsTypeMax;
             this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
             this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
             this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbolWidthsForType;
@@ -285,11 +285,11 @@ namespace WWFontEditor
             this.pxbFullSize.Visible = loadOk;
             if (loadOk)
             {
-                this.RefreshPalettes(false, false);
+                this.RefreshPalettes(newFontLoaded, false);
                 this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.btnValType.Text = m_LoadedFont.ShortTypeName.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.btnValType, m_LoadedFont.ShortTypeDescription);
-                this.numSymbols.Minimum = this.m_LoadedFont.SymbolsTypeMin;
+                this.numSymbols.Minimum = Math.Max(this.m_LoadedFont.SymbolsTypeMin, this.m_LoadedFont.SymbolsTypeFirst);
                 this.numSymbols.Maximum = this.m_LoadedFont.SymbolsTypeMax;
                 this.numSymbols.Value = this.m_LoadedFont.Length;
                 this.numFontHeight.Minimum = this.m_LoadedFont.FontHeightTypeMin;
@@ -353,7 +353,6 @@ namespace WWFontEditor
             if (currentPal != null)
                 oldBpp = currentPal.BitsPerPixel;
             Int32 bpp = GetEditBpp(m_LoadedFont);
-            // Don't reload if it was the same :)
             if (oldBpp == -1 || oldBpp != bpp || forced)
             {
                 Int32 index = -1;
@@ -391,7 +390,7 @@ namespace WWFontEditor
 
         public static Color[] GetDummyPalette()
         {
-            return PaletteUtils.GenerateRainbowPalette(4, true, true, false);
+            return PaletteUtils.GenerateRainbowPalette(4, 0, null, false);
         }
 
         public List<PaletteDropDownInfo> LoadDefaultPalettes()
@@ -408,21 +407,21 @@ namespace WWFontEditor
             // 4-bit and 8-bit
             if (this.m_Settings.Generate4BitRainbow)
                 //palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteRainbow, null, -1));
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteUtils.GenerateRainbowPalette(4, true, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 4, PaletteUtils.GenerateRainbowPalette(4, 0, null, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, PaletteUtils.GenerateDefWindowsPalette(4, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 4, PaletteUtils.GenerateDefWindowsPalette(4, null, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, PaletteUtils.GenerateGrayPalette(4, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 4, PaletteUtils.GenerateGrayPalette(4, null, false), null, -1, false, false));
             if (this.m_Settings.Generate4BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, PaletteUtils.GenerateGrayPalette(4, true, true), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 4, PaletteUtils.GenerateGrayPalette(4, null, true), null, -1, false, false));
             if (this.m_Settings.Generate8BitRainbow)
-                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, PaletteUtils.GenerateDoubleRainbow(true, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Rainbow", 8, PaletteUtils.GenerateDoubleRainbow(0, null, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitWindows)
-                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, PaletteUtils.GenerateDefWindowsPalette(8, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Windows palette", 8, PaletteUtils.GenerateDefWindowsPalette(8, null, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitBW)
-                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, PaletteUtils.GenerateGrayPalette(8, true, false), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale B->W", 8, PaletteUtils.GenerateGrayPalette(8, null, false), null, -1, false, false));
             if (this.m_Settings.Generate8BitWB)
-                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, PaletteUtils.GenerateGrayPalette(8, true, true), null, -1, false, false));
+                palettes.Add(new PaletteDropDownInfo("Grayscale W->B", 8, PaletteUtils.GenerateGrayPalette(8, null, true), null, -1, false, false));
             return palettes;
         }
 
@@ -431,6 +430,7 @@ namespace WWFontEditor
             List<PaletteDropDownInfo> palettes = new List<PaletteDropDownInfo>();
             String appFolder = Path.GetDirectoryName(Application.ExecutablePath);
             FileInfo[] files = new DirectoryInfo(appFolder).GetFiles("*.pal");
+            Array.Sort(files, (x,y) => String.Compare(x.Name,y.Name, StringComparison.InvariantCultureIgnoreCase));
             foreach (FileInfo file in files)
                 palettes.AddRange(PaletteDropDownInfo.LoadSubPalettesInfoFromPalette(file, false, false, true));
             return palettes;
@@ -459,7 +459,7 @@ namespace WWFontEditor
                 // add as param later
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
                 Color[] palette = m_CurrentPalette.ToArray();
-                palette[0] = Color.FromArgb(0xFF, palette[0]);
+                palette[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(0xFF, palette[this.m_LoadedFont.TransparencyColor]);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = -1;
                 Int32 scrollOffset = -1;
@@ -489,7 +489,7 @@ namespace WWFontEditor
                     symbolsTable.Rows.Add(row);
                 }
                 DataGridViewCellStyle style = new DataGridViewCellStyle();
-                style.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[0]);
+                style.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
                 style.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 this.dgrvSymbolsList.RowTemplate.Height = Math.Max(m_GridRowTemplateHeight, this.m_LoadedFont.FontHeight);
                 this.dgrvSymbolsList.DataSource = symbolsTable;
@@ -527,7 +527,7 @@ namespace WWFontEditor
                 this.m_FileName = fileName;
                 this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.tsmiRevertSymbol.Enabled = false;
-                ReloadUIWithSelection();
+                ReloadUIWithSelection(false);
             }
             catch (Exception e)
             {
@@ -688,7 +688,7 @@ namespace WWFontEditor
                     Int32 bgWidth = this.m_LoadedFont.FontWidth * zoom;
                     Int32 bgHeight = this.m_LoadedFont.FontHeight * zoom;
                     Int32 addedHeight = this.m_CurHeight + this.m_CurYOffset - this.m_LoadedFont.FontHeight;
-                    Color bgColor = this.m_Settings.UsePaletteBG ? Color.FromArgb(0xFF, this.m_CurrentPalette[0]) : m_Settings.Background;
+                    Color bgColor = this.m_Settings.UsePaletteBG ? Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]) : m_Settings.Background;
                     if (addGrid && drawGrid)
                     {
                         pxbFullSize.Image = ImageUtils.GenerateGridImage(this.m_LoadedFont.FontWidth, this.m_LoadedFont.FontHeight, zoom,
@@ -1006,6 +1006,7 @@ namespace WWFontEditor
 
         private void OpenColorEditDialog(Int32 colindex, PalettePanel palpanel)
         {
+            Byte transCol = this.m_LoadedFont != null ? this.m_LoadedFont.TransparencyColor : (Byte)0;
             ColorDialog cdl = new ColorDialog();
             cdl.Color = GetPaletteColor(colindex);
             cdl.FullOpen = true;
@@ -1014,7 +1015,7 @@ namespace WWFontEditor
             this.m_CustomColors = cdl.CustomColors;
             if (res == DialogResult.OK)
             {
-                Color paletteColor = Color.FromArgb(colindex == 0 ? 0x00 : 0xFF, cdl.Color);
+                Color paletteColor = Color.FromArgb(colindex == transCol ? 0x00 : 0xFF, cdl.Color);
                 m_CurrentPalette[colindex] = paletteColor;
                 if (palpanel != null)
                 {
@@ -1122,7 +1123,7 @@ namespace WWFontEditor
                     if (expand)
                         cont = symbol.TryExpandImage(shiftDirection, m_LoadedFont);
                     if (cont)
-                        symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
+                        symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked, this.m_LoadedFont.TransparencyColor);
                 }
             }
             else
@@ -1134,7 +1135,7 @@ namespace WWFontEditor
                 if (expand)
                     cont = symbol.TryExpandImage(shiftDirection, m_LoadedFont);
                 if (cont)
-                    symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked);
+                    symbol.ShiftImageData(shiftDirection, chkShiftWrap.Checked, this.m_LoadedFont.TransparencyColor);
             }
             this.ReloadImageInfo(true);
             this.ReloadDataGrid(false);
@@ -1189,7 +1190,7 @@ namespace WWFontEditor
             ShiftCurrentImage(ShiftDirection.Left, (Control.ModifierKeys & Keys.Shift) != 0, (Control.ModifierKeys & Keys.Alt) != 0);
         }
 
-        private void ChangeCurrentImageDimension(Byte newDimension, Boolean isHeight)
+        private void ChangeCurrentImageDimension(Int32 newDimension, Boolean isHeight)
         {
             if (this.m_Loading)
                 return;
@@ -1201,21 +1202,21 @@ namespace WWFontEditor
             if (symbol == null)
                 return;
             if (isHeight)
-                symbol.ChangeHeight(newDimension);
+                symbol.ChangeHeight(newDimension, this.m_LoadedFont.TransparencyColor);
             else
-                symbol.ChangeWidth(newDimension);
+                symbol.ChangeWidth(newDimension, this.m_LoadedFont.TransparencyColor);
             this.ReloadImageInfo(true);
             this.ReloadDataGrid(isHeight && (newDimension > m_GridRowTemplateHeight || oldHeight > m_GridRowTemplateHeight));
         }
 
         private void NumWidth_ValueChanged(object sender, EventArgs e)
         {
-            this.ChangeCurrentImageDimension((Byte)this.numWidth.Value, false);
+            this.ChangeCurrentImageDimension((Int32)this.numWidth.Value, false);
         }
 
         private void NumHeight_ValueChanged(object sender, EventArgs e)
         {
-            this.ChangeCurrentImageDimension((Byte)this.numHeight.Value, true);
+            this.ChangeCurrentImageDimension((Int32)this.numHeight.Value, true);
         }
 
         protected override Boolean IsInputKey(Keys keyData)
@@ -1340,9 +1341,8 @@ namespace WWFontEditor
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            //Color[] palette = PaletteUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
-            //palette[0] = Color.FromArgb(0xFF, palette[0]);
-            data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex].Cells[2].Value);
+            //Color[] palette = PaletteUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), PaletteUtils.MakeTransparencyGuide(this.m_LoadedFont.BitsPerPixel, this.m_LoadedFont.TransparencyColor)));
+            data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
             data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true));
             data.SetData(ffs.Clone());
             Clipboard.SetDataObject(data);
@@ -1403,7 +1403,7 @@ namespace WWFontEditor
                 if (pasteCombined)
                 {
                     Color[] pal = this.m_CurrentPalette.ToArray();
-                    pal[0] = Color.FromArgb(0, pal[0]);
+                    pal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(0, pal[this.m_LoadedFont.TransparencyColor]);
                     clipboard = FontFileSymbol.Combine(fc, clipboard, this.m_LoadedFont, pal);
                 }
                 fc = clipboard.CloneFor(this.m_LoadedFont, GetEditBpp(m_LoadedFont));
@@ -1446,8 +1446,11 @@ namespace WWFontEditor
                 if (newLen > 0)
                 {
                     Int32 newIndex = newLen - 1 - m_LoadedFont.SymbolsTypeFirst;
-                    this.dgrvSymbolsList.Rows[newIndex].Cells[0].Selected = true;
-                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[newIndex].Cells[0];
+                    if (newIndex > 0)
+                    {
+                        this.dgrvSymbolsList.Rows[newIndex].Cells[0].Selected = true;
+                        this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[newIndex].Cells[0];
+                    }
                 }
                 this.ReloadImageInfo(true);
             }
@@ -1488,7 +1491,7 @@ namespace WWFontEditor
             if (!this.ConfirmOnUnsavedChanges(QUESTION_RESETFONT))
                 return;
             this.m_LoadedFont = this.m_LoadedFontBackup.Clone();
-            ReloadUIWithSelection();
+            ReloadUIWithSelection(true);
         }
 
         private void TsmiManagePalettes_Click(object sender, EventArgs e)
@@ -1501,35 +1504,30 @@ namespace WWFontEditor
                 this.RefreshPalettes(true, true);
         }
 
-        private void ReloadUIWithSelection()
-        {
-            ReloadUIWithSelection(null);
-        }
-
-        private void ReloadUIWithSelection(Int32? oldFontSymbolLimit)
+        private void ReloadUIWithSelection(Boolean newFontLoaded)
         {
             Boolean wasLoading = m_Loading;
             m_Loading = true;
             try
             {
-                Int32 selectedIndex = GetSelectedIndex();
+                Int32 selectedIndex = m_LoadedFont == null ? m_Settings.SelectedSymbol : GetSelectedIndex();
                 Int32 scrollOffset = 0;
                 if (this.dgrvSymbolsList.SelectedRows.Count > 0)
-                {
-                    selectedIndex = this.dgrvSymbolsList.CurrentCell.RowIndex;
                     scrollOffset = this.dgrvSymbolsList.VerticalScrollbarOffset;
-                }
+                
                 m_Loading = false;
-                ReloadUi(false);
-                if (m_LoadedFont != null && oldFontSymbolLimit.HasValue)
+                ReloadUi(newFontLoaded);
+                if (m_LoadedFont != null)
                 {
-                    Int32 diff = oldFontSymbolLimit.Value - this.m_LoadedFont.SymbolsTypeFirst;
-                    selectedIndex += diff;
-                    scrollOffset += diff * this.dgrvSymbolsList.RowTemplate.Height;
+                    // Adjust to font limitations
+                    if (this.m_LoadedFont.SymbolsTypeFirst > selectedIndex)
+                        selectedIndex = 0;
+                    else
+                        selectedIndex -= this.m_LoadedFont.SymbolsTypeFirst;
                 }
                 if ((this.dgrvSymbolsList.DataSource as DataTable) != null && selectedIndex < ((DataTable)(this.dgrvSymbolsList.DataSource)).Rows.Count && selectedIndex > 0)
                 {
-                    this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Max(0, scrollOffset);
+                    this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Min(Math.Max(0, scrollOffset), this.dgrvSymbolsList.ClientSize.Height);
                     this.dgrvSymbolsList.Rows[selectedIndex].Cells[0].Selected = true;
                 }
             }
@@ -1613,11 +1611,15 @@ namespace WWFontEditor
 
         private void ReloadColors(Int32 bpp)
         {
+            Byte transparent = this.m_LoadedFont == null ? (Byte)0 : this.m_LoadedFont.TransparencyColor;
+            for (Int32 i = 0; i < this.m_CurrentPalette.Length; i++)
+                m_CurrentPalette[i] = Color.FromArgb(i == transparent ? 0 : 0xFF, m_CurrentPalette[i]);
             PalettePanel.InitPaletteControl(bpp, this.palColorSelector, m_CurrentPalette, PALETTE_MAX_DIM);
             if (this.m_CurrentPaintColor1 >= m_CurrentPalette.Length)
-                this.m_CurrentPaintColor1 = 1;
+                this.m_CurrentPaintColor1 = (Byte)(transparent == 0 ? 1 : 0);
+            // Transparent SHOULD be inside palette bounds, but, better safe...
             if (this.m_CurrentPaintColor2 >= m_CurrentPalette.Length)
-                this.m_CurrentPaintColor2 = 0;
+                this.m_CurrentPaintColor2 = (Byte)Math.Min(m_CurrentPalette.Length-1, transparent);
             this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor1]);
             this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor2]);
             if (!this.m_Loading)
@@ -1694,8 +1696,8 @@ namespace WWFontEditor
             }
             Int32 zoom = (Int32)numZoomPreview.Value;
             this.pnlImagePreview.Enabled = true;
-            this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
-            this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
+            this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
+            this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[this.m_LoadedFont.TransparencyColor]);
             Image image;
             if (chkWrapPreview.Checked)
             {
@@ -1713,7 +1715,6 @@ namespace WWFontEditor
             image = GeneratePreview(chkWrapPreview.Checked ? 0 : -1, true);
             pxbPreview.Image = image;
             pxbPreview.Size = new Size(image.Width * zoom, image.Height * zoom);
-
         }
 
         private Bitmap GeneratePreview(Int32 width, Boolean transparentBg)
@@ -1747,7 +1748,7 @@ namespace WWFontEditor
             this.RefreshPalettes(true, false);
             if (refreshSymbols)
             {
-                this.ReloadUIWithSelection();
+                this.ReloadUIWithSelection(false);
             }
         }
 
@@ -1814,7 +1815,6 @@ namespace WWFontEditor
             if (this.m_LoadedFont == null)
                 return false;
             FontFile sourceFontFile = this.m_LoadedFont;
-            Int32 origFirst = sourceFontFile.SymbolsTypeFirst;
             if (targetFontFile == null)
             {
                 FrmConvertFontType fontConvertDialog = new FrmConvertFontType(this.m_LoadedFont);
@@ -1834,7 +1834,7 @@ namespace WWFontEditor
             }
             m_LoadedFont.CloneInto(targetFontFile, replaceIndex, GetEditBpp(targetFontFile));
             m_LoadedFont = targetFontFile;
-            ReloadUIWithSelection(origFirst);
+            ReloadUIWithSelection(true);
             return true;
         }
 

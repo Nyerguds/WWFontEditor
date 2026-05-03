@@ -44,7 +44,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < firstSymbol; i++)
                 this.m_ImageDataList.Add(new FontFileSymbol(this));
             if (firstSymbol > 0x20)
-                this.m_ImageDataList[0x20].ChangeWidth(spaceSize);
+                this.m_ImageDataList[0x20].ChangeWidth(spaceSize, this.TransparencyColor);
             Int32 readOffset = 0x408;
             // Check on "readOffset + 8" because 8 is the byte size of a next symbol header.
             Int32 datalen = fileData.Length;
@@ -77,7 +77,7 @@ namespace WWFontEditor.Domain.FontTypes
                 this.m_FontWidth += interval;
                 foreach (FontFileSymbol fs in m_ImageDataList)
                     if (fs.Width != 0 || fs.Height != 0)
-                        fs.ChangeWidth(fs.Width + interval);
+                        fs.ChangeWidth(fs.Width + interval, this.TransparencyColor);
             }
         }
 
@@ -122,7 +122,7 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     // change list to clones with adapted width
                     FontFileSymbol fs = newList[i].Clone();
-                    fs.ChangeWidth(fs.Width - globalOpenSpace);
+                    fs.ChangeWidth(fs.Width - globalOpenSpace, this.TransparencyColor);
                     newList[i] = fs;
                 }
                 // font width should not be reduced by globalOpenSpace; it is unused in the saving process.

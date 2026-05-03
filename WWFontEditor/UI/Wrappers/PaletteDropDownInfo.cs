@@ -79,7 +79,7 @@ namespace WWFontEditor.UI.Wrappers
                 Color[] fullPal = ColorUtils.GetEightBitColorPalette(pal);
 
                 String bareName = file.Name;
-                String inipath = Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(file.Name)) + ".ini";
+                String inipath = Path.Combine(file.DirectoryName, Path.GetFileNameWithoutExtension(bareName)) + ".ini";
                 if (File.Exists(inipath))
                 {
                     IniFile paletteConfig = new IniFile(inipath);
@@ -97,15 +97,15 @@ namespace WWFontEditor.UI.Wrappers
                         Array.Copy(fullPal, i * 16, subPalette, 0, 16);
                         //if (subPalette.All(x => x.R == 0 && x.G == 0 && x.B == 0))
                         //    subPalette = ImageUtils.GenerateRainbowPalette(4, false, true, true, false).Entries;
-                        subPalette[0] = Color.FromArgb(0x00, subPalette[0]);
-                        palettes.Add(new PaletteDropDownInfo(name, 4, subPalette, file.Name, i, prefixIndex, suffixSource));
+                        //subPalette[0] = Color.FromArgb(0x00, subPalette[0]);
+                        palettes.Add(new PaletteDropDownInfo(name, 4, subPalette, bareName, i, prefixIndex, suffixSource));
                     }
                 }
                 else
                 {
                     // add as one 256 colour palette
-                    fullPal[0] = Color.FromArgb(0x00, fullPal[0]);
-                    palettes.Add(new PaletteDropDownInfo(file.Name, 8, fullPal, file.Name, 0, false, false));
+                    //fullPal[0] = Color.FromArgb(0x00, fullPal[0]);
+                    palettes.Add(new PaletteDropDownInfo(bareName, 8, fullPal, bareName, 0, false, false));
                 }
             }
             catch { /* ignore and continue */ }

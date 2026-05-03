@@ -46,27 +46,21 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 symbolsize = m_FontHeight * 2;
             for (Int32 i = 0; i < nrOfSymbols; i++)
             {
-                try
+                Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, symbolsize * i, 2, true);
+                for (Int32 b = 0; b < curData8bit.Length; b++)
                 {
-                    Byte[] curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, symbolsize * i, 2, true);
-                    for (Int32 b = 0; b < curData8bit.Length; b++)
+                    Byte val = curData8bit[b];
+                    if (val != 0)
                     {
-                        Byte val = curData8bit[b];
-                        if (val != 0)
-                        {
-                            if (val != 0x03)
-                                throw new FileTypeLoadException("Dynamix v1a only accepts 0 and 3 as values");
-                            else
-                                curData8bit[b] = 1;
-                        }
+                        if (val != 0x03)
+                            throw new FileTypeLoadException("Dynamix v1a only accepts 0 and 3 as values");
+                        else
+                            curData8bit[b] = 1;
                     }
-                    FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
-                    this.m_ImageDataList.Add(fc);
                 }
-                catch (Exception e)
-                {
-                    throw;
-                }
+                FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
+                this.m_ImageDataList.Add(fc);
+
             }
         }
 

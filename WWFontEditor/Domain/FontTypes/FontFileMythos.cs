@@ -6,40 +6,42 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Old 1bpp Westwood Studios font format
+    /// Font from Sherlock Holmes: The Case of Serrated Scalpel.
     /// </summary>
     public class FontFileMythos : FontFile
     {
-        public override Int32 SymbolsTypeMin { get { return 0x1; } }
+        public override Int32 SymbolsTypeMin { get { return 0x21; } }
         public override Int32 SymbolsTypeMax { get { return 0xFF; } }
         /// <summary>The first symbol that is saved. This hides all symbols before this index from the editor.</summary>
         public override Int32 SymbolsTypeFirst { get { return 0x21; } }
         public override Int32 FontWidthTypeMin { get { return 0x1; } }
-        public override Int32 FontWidthTypeMax { get { return 0xFF; } }
+        public override Int32 FontWidthTypeMax { get { return Int32.MaxValue; } }
         public override Int32 FontHeightTypeMin { get { return 0x1; } }
-        public override Int32 FontHeightTypeMax { get { return 0xFF; } }
+        public override Int32 FontHeightTypeMax { get { return Int32.MaxValue; } }
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
+        public override Byte TransparencyColor { get { return 0xFF; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
         public override Int32 FontTypePaddingBottom { get { return 0; } }
         /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
         public override Int32 FontTypePaddingRight { get { return 1; } }
-        public override Int32 BitsPerPixel { get { return 1; } }
+        public override Int32 BitsPerPixel { get { return 8; } }
         /// <summary>File extensions typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "vgs" }; } }
         public override Boolean CustomSymbolWidthsForType { get { return true; } }
         public override Boolean CustomSymbolHeightsForType { get { return true; } }
         public override String ShortTypeName { get { return "MythFont"; } }
-        public override String ShortTypeDescription { get { return "Mythos font"; } }
-        public override String LongTypeDescription { get { return "A 1bpp font with Y-offset support which is saved as 8-bit data with the values reversed (00 for painted pixels, FF for clear ones). It does not include a space character, and it is unknown if the games can handle reading more than 94 symbols from it."; } }
+        public override String ShortTypeDescription { get { return "Mythos Software font"; } }
+        public override String LongTypeDescription { get { return "An 8bpp font with Y-offset support, where FF is used for transparency, and which starts from the first character after the space. The font data does not contain spacing size between the symbols, does not contain the space, and skips symbol #127."; } }
         public override String[] GamesListForType { get { return new String[]
         {
-            "Sherlock Holmes: The Case of Serrated Scalpel"
+            "The Lost Files of Sherlock Holmes: The Case of Serrated Scalpel",
+            "Bodyworks Voyager: Missions in Anatomy",
         }; } }
 
         public override void LoadFont(Byte[] fileData)
         {
             // 01 00 06 00 00 00 00 01
-            // W-1   H-1             Y
+            // W-1   H-1      CM X? Y
             if (fileData.Length < 0x8)
                 throw new FileTypeLoadException(ERR_NOHEADER);
             Int32 offset = 0;
@@ -48,39 +50,79 @@ namespace WWFontEditor.Domain.FontTypes
 
             // fill in dummy symbols.
             for (Int32 i = 0; i < 0x20; i++)
-                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[1], 1, 1, 0, this.BitsPerPixel));
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[]{0xFF}, 0, 0, 0, this.BitsPerPixel));
             // Add space
-            this.m_ImageDataList.Add(new FontFileSymbol(new Byte[4], 4, 1, 0, this.BitsPerPixel));
+
+            this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 4, 0, 0, this.BitsPerPixel));
             // Read data
             while (offset < fileData.Length)
             {
+                // Dummy symbol after 126
+                if (this.m_ImageDataList.Count == 127)
+                    this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, 0, 0, this.BitsPerPixel));
+
                 Int32 symbWidth = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset + 0, 2, true) + 1;
                 Int32 symbHeight = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset + 2, 2, true) + 1;
                 if (symbWidth < 0 || symbHeight < 0)
                     throw new FileTypeLoadException("Bad header data.");
                 this.m_FontHeight = Math.Max(symbHeight, this.m_FontHeight);
                 this.m_FontWidth = Math.Max(symbWidth, this.m_FontWidth);
-                if (fileData[offset + 4] != 0 || fileData[offset + 6] != 0 || fileData[offset + 6] != 0)
-                    throw new FileTypeLoadException("Bad header data.");
+                Int32 skipLen;
+                Byte comprByte = fileData[offset + 5];
+                Boolean compressed = comprByte != 0;
+                //    throw new FileTypeLoadException("Bad header data.");
+                //Int32 xOffset = fileData[offset + 6];
                 Int32 yOffset = fileData[offset + 7];
                 offset += 8;
                 Int32 dataLen = symbWidth * symbHeight;
                 Byte[] imageData = new Byte[dataLen];
-                if (fileData.Length < offset + dataLen)
-                    throw new FileTypeLoadException("header references offset outside file data.");
-                Array.Copy(fileData, offset, imageData, 0, dataLen);
-                for (Int32 i = 0; i < dataLen; i++)
+                if (compressed)
                 {
-                    if (imageData[i] == 0)
-                        imageData[i] = 1;
-                    else if (imageData[i] == 0xFF)
-                        imageData[i] = 0;
-                    else
-                        throw new FileTypeLoadException("Bad value.");
+                    if (comprByte != 1)
+                        throw new FileTypeLoadException("Unknown compression type: " + comprByte);
+                    skipLen = (Int16)ArrayUtils.ReadIntFromByteArray(fileData, offset, 2, true) - 8;
+                }
+                else
+                {
+                    skipLen = dataLen;
+                }
+                if (fileData.Length < offset + skipLen)
+                    throw new FileTypeLoadException("header references offset outside file data.");
+
+                if (compressed)
+                {
+                    // Is compressed. Doesn't actually work...
+                    //Array.Copy(fileData, offset, imageData, 0, skipLen);
+                    // TODO: LZW MAGIC! ...or not. Bah.
+
+                    // Draw a nice little "Nope" box instead...
+                    for (int i = 0; i < imageData.Length; i++)
+                        imageData[i] = this.TransparencyColor;
+                    Byte drawColor = (Byte)(TransparencyColor + 1);
+                    Int32 crossDim = Math.Min(symbHeight, symbWidth);
+                    Int32 skipW = (symbWidth - crossDim) / 2;
+                    Int32 skipH = (symbHeight - crossDim) / 2;
+                    for (Int32 y = 0; y < symbHeight; y++)
+                    {
+                        for (Int32 x = 0; x < symbWidth; x++)
+                            if (
+                                (x - skipW == y - skipH) || // diagonal '\'
+                                (crossDim - x + skipW-1 == y - skipH) || // diagonal '/'
+                                (x == 0) || // line left
+                                (y == 0) || // line top
+                                (x == symbWidth - 1) || // line right
+                                (y == symbHeight - 1) // line bottom
+                                )
+                                imageData[y * symbWidth + x] = drawColor;
+                    }
+                }
+                else
+                {
+                    Array.Copy(fileData, offset, imageData, 0, dataLen);
                 }
                 FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel);
                 this.m_ImageDataList.Add(fc);
-                offset += dataLen;
+                offset += skipLen;
             }
             if (offset != fileData.Length)
                 throw new FileTypeLoadException("Font load failed.");
@@ -115,6 +157,9 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 offset = 0;
             for (Int32 i = 0; i < actualLen; i++)
             {
+                // Skip 127. It does not get written to the file.
+                if (i == 127 - SymbolsTypeFirst)
+                    continue;
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 0, 2, true, (UInt32)(widths[i] - 1));
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 2, 2, true, (UInt32)(heighths[i]-1));
                 finalData[offset + 7] = yOffsets[i];
@@ -122,14 +167,6 @@ namespace WWFontEditor.Domain.FontTypes
 
                 Byte[] curSymbolData = symbolData[i];
                 Byte[] saveSymbolData = new Byte[curSymbolData.Length];
-
-                for (Int32 o = 0; o < saveSymbolData.Length; o++)
-                {
-                    if (curSymbolData[o] == 0)
-                        saveSymbolData[o] = 0xFF;
-                    else
-                        saveSymbolData[o] = 0;
-                }
                 Array.Copy(saveSymbolData, 0, finalData, offset, saveSymbolData.Length);
                 offset += saveSymbolData.Length;
             }

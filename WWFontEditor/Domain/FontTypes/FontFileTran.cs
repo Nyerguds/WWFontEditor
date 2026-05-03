@@ -5,7 +5,7 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Very old 1bpp Westwood Studios font format, without file header, with fixed 8x8 symbols.
+    /// Transylvania font format
     /// </summary>
     public class FontFileTran : FontFile
     {
@@ -21,7 +21,7 @@ namespace WWFontEditor.Domain.FontTypes
         /// <summary>File extensions typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "GDA" }; } }
         public override String ShortTypeName { get { return "TranFont"; } }
-        public override String ShortTypeDescription { get { return "Translvania 1 & 2 Font"; } }
+        public override String ShortTypeDescription { get { return "Transylvania 1 & 2 Font"; } }
         public override String LongTypeDescription { get { return "A simple 1 BPP font with a tiny header of seemingly fixed values."; } }
         public override String[] GamesListForType { get { return new String[]
         {
