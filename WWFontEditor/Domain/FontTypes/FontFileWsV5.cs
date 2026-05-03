@@ -23,6 +23,7 @@ namespace WWFontEditor.Domain.FontTypes
         /// <summary>Padding between the characters of the font. Used for the preview function and to determine if padding is needed when automatically optimizing symbol widths.</summary>
         public override Int32 FontTypePaddingRight { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 1; } }
+
         public override String ShortTypeName { get { return "WWFont v5"; } }
         public override String ShortTypeDescription { get { return "WWFont v5 (RA2)"; } }
         public override String LongTypeDescription { get { return "A 1-bpp font which supports unicode."; } }
@@ -37,23 +38,23 @@ namespace WWFontEditor.Domain.FontTypes
             String format = Encoding.ASCII.GetString(fileData, 0, 4);
             if (!String.Equals(format, "fonT", StringComparison.InvariantCulture))
                 throw new FileTypeLoadException(ERR_BADHEADER);
-            //UInt32 dataStart? = (UInt32) ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
+            //UInt32 dataStart = (UInt32) ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
             Int32 stride = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 4, true);
             this.m_FontHeight = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 4, true);
             this.m_FontWidth = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x10, 4, true);
             // count: highest encountered ID. But all IDs are +1.
             Int32 count = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x14, 4, true);
-            Int32 symbolSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x18, 4, true);
-            Int32 symbolDataSize = symbolSize - 1;
-            if (stride * m_FontHeight != symbolDataSize)
+            Int32 symbolDataSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x18, 4, true);
+            Int32 symbolImageSize = symbolDataSize - 1;
+            if (stride * m_FontHeight != symbolImageSize)
                 throw new FileTypeLoadException("Symbol size does not match width * height!");
-            Int32 dataStart = 0x1C;
+            Int32 readOffset = 0x1C;
             List<Int32>[] symbolUsage = new List<Int32>[count];
-            if (fileData.Length <= dataStart + 0x20000)
+            if (fileData.Length <= readOffset + 0x20000)
                 throw new FileTypeLoadException(ERR_NOHEADER);
             for (Int32 i = 0; i <= 0xFFFF; i++)
             {
-                Int32 symbolIndex = (UInt16)(ArrayUtils.ReadIntFromByteArray(fileData, dataStart, 2, true)) - 1;
+                Int32 symbolIndex = (UInt16)(ArrayUtils.ReadIntFromByteArray(fileData, readOffset, 2, true)) - 1;
                 if (symbolIndex >= count)
                     throw new FileTypeLoadException("Symbol index exceeds number of symbols!");
                 if (symbolIndex >= 0)
@@ -62,20 +63,20 @@ namespace WWFontEditor.Domain.FontTypes
                         symbolUsage[symbolIndex] = new List<Int32>();
                     symbolUsage[symbolIndex].Add(i);
                 }
-                dataStart += 2;
+                readOffset += 2;
             }
             FontFileSymbol[] symbols = new FontFileSymbol[0x10000];
             for (Int32 i = 0; i < count; i++)
             {
-                if (dataStart >= fileData.Length)
-                    throw new FileTypeLoadException("File is not long enough to contain all referenced symbols!");
+                if (readOffset >= fileData.Length)
+                    throw new FileTypeLoadException("File is not long enough to contain all symbols!");
                 List<Int32> curSymbolUsage = symbolUsage[i];
                 if (curSymbolUsage == null)
                     break;
-                Byte symbolWidth = fileData[dataStart++];
-                Byte[] symbolData = new Byte[symbolDataSize];
-                Array.Copy(fileData, dataStart, symbolData, 0, symbolDataSize);
-                dataStart += symbolDataSize;
+                Byte symbolWidth = fileData[readOffset++];
+                Byte[] symbolData = new Byte[symbolImageSize];
+                Array.Copy(fileData, readOffset, symbolData, 0, symbolImageSize);
+                readOffset += symbolImageSize;
                 Int32 symbolStride = stride;
                 Byte[] symbolData8Bit = ImageUtils.ConvertTo8Bit(symbolData, symbolWidth, this.m_FontHeight, 0, 1, true, ref symbolStride);
                 foreach (Int32 index in curSymbolUsage)
@@ -95,22 +96,22 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 blockLength = dataLength + 1;
             Int32 imageListcount = m_ImageDataList.Count; // should always be 0x10000
             Byte[][] fontListBin = new Byte[0x10000][];
+            // Make list of binary entries, skipping any with width == 0
             for (Int32 i = 0; i < imageListcount; i++)
             {
                 FontFileSymbol ffs = m_ImageDataList[i];
-                if (ffs.Width == 0)
+                Int32 symbWidth = ffs.Width;
+                if (symbWidth == 0)
                     continue;
                 Byte[] output = new Byte[blockLength];
-                output[0] = (Byte)ffs.Width;
-                Int32 symbStride = ffs.Width;
-                Byte[] oneBppArr = ImageUtils.ConvertFrom8Bit(ffs.ByteData, ffs.Width, ffs.Height, 1, true, ref symbStride);
+                output[0] = (Byte)symbWidth;
+                Int32 symbStride = symbWidth;
+                Byte[] oneBppArr = ImageUtils.ConvertFrom8Bit(ffs.ByteData, symbWidth, ffs.Height, 1, true, ref symbStride);
                 oneBppArr = ImageUtils.ChangeStride(oneBppArr, symbStride, ffs.Height, stride, false, 0);
                 Array.Copy(oneBppArr, 0, output, 1, dataLength);
                 fontListBin[i] = output;
             }
             List<Byte[]> optimisedList = new List<Byte[]>();
-            // Remove all empty symbols
-            //FontFileSymbol blep = copiedList[65510];
             // Make optimised list, and write all entries to the index.
             Byte[] index = new Byte[0x20000];
             for (Int32 i = 0; i < imageListcount; i++)

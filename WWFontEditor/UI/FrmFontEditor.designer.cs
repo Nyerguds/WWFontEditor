@@ -53,7 +53,7 @@
             this.chkShiftWrap = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.numYOffset = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.chkGrid = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.grbSymbolInfo = new System.Windows.Forms.GroupBox();
             this.numWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -99,7 +99,7 @@
             this.pxbFullSize = new Nyerguds.Util.UI.PixelBox();
             this.cmbRange = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             ((System.ComponentModel.ISupportInitialize)(this.numYOffset)).BeginInit();
-            this.groupBox1.SuspendLayout();
+            this.grbSymbolInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -401,28 +401,28 @@
             this.toolTip1.SetToolTip(this.chkGrid, "Toggle grid");
             this.chkGrid.CheckStateChanged += new System.EventHandler(this.CheckboxGridOptionChanged);
             // 
-            // groupBox1
+            // grbSymbolInfo
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.chkShiftWrap);
-            this.groupBox1.Controls.Add(this.btnPaste);
-            this.groupBox1.Controls.Add(this.btnCopy);
-            this.groupBox1.Controls.Add(this.numWidth);
-            this.groupBox1.Controls.Add(this.numHeight);
-            this.groupBox1.Controls.Add(this.btnShiftLeft);
-            this.groupBox1.Controls.Add(this.btnShiftDown);
-            this.groupBox1.Controls.Add(this.btnShiftRight);
-            this.groupBox1.Controls.Add(this.lblSymbolWidth);
-            this.groupBox1.Controls.Add(this.btnShiftUp);
-            this.groupBox1.Controls.Add(this.numYOffset);
-            this.groupBox1.Controls.Add(this.lblSymbolHeight);
-            this.groupBox1.Controls.Add(this.lblSymbolYOffset);
-            this.groupBox1.Location = new System.Drawing.Point(616, 34);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(162, 176);
-            this.groupBox1.TabIndex = 60;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Symbol info";
+            this.grbSymbolInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.grbSymbolInfo.Controls.Add(this.chkShiftWrap);
+            this.grbSymbolInfo.Controls.Add(this.btnPaste);
+            this.grbSymbolInfo.Controls.Add(this.btnCopy);
+            this.grbSymbolInfo.Controls.Add(this.numWidth);
+            this.grbSymbolInfo.Controls.Add(this.numHeight);
+            this.grbSymbolInfo.Controls.Add(this.btnShiftLeft);
+            this.grbSymbolInfo.Controls.Add(this.btnShiftDown);
+            this.grbSymbolInfo.Controls.Add(this.btnShiftRight);
+            this.grbSymbolInfo.Controls.Add(this.lblSymbolWidth);
+            this.grbSymbolInfo.Controls.Add(this.btnShiftUp);
+            this.grbSymbolInfo.Controls.Add(this.numYOffset);
+            this.grbSymbolInfo.Controls.Add(this.lblSymbolHeight);
+            this.grbSymbolInfo.Controls.Add(this.lblSymbolYOffset);
+            this.grbSymbolInfo.Location = new System.Drawing.Point(616, 34);
+            this.grbSymbolInfo.Name = "grbSymbolInfo";
+            this.grbSymbolInfo.Size = new System.Drawing.Size(162, 176);
+            this.grbSymbolInfo.TabIndex = 60;
+            this.grbSymbolInfo.TabStop = false;
+            this.grbSymbolInfo.Text = "Symbol info";
             // 
             // numWidth
             // 
@@ -1033,7 +1033,7 @@
             this.cmbRange.Location = new System.Drawing.Point(213, 440);
             this.cmbRange.Name = "cmbRange";
             this.cmbRange.Size = new System.Drawing.Size(196, 21);
-            this.cmbRange.TabIndex = 308;
+            this.cmbRange.TabIndex = 21;
             this.cmbRange.Visible = false;
             this.cmbRange.SelectedIndexChanged += new System.EventHandler(this.CmbRange_SelectedIndexChanged);
             // 
@@ -1059,7 +1059,7 @@
             this.Controls.Add(this.numFontWidth);
             this.Controls.Add(this.numSymbols);
             this.Controls.Add(this.chkOutline);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.grbSymbolInfo);
             this.Controls.Add(this.chkGrid);
             this.Controls.Add(this.cmbEncodings);
             this.Controls.Add(this.dgrvSymbolsList);
@@ -1088,7 +1088,7 @@
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Frm_DragEnter);
             this.Resize += new System.EventHandler(this.FrmFontEditor_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.numYOffset)).EndInit();
-            this.groupBox1.ResumeLayout(false);
+            this.grbSymbolInfo.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).EndInit();
             this.menuStrip1.ResumeLayout(false);
@@ -1137,7 +1137,7 @@
         private Nyerguds.Util.UI.EnhNumericUpDown numYOffset;
         private Nyerguds.Util.UI.DataGridViewScrollSupport dgrvSymbolsList;
         private Nyerguds.Util.UI.ComboBoxSmartWidth cmbEncodings;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox grbSymbolInfo;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiFile;
         private System.Windows.Forms.ToolStripMenuItem tsmiOpenFont;

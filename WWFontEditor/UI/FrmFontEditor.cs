@@ -16,11 +16,18 @@ using WWFontEditor.Domain.FontTypes;
 using Nyerguds.Util.UI.Wrappers;
 using System.Drawing.Drawing2D;
 using System.Globalization;
+using System.Threading;
 
 namespace WWFontEditor.UI
 {
     public partial class FrmFontEditor : Form
     {
+        public delegate void InvokeDelegateReload(Boolean asNew);
+        public delegate DialogResult InvokeDelegateMessageBox(String message, MessageBoxButtons buttons, MessageBoxIcon icon);
+        public delegate void InvokeDelegateTwoArgs(Object arg1, Object arg2);
+        public delegate void InvokeDelegateSingleArg(Object value);
+        public delegate void InvokeDelegateEnableControls(Boolean enabled, String processingLabel);
+
         private const Int32 PALETTE_MAX_DIM = 162;
         private const String PROG_NAME = "Westwood Font Editor";
         private const String PROG_AUTHOR = "Created by Nyerguds";
@@ -52,7 +59,8 @@ namespace WWFontEditor.UI
         private Int32 m_ColumnWidth1 = -1;
         private Int32 m_ColumnWidth2 = -1;
         private Int32 m_ColumnWidth3 = -1;
-                    
+        private Thread m_ProcessingThread;
+        private Label m_BusyStatusLabel;
 
         private Point[] m_ShadowCoords;
         private Color m_ShadowColor = Color.Black;
@@ -635,9 +643,10 @@ namespace WWFontEditor.UI
         {
             if (this.m_LoadedFont == null)
                 return;
+            SaveOption[] saveOptions;
             try
             {
-                SaveOption[] saveOptions = this.m_LoadedFont.GetSaveOptions(fileName);
+                saveOptions = this.m_LoadedFont.GetSaveOptions(fileName);
                 if (saveOptions != null && saveOptions.Length > 0)
                 {
                     SaveOptionInfo soi = new SaveOptionInfo();
@@ -649,19 +658,160 @@ namespace WWFontEditor.UI
                         return;
                     saveOptions = extraopts.GetSaveOptions();
                 }
-                Byte[] filedata = this.m_LoadedFont.SaveFont(saveOptions);
-                File.WriteAllBytes(fileName, filedata);
-                this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
-                this.m_FileName = fileName;
-                this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + this.m_LoadedFont.ShortTypeName + ")";
-                this.tsmiRevertSymbol.Enabled = false;
-                this.ReloadUIWithSelection(false);
+                //Arguments: func returning FontFile, process type indication string.
+                Object[] arrParams = { new Func<FontFile>(()=> this.SaveFile(m_LoadedFont, fileName, saveOptions)), "Saving" };
+                this.m_ProcessingThread = new Thread(this.ExecuteThreaded);
+                this.m_ProcessingThread.Start(arrParams);
+
             }
             catch (Exception e)
             {
                 this.ToggleTempColorSelect(false);
                 MessageBox.Show(this, "Error occurred when saving:\n\n" + e.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private FontFile SaveFile(FontFile loadedFont, String fileName, SaveOption[] saveOptions)
+        {
+            Byte[] filedata = loadedFont.SaveFont(saveOptions);
+            File.WriteAllBytes(fileName, filedata);
+            return loadedFont;
+            this.m_LoadedFontBackup = loadedFont.Clone();
+            this.m_FileName = fileName;
+            this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + loadedFont.ShortTypeName + ")";
+            this.tsmiRevertSymbol.Enabled = false;
+            this.ReloadUIWithSelection(false);
+            return null;
+        }
+        
+        /// <summary>
+        ///  Executes a threaded operation while locking the UI.
+        ///  Arguments for the thread are: Func returning a FontFile, and a string to indicate the process type being executed (eg. "saving").
+        /// </summary>
+        /// <param name="parameters">An Object[] containing a Func returning a FontFile, and a string to indicate the process type being executed (eg. "saving").</param>
+        private void ExecuteThreaded(Object parameters)
+        {
+            Boolean wasLoading = this.m_Loading;
+            this.m_Loading = true;
+            try
+            {
+                Object[] arrParams = parameters as Object[];
+                if (arrParams == null || arrParams.Length != 2)
+                    return;
+                Func<FontFile> func = arrParams[0] as Func<FontFile>;
+                String operationType = arrParams[1] as String;
+                if (func == null)
+                    return;
+                this.Invoke(new InvokeDelegateEnableControls(this.EnableControls), false, operationType);
+                FontFile newfile = null;
+                try
+                {
+                    // Processing code.
+                    newfile = func();
+                }
+                catch (ThreadAbortException)
+                {
+                    // Ignore. Thread is aborted.
+                }
+                catch (Exception ex)
+                {
+                    operationType = String.IsNullOrEmpty(operationType) ? String.Empty : operationType.Trim().ToLowerInvariant() + " ";
+                    String message = operationType + " failed:\n" + ex.Message;
+                    this.Invoke(new InvokeDelegateMessageBox(this.ShowMessageBox), message, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.Invoke(new InvokeDelegateEnableControls(this.EnableControls), true, null);
+                }
+                try
+                {
+                    this.Invoke(new InvokeDelegateEnableControls(this.EnableControls), true, null);
+                    this.Invoke(new InvokeDelegateReload(this.ReloadUIWithSelection), false);
+                }
+                catch (InvalidOperationException) { /* ignore */ }
+            }
+            finally
+            {
+                this.m_Loading = wasLoading;
+            }
+        }
+
+        private void EnableControls(Boolean enabled, String processingLabel)
+        {
+            Boolean wasLoading = this.m_Loading;
+            this.m_Loading = true;
+            try
+            {
+                this.menuStrip1.Enabled = enabled;
+                this.btnValType.Enabled = enabled;
+                this.numSymbols.Enabled = enabled;
+                this.numFontWidth.Enabled = enabled;
+                this.numFontHeight.Enabled = enabled;
+                this.dgrvSymbolsList.Enabled = enabled;
+                this.cmbEncodings.Enabled = enabled;
+                this.cmbRange.Enabled = enabled;
+                this.txtPreview.Enabled = enabled;
+                this.numZoom.Enabled = enabled;
+                this.chkGrid.Enabled = enabled;
+                this.chkOutline.Enabled = enabled;
+                this.chkPaint.Enabled = enabled;
+                this.chkPicker.Enabled = enabled;
+                this.pnlImageScroll.Enabled = enabled;
+                this.grbSymbolInfo.Enabled = enabled;
+                this.cmbPalettes.Enabled = enabled;
+                this.palColorSelector.Enabled = enabled;
+                this.btnResetPalette.Enabled = enabled;
+                this.btnSavePalette.Enabled = enabled;
+                this.btnRemap.Enabled = enabled;
+                this.txtPreview.Enabled = enabled;
+                this.chkWrapPreview.Enabled = enabled;
+                this.btnSetShadow.Enabled = enabled;
+                this.numZoomPreview.Enabled = enabled;
+                this.pnlImagePreview.Enabled = enabled;
+                if (!enabled)
+                {
+                    // Create busy status label.
+                    if (this.m_BusyStatusLabel != null)
+                    {
+                        try { this.m_BusyStatusLabel.Dispose(); }
+                        catch { /*ignore*/ }
+                    }
+                    this.m_BusyStatusLabel = new Label();
+                    this.m_BusyStatusLabel.Text = (String.IsNullOrEmpty(processingLabel) ? "Processing" : processingLabel) + "...";
+                    this.m_BusyStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
+                    this.m_BusyStatusLabel.Font = new Font(this.m_BusyStatusLabel.Font.FontFamily, 15F, FontStyle.Regular, GraphicsUnit.Pixel, 0);
+                    this.m_BusyStatusLabel.AutoSize = false;
+                    this.m_BusyStatusLabel.Size = new Size(300, 100);
+                    this.m_BusyStatusLabel.Anchor = AnchorStyles.None; // Always floating in the middle, even on resize.
+                    this.m_BusyStatusLabel.BorderStyle = BorderStyle.FixedSingle;
+                    Int32 x = (this.ClientRectangle.Width - 300) / 2;
+                    Int32 y = (this.ClientRectangle.Height - 100) / 2;
+                    this.m_BusyStatusLabel.Location = new Point(x, y);
+                    this.Controls.Add(this.m_BusyStatusLabel);
+                    this.m_BusyStatusLabel.Visible = true;
+                    this.m_BusyStatusLabel.BringToFront();
+                }
+                else
+                    RemoveProcessingLabel();
+            }
+            finally
+            {
+                this.m_Loading = wasLoading;
+            }
+        }
+
+        private void RemoveProcessingLabel()
+        {
+            if (this.m_BusyStatusLabel == null)
+                return;
+            this.Controls.Remove(this.m_BusyStatusLabel);
+            try { this.m_BusyStatusLabel.Dispose(); }
+            catch { /* ignore */ }
+            this.m_BusyStatusLabel = null;
+        }
+
+        private DialogResult ShowMessageBox(String message, MessageBoxButtons buttons, MessageBoxIcon icon)
+        {
+            if (message == null)
+                return DialogResult.Cancel;
+            return MessageBox.Show(this, message, GetTitle(false), buttons, icon);
         }
 
         private void FrmFontEditor_Shown(Object sender, EventArgs e)
@@ -941,7 +1091,7 @@ namespace WWFontEditor.UI
         private void CheckMouse(Int32 mouseX, Int32 mouseY, MouseButtons pressedbuttons, Boolean drawPreviewPixel, Boolean force)
         {
             Bitmap gridFront = this.pxbEditGridFront.Image as Bitmap;
-            if (gridFront == null || this.m_LoadedFont == null)
+            if (gridFront == null || this.m_LoadedFont == null || this.m_Loading)
                 return;
             Int32 picX = mouseX / (Int32)this.numZoom.Value;
             Int32 picY = mouseY / (Int32)this.numZoom.Value;
@@ -1094,6 +1244,8 @@ namespace WWFontEditor.UI
 
         private void SetColorPickHighlight(Int32 index)
         {
+            if (this.m_Loading)
+                return;
             Color c = this.GetPaletteColor(index);
             if (c.A != 0xFF && this.palColorSelector.LabelSize.Width < 10)
                 this.palColorSelector.TransItemCharColor = Color.Empty;
@@ -2326,7 +2478,7 @@ namespace WWFontEditor.UI
         private void dgrvSymbolsList_CellMouseEnter(Object sender, DataGridViewCellEventArgs e)
         {
             DataGridView dgrvSender = sender as DataGridView;
-            if (dgrvSender == null)
+            if (dgrvSender == null || this.m_Loading)
                 return;
             this.toolTip1.SetToolTip(dgrvSender, null);
             if (m_LoadedFont == null)
@@ -2364,7 +2516,7 @@ namespace WWFontEditor.UI
         private void dgrvSymbolsList_CellMouseDown(Object sender, DataGridViewCellMouseEventArgs e)
         {
             DataGridView dgrvSender = sender as DataGridView;
-            if (e.ColumnIndex == -1 || e.RowIndex == -1 || e.Button != MouseButtons.Right || dgrvSender == null)
+            if (this.m_Loading || e.ColumnIndex == -1 || e.RowIndex == -1 || e.Button != MouseButtons.Right || dgrvSender == null)
                 return;
             DataGridViewCell c = dgrvSender[e.ColumnIndex, e.RowIndex];
             if (c.Selected)
@@ -2386,6 +2538,37 @@ namespace WWFontEditor.UI
                 return;
             this.m_LoadedFont = null;
             this.ReloadUi(true);
+        }
+
+        private void LblPaintColor1_MouseEnter(Object sender, EventArgs e)
+        {
+            this.SetColorPickHighlight(this.m_CurrentPaintColor1);
+        }
+
+        private void LblPaintColor2_MouseEnter(Object sender, EventArgs e)
+        {
+            this.SetColorPickHighlight(this.m_CurrentPaintColor2);
+        }
+
+        private void LblPaintColor_MouseLeave(Object sender, EventArgs e)
+        {
+            this.WipeColorPickHighlight();
+        }
+
+        private void btnSetShadow_Click(object sender, EventArgs e)
+        {
+            FrmSetshadow shadowDialog = new FrmSetshadow();
+            shadowDialog.ShadowColor = this.m_ShadowColor;
+            shadowDialog.ShadowCoords = this.m_ShadowCoords;
+            shadowDialog.CustomColors = this.m_CustomColors;
+            DialogResult dlr = shadowDialog.ShowDialog();
+            this.m_CustomColors = shadowDialog.CustomColors;
+            if (dlr == DialogResult.OK)
+            {
+                this.m_ShadowColor = shadowDialog.ShadowColor;
+                this.m_ShadowCoords = shadowDialog.ShadowCoords;
+                this.RepaintPreview();
+            }
         }
 
         private Boolean AbortForChangesAskSave(String question)
@@ -2430,37 +2613,5 @@ namespace WWFontEditor.UI
                 return null;
             return res == DialogResult.Yes;
         }
-
-        private void LblPaintColor1_MouseEnter(Object sender, EventArgs e)
-        {
-            this.SetColorPickHighlight(this.m_CurrentPaintColor1);
-        }
-
-        private void LblPaintColor2_MouseEnter(Object sender, EventArgs e)
-        {
-            this.SetColorPickHighlight(this.m_CurrentPaintColor2);
-        }
-
-        private void LblPaintColor_MouseLeave(Object sender, EventArgs e)
-        {
-            this.WipeColorPickHighlight();
-        }
-
-        private void btnSetShadow_Click(object sender, EventArgs e)
-        {
-            FrmSetshadow shadowDialog = new FrmSetshadow();
-            shadowDialog.ShadowColor = this.m_ShadowColor;
-            shadowDialog.ShadowCoords = this.m_ShadowCoords;
-            shadowDialog.CustomColors = this.m_CustomColors;
-            DialogResult dlr = shadowDialog.ShowDialog();
-            this.m_CustomColors = shadowDialog.CustomColors;
-            if (dlr == DialogResult.OK)
-            {
-                this.m_ShadowColor = shadowDialog.ShadowColor;
-                this.m_ShadowCoords = shadowDialog.ShadowCoords;
-                this.RepaintPreview();
-            }
-        }
-
     }
 }
