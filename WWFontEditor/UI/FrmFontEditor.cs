@@ -1153,22 +1153,22 @@ namespace WWFontEditor
                 return;
             DataObject retrievedData = (DataObject)Clipboard.GetDataObject();
             FontFileSymbol clipboard = null;
-            if (retrievedData.GetDataPresent(DataFormats.Bitmap))
+            if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
+            {
+                clipboard = retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
+            }
+            else if (retrievedData.GetDataPresent(DataFormats.Bitmap))
             {
                 Image srcImage = retrievedData.GetData(DataFormats.Bitmap) as Image;
                 clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
             }
-            else if (!retrievedData.GetDataPresent(typeof(FontFileSymbol)))
+            else
             {
                 MessageBox.Show("No font data found on the clipboard.", m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             if (clipboard == null)
-            {
-                clipboard = retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
-                if (clipboard == null)
-                    return;
-            }
+                return;
             Int32 curIndex = GetSelectedIndex();
             FontFileSymbol fc = this.m_LoadedFont.GetSymbol(curIndex);
             if (fc == null)

@@ -164,6 +164,9 @@ Special thanks to
 Version history
 ---------------
 
+v1.5.1:
+-Fixed bug where image pasting always took precedence over font symbol pasting.
+
 v1.5:
 -Implemented font type conversion.
 -Added global color replace function.
