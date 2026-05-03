@@ -67,6 +67,7 @@
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
+            this.chkLimit8Bit = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
@@ -350,6 +351,7 @@
             // 
             this.tabPage2.Controls.Add(this.chkPal8BppRainbow);
             this.tabPage2.Controls.Add(this.chkPal4BppWB);
+            this.tabPage2.Controls.Add(this.chkLimit8Bit);
             this.tabPage2.Controls.Add(this.chkPal8BppWB);
             this.tabPage2.Controls.Add(this.chkPal4BppBW);
             this.tabPage2.Controls.Add(this.chkPal1BppWB);
@@ -551,6 +553,17 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
+            // chkLimit8Bit
+            // 
+            this.chkLimit8Bit.AutoSize = true;
+            this.chkLimit8Bit.Location = new System.Drawing.Point(209, 150);
+            this.chkLimit8Bit.Name = "chkLimit8Bit";
+            this.chkLimit8Bit.Size = new System.Drawing.Size(160, 17);
+            this.chkLimit8Bit.TabIndex = 124;
+            this.chkLimit8Bit.Text = "Limit 8-bit fonts to 16 colours";
+            this.chkLimit8Bit.UseVisualStyleBackColor = true;
+            this.chkLimit8Bit.CheckedChanged += new System.EventHandler(this.chkLimit8Bit_CheckedChanged);
+            // 
             // FrmSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -617,5 +630,6 @@
         private System.Windows.Forms.Button btnReset;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnOk;
+        private System.Windows.Forms.CheckBox chkLimit8Bit;
     }
 }

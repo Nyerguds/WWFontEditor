@@ -43,6 +43,7 @@ namespace WWFontEditor.UI
             this.chkPal4BppWin.Checked = this.m_Settings.Generate4BitWindows;
             this.chkPal4BppBW.Checked = this.m_Settings.Generate4BitBW;
             this.chkPal4BppWB.Checked = this.m_Settings.Generate4BitWB;
+            this.chkLimit8Bit.Checked = this.m_Settings.Limit8BitPalettes;
             this.chkPal8BppRainbow.Checked = this.m_Settings.Generate8BitRainbow;
             this.chkPal8BppWin.Checked = this.m_Settings.Generate8BitWindows;
             this.chkPal8BppBW.Checked = this.m_Settings.Generate8BitBW;
@@ -87,6 +88,22 @@ namespace WWFontEditor.UI
                 ColorLabel_Click(sender, e);
         }
 
+        private void chkLimit8Bit_CheckedChanged(object sender, EventArgs e)
+        {
+            Boolean limit = this.chkLimit8Bit.Checked;
+
+            this.chkPal8BppRainbow.Enabled = !limit;
+            this.chkPal8BppWin.Enabled = !limit;
+            this.chkPal8BppBW.Enabled = !limit;
+            this.chkPal8BppWB.Enabled = !limit;
+            if (limit
+                && !this.chkPal8BppRainbow.Checked
+                && !this.chkPal8BppWin.Checked
+                && !this.chkPal8BppBW.Checked
+                && !this.chkPal8BppWB.Checked)
+                this.chkPal8BppRainbow.Checked = true;
+        }
+
         private void btnOk_Click(object sender, EventArgs e)
         {
             if ((!this.chkPal1BppBR.Checked && !this.chkPal1BppBW.Checked && !this.chkPal1BppWB.Checked)
@@ -115,6 +132,7 @@ namespace WWFontEditor.UI
             this.m_Settings.Generate4BitWindows = this.chkPal4BppWin.Checked;
             this.m_Settings.Generate4BitBW = this.chkPal4BppBW.Checked;
             this.m_Settings.Generate4BitWB = this.chkPal4BppWB.Checked;
+            this.m_Settings.Limit8BitPalettes = this.chkLimit8Bit.Checked;
             this.m_Settings.Generate8BitRainbow = this.chkPal8BppRainbow.Checked;
             this.m_Settings.Generate8BitWindows = this.chkPal8BppWin.Checked;
             this.m_Settings.Generate8BitBW = this.chkPal8BppBW.Checked;
@@ -148,6 +166,7 @@ namespace WWFontEditor.UI
             this.chkPal8BppWin.Checked = FontEditSettings.DefGenerate8BitWindows;
             this.chkPal8BppBW.Checked = FontEditSettings.DefGenerate8BitBW;
             this.chkPal8BppWB.Checked = FontEditSettings.DefGenerate8BitWB;
+            this.chkPal8BppWB.Checked = FontEditSettings.DefLimit8BitPalettes;
         }
     }
 }

@@ -45,10 +45,6 @@ namespace WWFontEditor.Domain
         public virtual Boolean CustomSymbSizesForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax || this.FontWidthTypeMin != this.FontWidthTypeMax; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
-        /// <summary>Exposed bits per pixel of the data in this font. Can be lower than what is saved internally.</summary>
-        public Int32 EditableBitsPerPixel { get { return Math.Min(this.BitsPerPixel, this.InternalEditBPP); } }
-        /// <summary>Bits per pixel of the data in this font.</summary>
-        protected virtual Int32 InternalEditBPP { get { return BitsPerPixel; } }
         /// <summary>File extension typically used for this font type.</summary>
         public virtual String[] FileExtensions { get { return new String[] { "fnt" }; } }
         /// <summary>File extension set for this specific file.</summary>
@@ -210,10 +206,9 @@ namespace WWFontEditor.Domain
         /// </summary>
         /// <param name="newFont">The new object to clone into.</param>
         /// <param name="overflowColor">Default value for overflow bytes on the font data in case newFont is of a lower color depth</param>
-        /// <param name="obeyEditableBpp">Treat image as if the exposed editable color depth is its true color depth in terms of needed color reduction.</param>
-        public void CloneInto(FontFile newFont, Byte overflowColor, Boolean obeyEditableBpp)
+        /// <param name="targetBpp">Target bit per pixel. Might be artificially limited below th maximum for 8-bit palettes.</param>
+        public void CloneInto(FontFile newFont, Byte overflowColor, Int32 targetBpp)
         {
-            Int32 targetBpp = obeyEditableBpp ? newFont.EditableBitsPerPixel : newFont.BitsPerPixel;
             Int32 colValLimit = 1 << targetBpp;
             if (overflowColor >= colValLimit)
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", overflowColor, targetBpp));
@@ -223,31 +218,30 @@ namespace WWFontEditor.Domain
             newFont.FontHeight = this.FontHeight;
             newFont.m_ImageDataList = new List<FontFileSymbol>();
 
-            //if newFont.SymbolsTypeMax this.newFont.SymbolsTypeMin < thisnewFont.SymbolsTypeMax;
-
             for (Int32 i = 0; i < newFont.SymbolsTypeMin; i++)
             {
                 FontFileSymbol image = i < m_ImageDataList.Count? this.m_ImageDataList[i] : new FontFileSymbol(targetBpp);
-                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor, obeyEditableBpp));
+                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor, targetBpp));
             }
             for (Int32 i = newFont.SymbolsTypeMin; i < Math.Min(m_ImageDataList.Count, newFont.SymbolsTypeMax); i++)
             {
-                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor, obeyEditableBpp));
+                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor, targetBpp));
             }
             newFont.PostConvertCleanup();
         }
-        public void RestorePicFromBackup(Int32 index, FontFile backup)
+
+        public void RestorePicFromBackup(Int32 index, FontFile backup, Int32 targetBpp)
         {
             if (index < 0 || backup.Length <= index || this.Length <= index)
                 return;
-            RestorePicFromBackup(index, backup.m_ImageDataList[index]);
+            RestorePicFromBackup(index, backup.m_ImageDataList[index], targetBpp);
         }
 
-        public void RestorePicFromBackup(Int32 index, FontFileSymbol backup)
+        public void RestorePicFromBackup(Int32 index, FontFileSymbol backup, Int32 targetBpp)
         {
             if (index < 0 || this.Length <= index)
                 return;
-            this.m_ImageDataList[index] = backup.CloneFor(this, false);
+            this.m_ImageDataList[index] = backup.CloneFor(this, targetBpp);
         }
 
         public Int32 GetSymbolWidth(Int32 index)

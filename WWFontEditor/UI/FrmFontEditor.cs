@@ -334,7 +334,7 @@ namespace WWFontEditor
             PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
             if (currentPal != null)
                 oldBpp = currentPal.BitsPerPixel;
-            Int32 bpp = m_LoadedFont == null ? 4 : m_LoadedFont.EditableBitsPerPixel;
+            Int32 bpp = GetEditBpp(m_LoadedFont);
             // Don't reload if it was the same :)
             if (oldBpp == -1 || oldBpp != bpp || forced)
             {
@@ -350,6 +350,16 @@ namespace WWFontEditor
                 if (index >= 0)
                     this.cmbPalettes.SelectedIndex = index;
             }
+        }
+
+        private int GetEditBpp(FontFile font)
+        {
+            if (font == null)
+                return 4;
+            Int32 bpp = m_LoadedFont.BitsPerPixel;
+            if (bpp != 8 || !this.m_Settings.Limit8BitPalettes)
+                return bpp;
+            return 4;
         }
 
         public static Color[] GetDummyPalette(Int32 bitsPerPixel)
@@ -492,7 +502,7 @@ namespace WWFontEditor
                 }
                 // add as param later
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
-                Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.EditableBitsPerPixel, false);
+                Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
                 palette[0] = Color.FromArgb(0xFF, palette[0]);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = 0;
@@ -941,7 +951,7 @@ namespace WWFontEditor
             DialogResult dr = MessageBox.Show("This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dr != DialogResult.Yes)
                 return;
-            this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup);
+            this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup, GetEditBpp(m_LoadedFont));
             this.ReloadImageInfo(true);
             this.ReloadDataGrid();
             this.pnlImageScroll.Focus();
@@ -1286,7 +1296,7 @@ namespace WWFontEditor
                 {
                     if (!String.IsNullOrEmpty(tb.SelectedText))
                         Clipboard.SetText(((TextBox)this.ActiveControl).SelectedText);
-                }
+                }                    
                 else
                     ((TextBox)this.ActiveControl).SelectedText = Clipboard.GetText();
                 return true;
@@ -1304,7 +1314,7 @@ namespace WWFontEditor
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.EditableBitsPerPixel, false);
+            Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), false);
             palette[0] = Color.FromArgb(0xFF, palette[0]);
             data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex].Cells[2].Value);
             data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(palette, m_LoadedFont));
@@ -1354,7 +1364,7 @@ namespace WWFontEditor
             }
             try
             {
-                fc = clipboard.CloneFor(this.m_LoadedFont, true);
+                fc = clipboard.CloneFor(this.m_LoadedFont, GetEditBpp(m_LoadedFont));
             }
             catch (InvalidOperationException)
             {
@@ -1362,7 +1372,7 @@ namespace WWFontEditor
                 convertPopup.StartPosition = FormStartPosition.CenterParent;
                 if (convertPopup.ShowDialog() == DialogResult.OK)
                 {
-                    fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex, true);
+                    fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex, GetEditBpp(m_LoadedFont));
                 }
             }
             // CloneFor already handles resizing
@@ -1372,7 +1382,7 @@ namespace WWFontEditor
             //    fc.ChangeWidth(this.m_LoadedFont.FontWidth);
             try
             {
-                this.m_LoadedFont.RestorePicFromBackup(curIndex, fc);
+                this.m_LoadedFont.RestorePicFromBackup(curIndex, fc, GetEditBpp(m_LoadedFont));
             }
             catch (InvalidOperationException ex)
             {
@@ -1634,12 +1644,24 @@ namespace WWFontEditor
 
         private void EditorSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            Int32 oldEditBpp = GetEditBpp(this.m_LoadedFont);
             FrmSettings settingsFrm = new FrmSettings(this.m_CustomColors, this.m_Settings);
             settingsFrm.StartPosition = FormStartPosition.CenterParent;
             settingsFrm.ShowDialog(this);
+            Boolean refreshSymbols = this.m_LoadedFont != null && oldEditBpp > GetEditBpp(this.m_LoadedFont);
+            if (refreshSymbols)
+            {
+                FontFileSymbol[] symbols = this.m_LoadedFont.GetAllSymbols();
+                foreach (FontFileSymbol symbol in symbols)
+                    symbol.ConvertToBpp(0, GetEditBpp(this.m_LoadedFont));
+            }
             this.m_CustomColors = settingsFrm.CustomColors;
             this.m_DefaultPalettes = LoadDefaultPalettes();
             ReloadPalettes(true);
+            if (refreshSymbols)
+            {
+                this.ReloadUIWithSelection();
+            }
         }
 
         private void txtPreview_TextChanged(object sender, EventArgs e)
@@ -1712,7 +1734,7 @@ namespace WWFontEditor
                     return false;
                 replaceIndex = (Byte)convertPopup.SelectedIndex;
             }
-            m_LoadedFont.CloneInto(targetFontFile, replaceIndex, true);
+            m_LoadedFont.CloneInto(targetFontFile, replaceIndex, GetEditBpp(targetFontFile));
             m_LoadedFont = targetFontFile;
             ReloadUIWithSelection();
             return true;
@@ -1765,7 +1787,7 @@ namespace WWFontEditor
             DialogResult res = MessageBox.Show(this, question, m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             return res != System.Windows.Forms.DialogResult.Yes;
         }
-
+        
     }
 
 }

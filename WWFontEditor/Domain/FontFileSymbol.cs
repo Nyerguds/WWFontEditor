@@ -56,9 +56,9 @@ namespace WWFontEditor.Domain
             return new FontFileSymbol(this.ByteData.ToArray(), this.Width, this.Height, this.YOffset, this.BitsPerPixel);
         }
 
-        public FontFileSymbol CloneFor(FontFile targetVersion, Boolean obeyEditableBpp)
+        public FontFileSymbol CloneFor(FontFile targetVersion, Int32 targetBpp)
         {
-            return CloneFor(targetVersion, null, obeyEditableBpp);
+            return CloneFor(targetVersion, null, targetBpp);
         }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
@@ -70,24 +70,11 @@ namespace WWFontEditor.Domain
             return this.ByteData.Any(x => x >= colValLimit);
         }
 
-        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue, Boolean obeyEditableBpp)
+        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue, Int32 targetBpp)
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
-            Int32 myBpp = this.BitsPerPixel;
-            Byte[] newByteData;
-            Int32 targetBpp = obeyEditableBpp ? targetVersion.EditableBitsPerPixel : targetVersion.BitsPerPixel;
-            Int32 colValLimit = 1 << targetBpp;
-            if (defaultValue.HasValue && defaultValue.Value >= colValLimit)
-                throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
-            if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
-            {
-                if (defaultValue == null)
-                    throw new InvalidOperationException(String.Format("Cannot insert a {0} bit per pixel image into a {1} bit per pixel font.", myBpp, targetBpp));
-                newByteData = this.ByteData.Select(x => x >= colValLimit ? defaultValue.Value : x).ToArray();
-            }
-            else
-                newByteData = this.ByteData.ToArray();
+            Byte[] newByteData = ConvertDataToBpp(defaultValue, targetBpp);
 
             FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp);
 
@@ -132,6 +119,30 @@ namespace WWFontEditor.Domain
             if (!targetVersion.CustomSymbSizesForType && targetVersion.FontWidth != newSymbol.Width)
                 newSymbol.ChangeWidth(targetVersion.FontWidth);
             return newSymbol;
+        }
+
+        public void ConvertToBpp(Byte? defaultValue, Int32 targetBpp)
+        {
+            this.ByteData = ConvertDataToBpp(defaultValue, targetBpp);
+            this.BitsPerPixel = targetBpp;
+        }
+
+        private Byte[] ConvertDataToBpp(Byte? defaultValue, Int32 targetBpp)
+        {
+            Int32 myBpp = this.BitsPerPixel;
+            Byte[] newByteData;
+            Int32 colValLimit = 1 << targetBpp;
+            if (defaultValue.HasValue && defaultValue.Value >= colValLimit)
+                throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
+            if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
+            {
+                if (defaultValue == null)
+                    throw new InvalidOperationException(String.Format("Cannot insert a {0} bit per pixel image into a {1} bit per pixel font.", myBpp, targetBpp));
+                newByteData = this.ByteData.Select(x => x >= colValLimit ? defaultValue.Value : x).ToArray();
+            }
+            else
+                newByteData = this.ByteData.ToArray();
+            return newByteData;
         }
 
         public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont)

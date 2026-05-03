@@ -40,10 +40,10 @@ Features list
 * Contains a Dune 2000 encoding for the game's reordered special characters.
 * Can preview text as image, in the chosen text encoding.
 * Has a multitude of inbuilt palettes to show the font symbols.
-* Color palettes can be edited on-the-fly by double-clicking the colours.
-* Has support for adding and editing custom added palettes (see next section).
-* The editor's colors and defaults can be customized in the settings.
-* Color Replace simplifies adapting fonts to the colors used on other fonts.
+* Colour palettes can be edited on-the-fly by double-clicking the colours.
+* Has support for adding and editing custom added palettes (see third section).
+* The editor's colours and defaults can be customized in the settings.
+* Colour Replace simplifies adapting fonts to the colours used on other fonts.
 
 
 ---------
@@ -52,37 +52,46 @@ Shortcuts
 
 The following shortcuts can be used in the editor:
 
+[Ctrl] + C : Copy symbol
+ This data can be used in the current or another Font Editor window, or can be
+ pasted as image or text in other editors. The text on the clipboard will be
+ the currently selected symbol in the chosen text encoding.
+
+[Ctrl] + V : Paste symbol
+ If the data was copied from Font Editor it will simply use the chosen palette.
+ If it was an image, it will match its colours to the current palette.
+
 [Ctrl] : Holding down [Ctrl] enables the Colour Picker.
 
-[Ctrl] + [Up]    : Shift image up   
-[Ctrl] + [Down]  : Shift image down	
-[Ctrl] + [Left]  : Shift image left	
+[Ctrl] + [Up]    : Shift image up
+[Ctrl] + [Down]  : Shift image down
+[Ctrl] + [Left]  : Shift image left
 [Ctrl] + [Right] : Shift image right
-Hold the [Shift] key to apply this operation to all symbols.
-Hold the [Alt] key to expand the frame with the shifting, to avoid losing data.
+ Hold the [Shift] key to apply this operation to all symbols.
+ Hold the [Alt] key to expand the frame when shifting, to avoid losing data.
 
 [Ctrl] + [PageUp]   : Decrease Y-offset
 [Ctrl] + [PageDown] : Increase Y-offset
-Hold the [Shift] key to apply this operation to all symbols.
+ Hold the [Shift] key to apply this operation to all symbols.
 
 
 ---------------
 Adding palettes
 ---------------
 
-The editor has a bunch of automatically-generated color palettes that allow
+The editor has a bunch of automatically-generated colour palettes that allow
 quick visualisation of the fonts. However, if you would wish to add custom
 palettes this is entirely possible too. The two types of palettes that can be
-added are 16-color palettes and 32-color palettes.
+added are 16-colour palettes and 32-colour palettes.
 
-For both of these, the editor uses the classic 256-color palette format used
+For both of these, the editor uses the classic 256-colour palette format used
 by all Westwood C&C games.
 
-To add a 256-color palette to the editor, simply copy the palette file into
+To add a 256-colour palette to the editor, simply copy the palette file into
 the editor folder and restart the application.
 
-To add a 16-color palette, the process is slightly more complex; the editor
-uses a C&C 256-color palette for that too, but divides it up into 16 entries.
+To add a 16-colour palette, the process is slightly more complex; the editor
+uses a C&C 256-colour palette for that too, but divides it up into 16 entries.
 To add such a palette, add the file itself, then create a .ini file with the
 same name and a [Palette] header inside it. The editor will read the entries
 below that header from 0 to 15 and add them to the editor. Palettes used as
@@ -202,10 +211,13 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+v1.6: (2017/04/11 08:30)
+-Added option for limiting 8-bit font types to use only 16 colours.
+
 v1.5.9: (2017/04/09 12:49)
 -Added shortcuts for bulk shifting without data loss and Y-offset changes.
--Holding down ctrl now enables colour picker mode, for fast color picking.
--Optimized refreshing of paint mode and color pick mode.
+-Holding down Ctrl now enables colour picker mode, for fast colour picking.
+-Optimized refreshing of paint mode and colour pick mode.
 -Colour picker now shows a hand cursor.
 
 v1.5.8: (2017/04/09 00:30)
@@ -243,7 +255,7 @@ v1.5.1: (2016/12/10 05:12)
 
 v1.5: (2016/12/09 23:22)
 -Implemented font type conversion.
--Added global color replace function.
+-Added global colour replace function.
 -Ctrl + arrow keys serve as shortcuts for image shifting.
 -Ctrl + Shift + arrow keys will shift all images in the font.
 -The preview image can now be copied to the clipboard with a right-click menu.
@@ -263,7 +275,7 @@ v1.3: (2016/12/06 17:22)
 -Palette support implemented: the program will now read any C&C type palettes
  in the program folder. If an ini file of the same name is added, the palette
  is divided into 16-colour palettes according to keys 0 to 15 under [Palette].
--Application settings added: all UI colors and defaults can now be customized.
+-Application settings added: all UI colours and defaults can now be customized.
 
 v1.2.2: (2016/12/01 21:53)
 -Implemented correct conversion of symbols pasted in from a different font type.
@@ -295,18 +307,19 @@ v1.0: (2016/11/29 14:18)
 -Added Revert option for reloading a symbol to the original loaded state.
 -Added Copy & Paste options for copying whole symbols.
 -Modified palette control to support both 16 and 256 colour for later TS/D2k support.
--Added edit mode buttons for normal drawing and color picker.
+-Added edit mode buttons for normal drawing and colour picker.
 
 v0.4: (2016/11/26 21:26)
--Added 16-color palette to select left and right mouse button colors.
+-Added 16-colour palette to select left and right mouse button colours.
 
 v0.3: (2016/11/25 21:56)
 -Saving implemented.
 
 v0.2: (2016/11/25 14:23)
--Basic 2-button pixel editing implemented, but no palette selector yet, limiting to the set colors.
+-Basic 2-button pixel editing implemented, but no palette selector yet,
+ limiting to the set colours.
 -Split grid and editable area into two options
--Shows current edit foreground color (but it can't be changed)
+-Shows current edit foreground colour (but it can't be changed)
 
 v0.1: (2016/11/22 23:24)
 -Basic viewing implemented, including Y-offset. No editing.
