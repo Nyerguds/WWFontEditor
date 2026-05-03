@@ -69,6 +69,7 @@
     <Compile Include="Domain\ColorTools\ColorUtils.cs" />
     <Compile Include="Domain\ColorTools\SixBitColor.cs" />
     <Compile Include="Domain\D2KEncoding.cs" />
+    <Compile Include="Domain\FileTypeBroadcaster.cs" />
     <Compile Include="Domain\FontFile.cs" />
     <Compile Include="Domain\FontFileSymbol.cs" />
     <Compile Include="Domain\FontTypes\FontFileD2K.cs" />
@@ -143,7 +144,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\Wrappers\EncodingDropDownInfo.cs" />
-    <Compile Include="UI\Wrappers\FontFileDialogItem.cs" />
+    <Compile Include="UI\Tools\FileDialogGenerator.cs" />
     <Compile Include="UI\Wrappers\PaletteDropDownInfo.cs" />
     <EmbeddedResource Include="UI\FrmReplaceColor.resx">
       <DependentUpon>FrmReplaceColor.cs</DependentUpon>

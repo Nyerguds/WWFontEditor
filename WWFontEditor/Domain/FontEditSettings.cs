@@ -181,13 +181,21 @@ namespace WWFontEditor.Domain
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEAREA, m_EnableArea);
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEPIXELWRAP, this.m_EnablePixelWrap);
 
+            if (!this.m_Generate1BitBR && !this.m_Generate1BitBW && !this.m_Generate1BitWB)
+                this.m_Generate1BitBR = true;
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBR, m_Generate1BitBR);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBW, m_Generate1BitBW);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITWB, m_Generate1BitWB);
+
+            if (!this.m_Generate4BitRainbow && !this.m_Generate4BitWindows && !this.m_Generate4BitBW && !this.m_Generate4BitWB)
+                this.m_Generate4BitRainbow = true;
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITRAINBOW, m_Generate4BitRainbow);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWINDOWS, m_Generate4BitWindows);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITBW, m_Generate4BitBW);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE4BITWB, m_Generate4BitWB);
+
+            if (!this.m_Generate8BitRainbow && !this.m_Generate8BitWindows && !this.m_Generate8BitBW && !this.m_Generate8BitWB)
+                this.m_Generate8BitRainbow = true;
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITRAINBOW, m_Generate8BitRainbow);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITWINDOWS, m_Generate8BitWindows);
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE8BITBW, m_Generate8BitBW);

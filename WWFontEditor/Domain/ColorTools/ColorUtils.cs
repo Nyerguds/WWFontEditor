@@ -20,7 +20,7 @@ namespace ColorManipulation
         {
             Color[] eightbitpalette = new Color[sixbitpalette.Length];
             for (Int32 i = 0; i < sixbitpalette.Length; i++)
-                eightbitpalette[i] = sixbitpalette[i].getAsColor();
+                eightbitpalette[i] = sixbitpalette[i].GetAsColor();
             return eightbitpalette;
         }
         
@@ -60,12 +60,7 @@ namespace ColorManipulation
             if (new FileInfo(palfilename).Length != 768)
                 throw new ArgumentException(invalid);
 
-            Byte[] readBytes;
-            FileStream fs = new FileStream(palfilename, FileMode.Open, FileAccess.Read);
-            using (BinaryReader reader = new BinaryReader(fs))
-            {
-                readBytes = reader.ReadBytes(768);
-            }            
+            Byte[] readBytes = File.ReadAllBytes(palfilename);
             SixBitColor[] pal = new SixBitColor[256];
             try
             {

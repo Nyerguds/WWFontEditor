@@ -27,7 +27,7 @@ namespace ColorManipulation
             else if (!".png".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
                 filename += ".png";
 
-            if (saveFormat == ImageFormat.Jpeg)
+            if (saveFormat.Guid == ImageFormat.Jpeg.Guid)
             {
                 // What a mess just to have non-crappy jpeg. Scratch that; jpeg is always crappy.
                 ImageCodecInfo jpegEncoder = null;
@@ -43,7 +43,7 @@ namespace ColorManipulation
                 }
                 System.Drawing.Imaging.Encoder qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
                 EncoderParameters encparams = new EncoderParameters(1);
-                encparams.Param[0] = new EncoderParameter(qualityEncoder, 100L);
+                encparams.Param[0] = new EncoderParameter(qualityEncoder, 90L);
                 image.Save(filename, jpegEncoder, encparams);
             }
             else
@@ -105,36 +105,37 @@ namespace ColorManipulation
             throw new NotSupportedException("No indexed PixelFormat available for " + bitsPerPixel + " bpp.");
         }
 
-        public static ColorPalette MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero)
+        public static Color[] MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero)
         {
             PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
             return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
         }
 
-        public static ColorPalette MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero, Color? defaultColor)
+        public static Color[] MakePalette(Color[] sourcePalette, Int32 bitsPerPixel, Boolean addTransparentZero, Color? defaultColor)
         {
             PixelFormat pixelFormat = GetPalettedFormat(bitsPerPixel);
             return MakePalette(sourcePalette, pixelFormat, addTransparentZero, defaultColor);
         }
 
-        public static ColorPalette MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero)
+        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero)
         {
             return MakePalette(sourcePalette, pixelFormat, addTransparentZero, null);
         }
 
-        public static ColorPalette MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero, Color? defaultColor)
+        public static Color[] MakePalette(Color[] sourcePalette, PixelFormat pixelFormat, Boolean addTransparentZero, Color? defaultColor)
         {
-            ColorPalette pal = new Bitmap(10, 10, pixelFormat).Palette;
-            for (Int32 i = 0; i < pal.Entries.Length; i++)
+            Int32 pfs = Image.GetPixelFormatSize(pixelFormat);
+            Color[] pal = new Color[pfs > 8 ? 0 : 1 << pfs];
+            for (Int32 i = 0; i < pal.Length; i++)
             {
                 if (sourcePalette != null && i < sourcePalette.Length)
-                    pal.Entries[i] = sourcePalette[i];
+                    pal[i] = sourcePalette[i];
                 else if (defaultColor.HasValue)
-                    pal.Entries[i] = defaultColor.Value;
+                    pal[i] = defaultColor.Value;
             }
             // make color 0 transparent
             if (addTransparentZero)
-                pal.Entries[0] = Color.FromArgb(0, pal.Entries[0]);
+                pal[0] = Color.FromArgb(0, pal[0]);
             return pal;
         }
 
@@ -232,7 +233,7 @@ namespace ColorManipulation
         /// <param name="pixelFormat"></param>
         /// <param name="palette"></param>
         /// <returns>The new image</returns>
-        public static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat, ColorPalette palette)
+        public static Bitmap BuildImage(Byte[] sourceData, Int32 width, Int32 height, Int32 stride, PixelFormat pixelFormat, Color[] palette)
         {
             if (width == 0 || height == 0)
                 return null;
@@ -242,7 +243,13 @@ namespace ColorManipulation
             newImage.UnlockBits(targetData);
             // For 8-bit images, set the palette.
             if ((pixelFormat == PixelFormat.Format8bppIndexed || pixelFormat == PixelFormat.Format4bppIndexed) && palette != null)
-                newImage.Palette = palette;
+            {
+                ColorPalette pal = newImage.Palette;
+                for (Int32 i = 0; i < pal.Entries.Length; i++)
+                    if (i < palette.Length)
+                    pal.Entries[i] = palette[i];
+                newImage.Palette = pal;
+            }
             return newImage;
         }
 
@@ -318,7 +325,7 @@ namespace ColorManipulation
                         if (linepos > lineMax)
                             continue;
                         Byte b = bytes[i];
-                        if (transCols.Contains((Int32)b))
+                        if (transCols.Contains(b))
                             return true;
                     }
                 }
@@ -379,16 +386,15 @@ namespace ColorManipulation
             }
             return false;
         }
-        
-        private static ColorPalette GeneratePalette(Color[] colors, Color def)
+
+        private static Color[] GeneratePalette(Color[] colors, Color def)
         {
-            Bitmap bm = new Bitmap(1, 1, PixelFormat.Format8bppIndexed);
-            ColorPalette pal = bm.Palette;
-            for (Int32 i = 0; i < pal.Entries.Length; i++)
+            Color[] pal = new Color[256];
+            for (Int32 i = 0; i < pal.Length; i++)
                 if (i < colors.Length)
-                    pal.Entries[i] = colors[i];
+                    pal[i] = colors[i];
                 else
-                    pal.Entries[i] = def;
+                    pal[i] = def;
             return pal;
         }
 
@@ -396,7 +402,7 @@ namespace ColorManipulation
         {
             if (width == 0 || height == 0)
                 return null;
-            ColorPalette pal = GeneratePalette(colors, Color.Empty);
+            Color[] pal = GeneratePalette(colors, Color.Empty);
             Byte[] blankArray = new Byte[width * height];
             if (paintColor != 0)
                 for (Int32 i = 0; i < blankArray.Length; i++)
@@ -408,7 +414,7 @@ namespace ColorManipulation
         {
             if (width == 0 || height == 0)
                 return null;
-            ColorPalette pal = GeneratePalette(colors, Color.Empty);
+            Color[] pal = GeneratePalette(colors, Color.Empty);
             Byte[] patternArray = new Byte[width * height];
             for (Int32 y = 0; y < width; y++)
             {
@@ -425,7 +431,7 @@ namespace ColorManipulation
         {
             if (zoomFactor <= 0)
                 throw new ArgumentOutOfRangeException("zoomFactor");
-            ColorPalette pal = GeneratePalette(colors, Color.Empty);
+            Color[] pal = GeneratePalette(colors, Color.Empty);
             Int32 width1 = origWidth * zoomFactor;
             Int32 height1 = origHeight * zoomFactor;
             Int32 width = width1 + 1;

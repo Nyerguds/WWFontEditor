@@ -19,7 +19,7 @@ namespace ColorManipulation
             set
             {
                 if (value > 63)
-                    throw new ArgumentException(argError, "R");
+                    throw new ArgumentException(argError, "value");
                 else
                     this.m_Red = value;
             }
@@ -30,7 +30,7 @@ namespace ColorManipulation
             set
             {
                 if (value > 63)
-                    throw new ArgumentException(argError, "G");
+                    throw new ArgumentException(argError, "value");
                 else
                     this.m_Green = value;
             }
@@ -41,7 +41,7 @@ namespace ColorManipulation
             set
             {
                 if (value > 63)
-                    throw new ArgumentException(argError, "B");
+                    throw new ArgumentException(argError, "value");
                 else
                     this.m_Blue = value;
             }
@@ -61,14 +61,14 @@ namespace ColorManipulation
             B = (Byte)(color.B / 4);
         }
 
-        public Color getAsColor()
+        public Color GetAsColor()
         {
-            return Color.FromArgb((Int32)(R*4), (Int32)(G*4), (Int32)(B*4));
+            return Color.FromArgb(R * 4, G * 4, B * 4);
         }
 
-        public Byte[] asByteArray()
-        { 
-            return new Byte[]{R,G,B};
+        public Byte[] GetAsByteArray()
+        {
+            return new Byte[] {R, G, B};
         }
 
         public override String ToString()

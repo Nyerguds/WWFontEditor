@@ -14,6 +14,8 @@ using System.Text.RegularExpressions;
 using WWFontEditor.UI;
 using Nyerguds.Ini;
 using WWFontEditor.UI.Wrappers;
+using WWFontEditor.UI.Tools;
+using Nyerguds.Util;
 
 namespace WWFontEditor
 {
@@ -203,7 +205,7 @@ namespace WWFontEditor
                             fontFile.LoadFont(data);
                             m_LoadedFont = fontFile;
                         }
-                        catch (LoadFailedException e)
+                        catch (FileTypeLoadException e)
                         {
                             m_LoadedFont = null;
                             error = "Could not load font file as " + fontFile.ShortTypeDescription + ":\n\n" + e.Message;
@@ -211,7 +213,7 @@ namespace WWFontEditor
                     }
                     else
                     {
-                        List<LoadFailedException> loadErrors;
+                        List<FileTypeLoadException> loadErrors;
                         this.m_LoadedFont = FontFile.LoadFontFile(data, out loadErrors);
                         if (this.m_LoadedFont == null)
                         {
@@ -264,21 +266,7 @@ namespace WWFontEditor
             this.pxbFullSize.Visible = loadOk;
             if (loadOk)
             {
-                Int32 oldBpp = -1;
-                PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
-                if (currentPal != null)
-                    oldBpp = currentPal.BitsPerPixel;
-                Int32 bpp = m_LoadedFont.BitsPerPixel;
-                // Don't reload if it was the same :)
-                if (oldBpp == -1 || oldBpp != bpp)
-                {
-                    this.m_CurrentPaintColor1 = 1;
-                    this.m_CurrentPaintColor2 = 0;
-                    List<PaletteDropDownInfo> bppPalettes = GetPalettes(bpp);
-                    if (bppPalettes.Count == 0)
-                        bppPalettes.Add(new PaletteDropDownInfo("Rainbow", bpp, GetDummyPalette(4), null, -1));
-                    this.cmbPalettes.DataSource = bppPalettes;
-                }
+                ReloadPalettes(false);
                 this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.btnValType.Text = m_LoadedFont.ShortTypeName.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.btnValType, m_LoadedFont.ShortTypeDescription);
@@ -323,7 +311,7 @@ namespace WWFontEditor
                 Int32 firstSelected = this.m_Settings.SelectedSymbol;
                 if (this.m_LoadedFont.Length <= firstSelected)
                     firstSelected = 0;
-                if (loadOk && this.m_LoadedFont.Length > firstSelected)
+                if (this.m_LoadedFont.Length > firstSelected)
                 {
                     this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[firstSelected].Cells[0];
                     this.dgrvSymbolsList.Rows[firstSelected].Cells[0].Selected = true;
@@ -332,6 +320,30 @@ namespace WWFontEditor
             }
             this.m_Loading = wasloading;
             return loadOk;
+        }
+
+        private void ReloadPalettes(Boolean forced)
+        {
+            Int32 oldBpp = -1;
+            PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
+            if (currentPal != null)
+                oldBpp = currentPal.BitsPerPixel;
+            Int32 bpp = m_LoadedFont == null ? 4 : m_LoadedFont.EditableBitsPerPixel;
+            // Don't reload if it was the same :)
+            if (oldBpp == -1 || oldBpp != bpp || forced)
+            {
+                Int32 index = -1;
+                this.m_CurrentPaintColor1 = 1;
+                this.m_CurrentPaintColor2 = 0;
+                List<PaletteDropDownInfo> bppPalettes = GetPalettes(bpp);
+                if (forced && oldBpp != -1 && oldBpp == bpp)
+                    index = bppPalettes.FindIndex(x => x.Name == currentPal.Name);
+                if (bppPalettes.Count == 0)
+                    bppPalettes.Add(new PaletteDropDownInfo("Rainbow", bpp, GetDummyPalette(4), null, -1));
+                this.cmbPalettes.DataSource = bppPalettes;
+                if (index >= 0)
+                    this.cmbPalettes.SelectedIndex = index;
+            }
         }
 
         public static Color[] GetDummyPalette(Int32 bitsPerPixel)
@@ -393,7 +405,7 @@ namespace WWFontEditor
                     Color[] fullPal = ColorUtils.GetEightBitColorPalette(pal);
 
                     String path = file.FullName.Substring(0, file.FullName.LastIndexOf(".", StringComparison.Ordinal) + 1);
-                    String bareName = file.Name.Substring(0, file.Name.LastIndexOf(".", StringComparison.Ordinal));
+                    String bareName = file.Name;//.Substring(0, file.Name.LastIndexOf(".", StringComparison.Ordinal));
                     String inipath = path + "ini";
                     if (File.Exists(inipath))
                     {
@@ -401,7 +413,16 @@ namespace WWFontEditor
                         Boolean generateDefault = !paletteConfig.GetSectionNames().Contains(INI_SECTION);
                         for (Int32 i = 0; i < 16; i++)
                         {
-                            String name = generateDefault ? bareName + "#" + i : paletteConfig.GetStringValue("Palette", i.ToString(), null);
+                            String name = paletteConfig.GetStringValue("Palette", i.ToString(), null);
+                            Boolean hasName = !String.IsNullOrEmpty(name);
+                            if (generateDefault || hasName)
+                            {
+                                String defName = bareName + " #" + i;
+                                if (hasName)
+                                    name += " [" + defName + "]";
+                                else
+                                    name = defName;
+                            }
                             if (!String.IsNullOrEmpty(name))
                             {
                                 Color[] subPalette = new Color[16];
@@ -409,7 +430,7 @@ namespace WWFontEditor
                                 if (subPalette.All(x => x.R == 0 && x.G == 0 && x.B == 0))
                                     subPalette = GetDummyPalette(4).ToArray();
                                 subPalette[0] = Color.FromArgb(0x00, subPalette[0]);
-                                palettes.Add(new PaletteDropDownInfo(name + " (from " + bareName + ")", 4, subPalette, file.Name, i));
+                                palettes.Add(new PaletteDropDownInfo(name, 4, subPalette, file.Name, i));
                             }
                         }
                     }
@@ -465,8 +486,8 @@ namespace WWFontEditor
                 }
                 // add as param later
                 Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
-                ColorPalette palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.BitsPerPixel, false);
-                palette.Entries[0] = Color.FromArgb(0xFF, palette.Entries[0]);
+                Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.EditableBitsPerPixel, false);
+                palette[0] = Color.FromArgb(0xFF, palette[0]);
                 Bitmap dummyImage = ImageUtils.GenerateBlankImage(5, 5, new Color[] { Color.Transparent }, 0);
                 Int32 selectedIndex = 0;
                 Int32 scrollOffset = 0;
@@ -710,7 +731,7 @@ namespace WWFontEditor
         private void pxbEditGridFront_MouseDown(object sender, MouseEventArgs e)
         {
             pnlImageScroll.Focus();
-            // prevents bug where the closing click of a dialog is seen as valid mouse-up event on the edit grid
+            // prevents problem where the closing click of a dialog is seen as valid mouse-up event on the edit grid
             m_Clicking = (e.Button & MouseButtons.Left) != 0 || (e.Button & MouseButtons.Right) != 0;
             CheckMouse(sender, e, false);
         }
@@ -961,20 +982,11 @@ namespace WWFontEditor
         {
             if (AbortForUnsavedChanges(QUESTION_OPENNEWFONT))
                 return;
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Multiselect = false;
-            FontFileDialogItem[] items = FontFile.SupportedTypes.Select(x => new FontFileDialogItem(x)).ToArray();
-            ofd.Filter = FontFileDialogItem.GetFileFilter(items, true);
-            //ofd.FilterIndex = 1; // "all supported files". One-based for some fucked up reason.
-            //"Westwood font files (*.fnt)|*.fnt|All Files (*.*)|*.*";
-            ofd.InitialDirectory = String.IsNullOrEmpty(m_FileName) ? Path.GetFullPath(".") : Path.GetDirectoryName(m_FileName);
-            //ofd.FilterIndex
-            DialogResult res = ofd.ShowDialog(this);
-            if (res != System.Windows.Forms.DialogResult.OK)
+            FontFile selectedItem;
+            String filename = FileDialogGenerator.ShowOpenFileFialog(this, FontFile.SupportedTypes, m_FileName, "fonts", "fnt", out selectedItem);
+            if (filename == null)
                 return;
-            Int32 index = ofd.FilterIndex - 2;
-            FontFile selectedItem = index >= 0 && index < items.Length ? items[ofd.FilterIndex - 2].FontTypeObject : null;
-            LoadFontFile(ofd.FileName, selectedItem);
+            LoadFontFile(filename, selectedItem);
         }
 
         private void SaveFontToolStripMenuItem_Click(object sender, EventArgs e)
@@ -999,28 +1011,17 @@ namespace WWFontEditor
         {
             if (this.m_LoadedFont == null)
                 return false;
-            SaveFileDialog sfd = new SaveFileDialog();
-            FontFileDialogItem[] items = FontFile.SupportedTypes.Select(x => new FontFileDialogItem(x)).ToArray();
-            Int32 filterIndex;
-            for (filterIndex = 0; filterIndex < items.Length; filterIndex++)
-                if (m_LoadedFont.GetType() == items[filterIndex].FontType)
-                    break;
-            filterIndex++;
-            sfd.Filter = FontFileDialogItem.GetFileFilter(items, false);
-            sfd.FilterIndex = filterIndex;
-            //sfd.Filter = "Westwood font file (*.fnt)|*.fnt";
-            sfd.InitialDirectory = String.IsNullOrEmpty(m_FileName) ? Path.GetFullPath(".") : Path.GetDirectoryName(m_FileName);
-            if (!String.IsNullOrEmpty(m_FileName))
-                sfd.FileName = Path.GetFileName(m_FileName);
-            DialogResult res = sfd.ShowDialog(this);
-            if (res != System.Windows.Forms.DialogResult.OK)
+
+            FontFile selectedItem;
+            String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, true, m_FileName, out selectedItem);
+            if (filename == null || selectedItem == null)
                 return false;
-            if (sfd.FilterIndex != filterIndex)
+            if (m_LoadedFont.GetType() != selectedItem.GetType())
             {
-                if (!ChangeFontType(items[sfd.FilterIndex - 1].FontTypeObject))
+                if (!ChangeFontType(selectedItem))
                     return false;
             }
-            return SaveFontFile(sfd.FileName);
+            return SaveFontFile(filename);
         }
 
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1106,7 +1107,7 @@ namespace WWFontEditor
             {
                 if (isCtrlC)
                     Clipboard.SetText(((TextBox)this.ActiveControl).SelectedText);
-                else if (isCtrlV)
+                else
                     ((TextBox)this.ActiveControl).SelectedText = Clipboard.GetText();
                 return true;
             }
@@ -1157,9 +1158,10 @@ namespace WWFontEditor
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
-            ColorPalette palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.BitsPerPixel, false);
-            palette.Entries[0] = Color.FromArgb(0xFF, palette.Entries[0]);
-            data.SetData(DataFormats.Bitmap, (Object)ffs.GetBitmapFullSize(palette, m_LoadedFont));
+            Color[] palette = ImageUtils.MakePalette(m_CurrentPalette, m_LoadedFont.EditableBitsPerPixel, false);
+            palette[0] = Color.FromArgb(0xFF, palette[0]);
+            data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex].Cells[2].Value);
+            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(palette, m_LoadedFont));
             data.SetData(ffs.Clone());
             Clipboard.SetDataObject(data);
         }
@@ -1186,11 +1188,6 @@ namespace WWFontEditor
                     Image srcImage = retrievedData.GetData(typeof(Image)) as Image;
                     clipboard = new FontFileSymbol(srcImage, this.m_CurrentPalette, this.m_LoadedFont);
                 }
-                String[] o = retrievedData.GetFormats();
-                foreach (String st in o)
-                {
-
-                }
             }
             if (clipboard == null)
             {
@@ -1211,7 +1208,7 @@ namespace WWFontEditor
             }
             try
             {
-                fc = clipboard.CloneFor(this.m_LoadedFont);
+                fc = clipboard.CloneFor(this.m_LoadedFont, true);
             }
             catch (InvalidOperationException)
             {
@@ -1219,14 +1216,14 @@ namespace WWFontEditor
                 convertPopup.StartPosition = FormStartPosition.CenterParent;
                 if (convertPopup.ShowDialog() == DialogResult.OK)
                 {
-                    fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex);
+                    fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex, true);
                 }
             }
-            //fc = this.m_Clipboard.Clone();
-            if (fc.Height > this.m_LoadedFont.FontHeight)
-                fc.ChangeHeight(this.m_LoadedFont.FontHeight);
-            if (fc.Width > this.m_LoadedFont.FontWidth)
-                fc.ChangeWidth(this.m_LoadedFont.FontWidth);
+            // CloneFor already handles resizing
+            //if (fc.Height > this.m_LoadedFont.FontHeight)
+            //    fc.ChangeHeight(this.m_LoadedFont.FontHeight);
+            //if (fc.Width > this.m_LoadedFont.FontWidth)
+            //    fc.ChangeWidth(this.m_LoadedFont.FontWidth);
             try
             {
                 this.m_LoadedFont.RestorePicFromBackup(curIndex, fc);
@@ -1394,6 +1391,10 @@ namespace WWFontEditor
         private void ReloadColors(Int32 bpp)
         {
             InitPaletteControl(bpp, this.palColorSelector, m_CurrentPalette, PALETTE_MAX_DIM);
+            if (this.m_CurrentPaintColor1 >= m_CurrentPalette.Length)
+                this.m_CurrentPaintColor1 = 1;
+            if (this.m_CurrentPaintColor2 >= m_CurrentPalette.Length)
+                this.m_CurrentPaintColor2 = 0;
             this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor1]);
             this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor2]);
             if (!this.m_Loading)
@@ -1438,7 +1439,9 @@ namespace WWFontEditor
         {
             if (this.m_LoadedFont == null)
                 return;
-            FrmReplaceColor convertPopup = new FrmReplaceColor(this.m_LoadedFont.BitsPerPixel, this.m_CurrentPalette);
+
+            PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
+            FrmReplaceColor convertPopup = new FrmReplaceColor(currentPal.BitsPerPixel, currentPal.Colors);
             convertPopup.StartPosition = FormStartPosition.CenterParent;
             if (convertPopup.ShowDialog(this) == DialogResult.OK && convertPopup.SelectedIndexSource != convertPopup.SelectedIndexTarget)
             {
@@ -1480,19 +1483,11 @@ namespace WWFontEditor
         private void EditorSettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FrmSettings settingsFrm = new FrmSettings(this.m_CustomColors, this.m_Settings);
-            PaletteDropDownInfo currentPal = cmbPalettes.SelectedItem as PaletteDropDownInfo;
             settingsFrm.StartPosition = FormStartPosition.CenterParent;
             settingsFrm.ShowDialog(this);
             this.m_CustomColors = settingsFrm.CustomColors;
             this.m_DefaultPalettes = LoadDefaultPalettes();
-            List<PaletteDropDownInfo> bppPalettes = GetPalettes(currentPal.BitsPerPixel);
-            if (bppPalettes.Count == 0)
-                bppPalettes.Add(new PaletteDropDownInfo("Rainbow", currentPal.BitsPerPixel, GetDummyPalette(currentPal.BitsPerPixel), null, -1));
-            this.cmbPalettes.DataSource = bppPalettes;
-            Int32 oldIndex = bppPalettes.FindIndex(x => x.Name == currentPal.Name);
-            this.RefreshEditor();
-            if (oldIndex >= 0)
-                this.cmbPalettes.SelectedIndex = oldIndex;
+            ReloadPalettes(true);
         }
 
         private void txtPreview_TextChanged(object sender, EventArgs e)
@@ -1555,7 +1550,7 @@ namespace WWFontEditor
                     return false;
                 replaceIndex = (Byte)convertPopup.SelectedIndex;
             }
-            m_LoadedFont.CloneInto(targetFontFile, replaceIndex);
+            m_LoadedFont.CloneInto(targetFontFile, replaceIndex, true);
             m_LoadedFont = targetFontFile;
             ReloadUIWithSelection();
             return true;
@@ -1563,15 +1558,11 @@ namespace WWFontEditor
 
         private void TextBoxSelectAll(object sender, KeyEventArgs e)
         {
-            if (e.Control && (e.KeyCode == Keys.A))
-            {
-                if (sender != null && sender is TextBox)
-                {
-                    ((TextBox)sender).SelectAll();
-                    e.SuppressKeyPress = true;
-                    e.Handled = true;
-                }
-            }
+            if (!e.Control || (e.KeyCode != Keys.A)) return;
+            if (!(sender is TextBox)) return;
+            ((TextBox)sender).SelectAll();
+            e.SuppressKeyPress = true;
+            e.Handled = true;
         }
 
         private void dgrvSymbolsList_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)

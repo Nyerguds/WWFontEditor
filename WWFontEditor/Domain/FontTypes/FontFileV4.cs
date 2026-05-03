@@ -12,6 +12,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
         public override Int32 BitsPerPixel { get { return 8; } }
+        protected override Int32 InternalEditBPP { get { return 4; } }
         public override String ShortTypeName { get { return "WW V4"; } }
         public override String ShortTypeDescription { get { return "WWFont v4 (Tiberian Sun)"; } }
         public override String LongTypeDescription { get { return "An 8 BPP font with variable amount of characters, which allows separate symbols to specify their width, height and Y-offset."; } }

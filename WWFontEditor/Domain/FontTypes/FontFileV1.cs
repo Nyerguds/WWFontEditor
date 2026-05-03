@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nyerguds.Util;
+using System;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -33,7 +34,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length != m_FontSize)
-                throw new LoadFailedException("File size is not " + m_FontSize + " bytes.");
+                throw new FileTypeLoadException("File size is not " + m_FontSize + " bytes.");
             m_FontWidth = 8;
             m_FontHeight = 8;
             for (Int32 i = 0; i < m_FontSize; i += 8)

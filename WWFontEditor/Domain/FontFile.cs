@@ -1,16 +1,17 @@
 ﻿using ColorManipulation;
+using Nyerguds.Util;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using WWFontEditor.Domain.FontTypes;
-using System.Text;
 using System.Drawing.Drawing2D;
+using System.Linq;
+using System.Text;
+using WWFontEditor.Domain.FontTypes;
 
 namespace WWFontEditor.Domain
 {
-    public abstract class FontFile : IEquatable<FontFile>
+    public abstract class FontFile : IEquatable<FontFile>, FileTypeBroadcaster
     {                              
         protected const String ERR_NOHEADER = "File data too short to contain header.";
         protected const String ERR_SIZECHECK = "File size value in header does not match file data length.";
@@ -44,22 +45,29 @@ namespace WWFontEditor.Domain
         public virtual Boolean CustomSymbSizesForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax || this.FontWidthTypeMin != this.FontWidthTypeMax; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
+        /// <summary>Exposed bits per pixel of the data in this font. Can be lower than what is saved internally.</summary>
+        public Int32 EditableBitsPerPixel { get { return Math.Min(this.BitsPerPixel, this.InternalEditBPP); } }
+        /// <summary>Bits per pixel of the data in this font.</summary>
+        protected virtual Int32 InternalEditBPP { get { return BitsPerPixel; } }
         /// <summary>File extension typically used for this font type.</summary>
-        public virtual String FileExtension { get { return "fnt"; } }
+        public virtual String[] FileExtensions { get { return new String[] { "fnt" }; } }
+        /// <summary>File extension set for this specific file.</summary>
+        public String FileExtension { get; set; }
         /// <summary>Very short code name for this font type.</summary>
         public abstract String ShortTypeName { get; }
-        /// <summary>Brief name and description of the font type, for the file types dropdown in the open file dialog.</summary>
+        /// <summary>Brief name and description of the overall file type, for the types dropdown in the open file dialog.</summary>
         public abstract String ShortTypeDescription { get; }
+        /// <summary>Brief name and description of the specific types for all extensions, for the types dropdown in the save file dialog.</summary>
+        public virtual String[] DescriptionsForExtensions { get { return Enumerable.Repeat(this.ShortTypeDescription, this.FileExtensions.Length).ToArray(); } }
         /// <summary>Longer description of the font format.</summary>
         public abstract String LongTypeDescription { get; }
         /// <summary>List of games and other programs this font type is used by.</summary>
         public abstract String[] GamesListForType { get; }
 
         /// <summary>
-        /// Loads the font from file data. Throws a LoadFailedException if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
+        /// Loads the font from file data. Throws a FileTypeLoadException if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
         /// </summary>
         /// <param name="fileData">The file data to read the font from.</param>
-        /// <param name="fromAutoDetect">From autodetect; means stricter failure conditions. Always fail if not detected as exactly this type.</param>
         /// <returns>False if the font was not identified as this type.</returns>
         public abstract void LoadFont(Byte[] fileData);
 
@@ -81,10 +89,10 @@ namespace WWFontEditor.Domain
             get { return m_FontHeight; }
             set
             {
-                this.m_FontHeight = Math.Min(value, this.FontHeightTypeMax);
+                this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Height > value || !this.CustomSymbSizesForType)
-                        symbol.ChangeHeight(value);
+                    if (symbol.Height > m_FontHeight || !this.CustomSymbSizesForType)
+                        symbol.ChangeHeight(m_FontHeight);
             }
         }
 
@@ -94,10 +102,10 @@ namespace WWFontEditor.Domain
             get { return m_FontWidth; }
             set
             {
-                this.m_FontWidth = Math.Min(value, this.FontWidthTypeMax);
+                this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Width > value || !this.CustomSymbSizesForType)
-                        symbol.ChangeWidth(value);
+                    if (symbol.Width > m_FontHeight || !this.CustomSymbSizesForType)
+                        symbol.ChangeWidth(m_FontHeight);
             }
         }
 
@@ -139,17 +147,16 @@ namespace WWFontEditor.Domain
         /// <summary>
         /// Attempts to load the given data as one of the known font types.
         /// </summary>
-        /// <param name="AutoDetectTypes">List of fonts to try detection on.</param>
         /// <param name="fileData">File data</param>
         /// <param name="loadErrors">Load errors detailing failed attempts at identification.</param>
         /// <returns>An instance of the detected font, or null if not found.</returns>
-        public static FontFile LoadFontFile(Byte[] fileData, out List<LoadFailedException> loadErrors)
+        public static FontFile LoadFontFile(Byte[] fileData, out List<FileTypeLoadException> loadErrors)
         {
             Type fontType = typeof (FontFile);
             foreach (Type t in SupportedTypes)
                 if (!t.IsSubclassOf(fontType))
                     throw new Exception("Entries in autoDetectTypes list must all be FontFile classes!");
-            loadErrors = new List<LoadFailedException>();
+            loadErrors = new List<FileTypeLoadException>();
             //List<Exception> processErrors = new List<Exception>();
             foreach (Type type in SupportedTypes)
             {
@@ -166,7 +173,7 @@ namespace WWFontEditor.Domain
                     fontInstance.LoadFont(fileData);
                     return fontInstance;
                 }
-                catch (LoadFailedException e)
+                catch (FileTypeLoadException e)
                 {
                     e.AttemptedLoadedType = fontInstance.ShortTypeName;
                     loadErrors.Add(e);
@@ -203,13 +210,16 @@ namespace WWFontEditor.Domain
         /// </summary>
         /// <param name="newFont">The new object to clone into.</param>
         /// <param name="overflowColor">Default value for overflow bytes on the font data in case newFont is of a lower color depth</param>
-        public void CloneInto(FontFile newFont, Byte overflowColor)
+        /// <param name="obeyEditableBpp">Treat image as if the exposed editable color depth is its true color depth in terms of needed color reduction.</param>
+        public void CloneInto(FontFile newFont, Byte overflowColor, Boolean obeyEditableBpp)
         {
-            Int32 targetBpp = newFont.BitsPerPixel;
+            Int32 targetBpp = obeyEditableBpp ? newFont.EditableBitsPerPixel : newFont.BitsPerPixel;
             Int32 colValLimit = 1 << targetBpp;
             if (overflowColor >= colValLimit)
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", overflowColor, targetBpp));
+            // automatically adjusts the images to the given font width.
             newFont.FontWidth = this.FontWidth;
+            // automatically adjusts the images to the given font height.
             newFont.FontHeight = this.FontHeight;
             newFont.m_ImageDataList = new List<FontFileSymbol>();
 
@@ -218,11 +228,11 @@ namespace WWFontEditor.Domain
             for (Int32 i = 0; i < newFont.SymbolsTypeMin; i++)
             {
                 FontFileSymbol image = i < m_ImageDataList.Count? this.m_ImageDataList[i] : new FontFileSymbol(targetBpp);
-                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor));
+                newFont.m_ImageDataList.Add(image.CloneFor(newFont, overflowColor, obeyEditableBpp));
             }
             for (Int32 i = newFont.SymbolsTypeMin; i < Math.Min(m_ImageDataList.Count, newFont.SymbolsTypeMax); i++)
             {
-                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor));
+                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor, obeyEditableBpp));
             }
             newFont.PostConvertCleanup();
         }
@@ -237,7 +247,7 @@ namespace WWFontEditor.Domain
         {
             if (index < 0 || this.Length <= index)
                 return;
-            this.m_ImageDataList[index] = backup.CloneFor(this);
+            this.m_ImageDataList[index] = backup.CloneFor(this, false);
         }
 
         public Int32 GetSymbolWidth(Int32 index)
@@ -277,14 +287,14 @@ namespace WWFontEditor.Domain
         {
             if (index < 0 || index >= this.Length)
                 return null;
-            ColorPalette palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero, Color.Black);
+            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero, Color.Black);
             return this.m_ImageDataList[index].GetBitmap(palette);
         }
 
         public Bitmap[] GetAllBitmaps(Color[] colors, Boolean addTransparentZero)
         {
             Bitmap[] allPics = new Bitmap[this.Length];
-            ColorPalette palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero);
+            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, addTransparentZero);
             for (Int32 i = 0; i < allPics.Length; i++)
                 allPics[i] = this.m_ImageDataList[i].GetBitmap(palette);
             return allPics;
@@ -335,7 +345,7 @@ namespace WWFontEditor.Domain
             }
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
-            ColorPalette palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, true);
+            Color[] palette = ImageUtils.MakePalette(colors, this.BitsPerPixel, true);
             Bitmap fullBm = new Bitmap(fullWidth, fullHeight, PixelFormat.Format32bppPArgb);
             using (Graphics g = Graphics.FromImage(fullBm))
             {
@@ -377,10 +387,10 @@ namespace WWFontEditor.Domain
         {
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
-                throw new LoadFailedException(ERR_NOHEADER);
+                throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             if (fileSize != fileLength)
-                throw new LoadFailedException(ERR_SIZECHECK);
+                throw new FileTypeLoadException(ERR_SIZECHECK);
             Byte dataFormat = fileData[0x02];
             //Byte unknown03 = fileData[0x03];
             //this.Unknown04 = ArrayUtils.GetLEShortFromByteArray(fileData, 0x04);
@@ -389,7 +399,7 @@ namespace WWFontEditor.Domain
             // use this for pos on TS format
             Int16 fontDataOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0A);
             Int16 heightsListOffset = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0C);
-            Int16 unknown0E = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0E);
+            //Int16 unknown0E = ArrayUtils.GetLEShortFromByteArray(fileData, 0x0E);
             //Byte AlwaysZero = fileData[0x10];
             Byte lastIndex = fileData[0x11];
             this.m_FontHeight = fileData[0x12];
@@ -400,7 +410,7 @@ namespace WWFontEditor.Domain
             if (isV4)
             {
                 if (!forV4)
-                    throw new LoadFailedException("Load type identifies as v4.");
+                    throw new FileTypeLoadException("Load type identifies as v4.");
                 // isn't in the header? Calculate.
                 Int32[] headerVals = new Int32[] {fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset}.OrderBy(n => n).Take(2).ToArray();
                 Int32 divval = 1;
@@ -411,17 +421,17 @@ namespace WWFontEditor.Domain
             else if (dataFormat == 0x00)
             {
                 if (forV4)
-                    throw new LoadFailedException("Load type identifies as v3.");
+                    throw new FileTypeLoadException("Load type identifies as v3.");
                 length++;
             }
             else
-                throw new LoadFailedException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
+                throw new FileTypeLoadException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
             if (fontDataOffsetsListOffset + length * 2 > fileLength)
-                throw new LoadFailedException("File data too short for offsets list!");
+                throw new FileTypeLoadException("File data too short for offsets list!");
             if (widthsListOffset + length > fileLength)
-                throw new LoadFailedException("File data too short for symbol widths list starting from offset !");
+                throw new FileTypeLoadException("File data too short for symbol widths list starting from offset !");
             if (heightsListOffset + length * 2 > fileLength)
-                throw new LoadFailedException("File data too short for symbol heights list!");
+                throw new FileTypeLoadException("File data too short for symbol heights list!");
 
             //FontDataOffset
             Int32[] fontDataOffsetsList = new Int32[length];
@@ -432,7 +442,7 @@ namespace WWFontEditor.Domain
             {
                 Byte width = fileData[widthsListOffset + i];
                 if (width > this.FontWidth)
-                    throw new LoadFailedException(String.Format("Illegal value '{0}' in symbol widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
+                    throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
                 widthsList.Add(width);
             }
             List<Byte> yOffsetsList = new List<Byte>();
@@ -442,10 +452,10 @@ namespace WWFontEditor.Domain
                 yOffsetsList.Add(fileData[heightsListOffset + i * 2]);
                 Byte height = fileData[heightsListOffset + i * 2 + 1];
                 if (height > this.FontHeight)
-                    throw new LoadFailedException(String.Format("Illegal value '{0}' in symbol heights list at entry #{1}: the value is larger than global height '{2}'.", height, i, this.FontHeight));
+                    throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol heights list at entry #{1}: the value is larger than global height '{2}'.", height, i, this.FontHeight));
                 heightsList.Add(height);
             }
-            // End of LoadFailedExceptions. After this, assume the type is identified.
+            // End of FileTypeLoadExceptions. After this, assume the type is identified.
             this.m_ImageDataList = new List<FontFileSymbol>();
             Int32 bitsLength = this.BitsPerPixel;
             for (Int32 i = 0; i < length; i++)
@@ -627,7 +637,7 @@ namespace WWFontEditor.Domain
                     Int32 shift = (x % parts) * bitsLength;
                     // Reversed for big-endian
                     if (bigEndian)
-                        shift = parts - 1 - shift;
+                        shift = 8 - shift - bitsLength;
                     // Get data and store it.
                     data8bit[index8bit] = (Byte)((curData[indexXbit] >> shift) & bitmask);
                 }
@@ -658,7 +668,7 @@ namespace WWFontEditor.Domain
                     Int32 shift = (x % parts) * bitsLength;
                     // Reversed for big-endian
                     if (bigEndian)
-                        shift = parts - 1 - shift;
+                        shift = 8 - shift - bitsLength;
                     // Get data, reduce to bit rate, shift it and store it.
                     dataXbit[indexXbit] |= (Byte)((data8bit[index8bit] & bitmask) << shift);
                 }
@@ -681,24 +691,4 @@ namespace WWFontEditor.Domain
             return true;
         }
     }
-
-    /// <summary>Load failed exceptions. These are typically ignored in favour of checking the next type to try.</summary>
-    public class LoadFailedException: Exception
-    {
-        public String AttemptedLoadedType { get; set; }
-
-        public LoadFailedException() { }
-        public LoadFailedException(string message) : base(message) { }
-        public LoadFailedException(string message, Exception innerException): base(message, innerException) {}
-        public LoadFailedException(string message, String attemptedLoadedType) : base(message)
-        {
-            this.AttemptedLoadedType = attemptedLoadedType;
-        }
-        public LoadFailedException(string message, String attemptedLoadedType, Exception innerException)
-            : base(message, innerException)
-        {
-            this.AttemptedLoadedType = attemptedLoadedType;
-        }
-    }
-
 }

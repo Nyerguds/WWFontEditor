@@ -34,9 +34,16 @@
             this.chkEnableEditArea = new System.Windows.Forms.CheckBox();
             this.chkEnableGrid = new System.Windows.Forms.CheckBox();
             this.lblDefaultSelectedSymbol = new System.Windows.Forms.Label();
+            this.numDefaultSelectedSymbol = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.lblDefaultZoom = new System.Windows.Forms.Label();
+            this.numDefaultZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.chkUsePaletteBg = new System.Windows.Forms.CheckBox();
             this.lblEditorBackColor = new System.Windows.Forms.Label();
+            this.lblValEditorBackColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.lblValEditorGridColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.lblValEditAreaOutlineColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.lblValEditAreaGridColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
+            this.lblValEditorOutlineColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.lblEditorOutlineColor = new System.Windows.Forms.Label();
             this.lblEditorGridColor = new System.Windows.Forms.Label();
             this.lblEditAreaOutlineColor = new System.Windows.Forms.Label();
@@ -60,18 +67,11 @@
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
-            this.numDefaultSelectedSymbol = new Nyerguds.Util.UI.EnhNumericUpDown();
-            this.numDefaultZoom = new Nyerguds.Util.UI.EnhNumericUpDown();
-            this.lblValEditorBackColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.lblValEditorGridColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.lblValEditAreaOutlineColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.lblValEditAreaGridColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
-            this.lblValEditorOutlineColor = new Nyerguds.Util.UI.ImageButtonCheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultZoom)).BeginInit();
+            this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -154,6 +154,29 @@
             this.lblDefaultSelectedSymbol.TabIndex = 23;
             this.lblDefaultSelectedSymbol.Text = "Default selected symbol";
             // 
+            // numDefaultSelectedSymbol
+            // 
+            this.numDefaultSelectedSymbol.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.numDefaultSelectedSymbol.EnteredValue = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 164);
+            this.numDefaultSelectedSymbol.Maximum = new decimal(new int[] {
+            255,
+            0,
+            0,
+            0});
+            this.numDefaultSelectedSymbol.Name = "numDefaultSelectedSymbol";
+            this.numDefaultSelectedSymbol.Size = new System.Drawing.Size(53, 20);
+            this.numDefaultSelectedSymbol.TabIndex = 24;
+            this.numDefaultSelectedSymbol.Value = new decimal(new int[] {
+            32,
+            0,
+            0,
+            0});
+            // 
             // lblDefaultZoom
             // 
             this.lblDefaultZoom.AutoSize = true;
@@ -162,6 +185,29 @@
             this.lblDefaultZoom.Size = new System.Drawing.Size(69, 13);
             this.lblDefaultZoom.TabIndex = 21;
             this.lblDefaultZoom.Text = "Default zoom";
+            // 
+            // numDefaultZoom
+            // 
+            this.numDefaultZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.numDefaultZoom.EnteredValue = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numDefaultZoom.Location = new System.Drawing.Point(331, 141);
+            this.numDefaultZoom.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numDefaultZoom.Name = "numDefaultZoom";
+            this.numDefaultZoom.Size = new System.Drawing.Size(53, 20);
+            this.numDefaultZoom.TabIndex = 22;
+            this.numDefaultZoom.Value = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
             // 
             // chkUsePaletteBg
             // 
@@ -183,6 +229,86 @@
             this.lblEditorBackColor.Size = new System.Drawing.Size(123, 13);
             this.lblEditorBackColor.TabIndex = 10;
             this.lblEditorBackColor.Text = "Editor background color:";
+            // 
+            // lblValEditorBackColor
+            // 
+            this.lblValEditorBackColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValEditorBackColor.BackColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorBackColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblValEditorBackColor.Checked = true;
+            this.lblValEditorBackColor.ForeColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorBackColor.Location = new System.Drawing.Point(365, 9);
+            this.lblValEditorBackColor.Margin = new System.Windows.Forms.Padding(3);
+            this.lblValEditorBackColor.Name = "lblValEditorBackColor";
+            this.lblValEditorBackColor.Size = new System.Drawing.Size(19, 17);
+            this.lblValEditorBackColor.TabIndex = 11;
+            this.lblValEditorBackColor.Toggle = false;
+            this.lblValEditorBackColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
+            this.lblValEditorBackColor.Click += new System.EventHandler(this.ColorLabel_Click);
+            // 
+            // lblValEditorGridColor
+            // 
+            this.lblValEditorGridColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValEditorGridColor.BackColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorGridColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblValEditorGridColor.Checked = true;
+            this.lblValEditorGridColor.ForeColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorGridColor.Location = new System.Drawing.Point(365, 73);
+            this.lblValEditorGridColor.Margin = new System.Windows.Forms.Padding(3);
+            this.lblValEditorGridColor.Name = "lblValEditorGridColor";
+            this.lblValEditorGridColor.Size = new System.Drawing.Size(19, 17);
+            this.lblValEditorGridColor.TabIndex = 16;
+            this.lblValEditorGridColor.Toggle = false;
+            this.lblValEditorGridColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
+            this.lblValEditorGridColor.Click += new System.EventHandler(this.ColorLabel_Click);
+            // 
+            // lblValEditAreaOutlineColor
+            // 
+            this.lblValEditAreaOutlineColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValEditAreaOutlineColor.BackColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditAreaOutlineColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblValEditAreaOutlineColor.Checked = true;
+            this.lblValEditAreaOutlineColor.ForeColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditAreaOutlineColor.Location = new System.Drawing.Point(365, 96);
+            this.lblValEditAreaOutlineColor.Margin = new System.Windows.Forms.Padding(3);
+            this.lblValEditAreaOutlineColor.Name = "lblValEditAreaOutlineColor";
+            this.lblValEditAreaOutlineColor.Size = new System.Drawing.Size(19, 17);
+            this.lblValEditAreaOutlineColor.TabIndex = 18;
+            this.lblValEditAreaOutlineColor.Toggle = false;
+            this.lblValEditAreaOutlineColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
+            this.lblValEditAreaOutlineColor.Click += new System.EventHandler(this.ColorLabel_Click);
+            // 
+            // lblValEditAreaGridColor
+            // 
+            this.lblValEditAreaGridColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValEditAreaGridColor.BackColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditAreaGridColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblValEditAreaGridColor.Checked = true;
+            this.lblValEditAreaGridColor.ForeColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditAreaGridColor.Location = new System.Drawing.Point(365, 119);
+            this.lblValEditAreaGridColor.Margin = new System.Windows.Forms.Padding(3);
+            this.lblValEditAreaGridColor.Name = "lblValEditAreaGridColor";
+            this.lblValEditAreaGridColor.Size = new System.Drawing.Size(19, 17);
+            this.lblValEditAreaGridColor.TabIndex = 20;
+            this.lblValEditAreaGridColor.Toggle = false;
+            this.lblValEditAreaGridColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
+            this.lblValEditAreaGridColor.Click += new System.EventHandler(this.ColorLabel_Click);
+            // 
+            // lblValEditorOutlineColor
+            // 
+            this.lblValEditorOutlineColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblValEditorOutlineColor.BackColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorOutlineColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblValEditorOutlineColor.Checked = true;
+            this.lblValEditorOutlineColor.ForeColor = System.Drawing.Color.Fuchsia;
+            this.lblValEditorOutlineColor.Location = new System.Drawing.Point(365, 50);
+            this.lblValEditorOutlineColor.Margin = new System.Windows.Forms.Padding(3);
+            this.lblValEditorOutlineColor.Name = "lblValEditorOutlineColor";
+            this.lblValEditorOutlineColor.Size = new System.Drawing.Size(19, 17);
+            this.lblValEditorOutlineColor.TabIndex = 14;
+            this.lblValEditorOutlineColor.Toggle = false;
+            this.lblValEditorOutlineColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
+            this.lblValEditorOutlineColor.Click += new System.EventHandler(this.ColorLabel_Click);
             // 
             // lblEditorOutlineColor
             // 
@@ -425,132 +551,6 @@
             this.btnOk.UseVisualStyleBackColor = true;
             this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
             // 
-            // numDefaultSelectedSymbol
-            // 
-            this.numDefaultSelectedSymbol.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.numDefaultSelectedSymbol.EnteredValue = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 164);
-            this.numDefaultSelectedSymbol.Maximum = new decimal(new int[] {
-            255,
-            0,
-            0,
-            0});
-            this.numDefaultSelectedSymbol.Name = "numDefaultSelectedSymbol";
-            this.numDefaultSelectedSymbol.Size = new System.Drawing.Size(53, 20);
-            this.numDefaultSelectedSymbol.TabIndex = 24;
-            this.numDefaultSelectedSymbol.Value = new decimal(new int[] {
-            32,
-            0,
-            0,
-            0});
-            // 
-            // numDefaultZoom
-            // 
-            this.numDefaultZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.numDefaultZoom.EnteredValue = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numDefaultZoom.Location = new System.Drawing.Point(331, 141);
-            this.numDefaultZoom.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numDefaultZoom.Name = "numDefaultZoom";
-            this.numDefaultZoom.Size = new System.Drawing.Size(53, 20);
-            this.numDefaultZoom.TabIndex = 22;
-            this.numDefaultZoom.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
-            // 
-            // lblValEditorBackColor
-            // 
-            this.lblValEditorBackColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValEditorBackColor.BackColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorBackColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblValEditorBackColor.Checked = true;
-            this.lblValEditorBackColor.ForeColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorBackColor.Location = new System.Drawing.Point(365, 9);
-            this.lblValEditorBackColor.Margin = new System.Windows.Forms.Padding(3);
-            this.lblValEditorBackColor.Name = "lblValEditorBackColor";
-            this.lblValEditorBackColor.Size = new System.Drawing.Size(19, 17);
-            this.lblValEditorBackColor.TabIndex = 11;
-            this.lblValEditorBackColor.Toggle = false;
-            this.lblValEditorBackColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
-            this.lblValEditorBackColor.Click += new System.EventHandler(this.ColorLabel_Click);
-            // 
-            // lblValEditorGridColor
-            // 
-            this.lblValEditorGridColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValEditorGridColor.BackColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorGridColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblValEditorGridColor.Checked = true;
-            this.lblValEditorGridColor.ForeColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorGridColor.Location = new System.Drawing.Point(365, 73);
-            this.lblValEditorGridColor.Margin = new System.Windows.Forms.Padding(3);
-            this.lblValEditorGridColor.Name = "lblValEditorGridColor";
-            this.lblValEditorGridColor.Size = new System.Drawing.Size(19, 17);
-            this.lblValEditorGridColor.TabIndex = 16;
-            this.lblValEditorGridColor.Toggle = false;
-            this.lblValEditorGridColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
-            this.lblValEditorGridColor.Click += new System.EventHandler(this.ColorLabel_Click);
-            // 
-            // lblValEditAreaOutlineColor
-            // 
-            this.lblValEditAreaOutlineColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValEditAreaOutlineColor.BackColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditAreaOutlineColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblValEditAreaOutlineColor.Checked = true;
-            this.lblValEditAreaOutlineColor.ForeColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditAreaOutlineColor.Location = new System.Drawing.Point(365, 96);
-            this.lblValEditAreaOutlineColor.Margin = new System.Windows.Forms.Padding(3);
-            this.lblValEditAreaOutlineColor.Name = "lblValEditAreaOutlineColor";
-            this.lblValEditAreaOutlineColor.Size = new System.Drawing.Size(19, 17);
-            this.lblValEditAreaOutlineColor.TabIndex = 18;
-            this.lblValEditAreaOutlineColor.Toggle = false;
-            this.lblValEditAreaOutlineColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
-            this.lblValEditAreaOutlineColor.Click += new System.EventHandler(this.ColorLabel_Click);
-            // 
-            // lblValEditAreaGridColor
-            // 
-            this.lblValEditAreaGridColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValEditAreaGridColor.BackColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditAreaGridColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblValEditAreaGridColor.Checked = true;
-            this.lblValEditAreaGridColor.ForeColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditAreaGridColor.Location = new System.Drawing.Point(365, 119);
-            this.lblValEditAreaGridColor.Margin = new System.Windows.Forms.Padding(3);
-            this.lblValEditAreaGridColor.Name = "lblValEditAreaGridColor";
-            this.lblValEditAreaGridColor.Size = new System.Drawing.Size(19, 17);
-            this.lblValEditAreaGridColor.TabIndex = 20;
-            this.lblValEditAreaGridColor.Toggle = false;
-            this.lblValEditAreaGridColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
-            this.lblValEditAreaGridColor.Click += new System.EventHandler(this.ColorLabel_Click);
-            // 
-            // lblValEditorOutlineColor
-            // 
-            this.lblValEditorOutlineColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblValEditorOutlineColor.BackColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorOutlineColor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblValEditorOutlineColor.Checked = true;
-            this.lblValEditorOutlineColor.ForeColor = System.Drawing.Color.Fuchsia;
-            this.lblValEditorOutlineColor.Location = new System.Drawing.Point(365, 50);
-            this.lblValEditorOutlineColor.Margin = new System.Windows.Forms.Padding(3);
-            this.lblValEditorOutlineColor.Name = "lblValEditorOutlineColor";
-            this.lblValEditorOutlineColor.Size = new System.Drawing.Size(19, 17);
-            this.lblValEditorOutlineColor.TabIndex = 14;
-            this.lblValEditorOutlineColor.Toggle = false;
-            this.lblValEditorOutlineColor.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.ColorLabel_KeyPress);
-            this.lblValEditorOutlineColor.Click += new System.EventHandler(this.ColorLabel_Click);
-            // 
             // FrmSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -568,10 +568,10 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultZoom)).EndInit();
+            this.tabPage2.ResumeLayout(false);
+            this.tabPage2.PerformLayout();
             this.ResumeLayout(false);
 
         }

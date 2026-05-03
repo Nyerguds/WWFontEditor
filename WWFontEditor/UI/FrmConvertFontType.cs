@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nyerguds.Util.UI;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using WWFontEditor.Domain;
-using WWFontEditor.UI.Wrappers;
 
 namespace WWFontEditor.UI
 {
@@ -25,11 +25,11 @@ namespace WWFontEditor.UI
             : this()
         {
             this.SourceFontFile = fontfile;
-            FontFileDialogItem[] fonttypes = FontFile.SupportedTypes.Select(x => new FontFileDialogItem(x)).ToArray();
+            FileDialogItem<FontFile>[] fonttypes = FontFile.SupportedTypes.Select(x => new FileDialogItem<FontFile>(x)).ToArray();
             cmbTypes.DataSource = fonttypes;
             if (SourceFontFile != null)
             {
-                FontFileDialogItem fontItem = fonttypes.First(x => x.FontType == SourceFontFile.GetType());
+                FileDialogItem<FontFile> fontItem = fonttypes.First(x => x.ItemType == SourceFontFile.GetType());
                 if (fontItem != null)
                     cmbTypes.SelectedItem = fontItem;
             }
@@ -37,11 +37,11 @@ namespace WWFontEditor.UI
 
         private void cmbTypes_SelectedIndexChanged(object sender, EventArgs e)
         {
-            FontFileDialogItem selectedItem = cmbTypes.SelectedItem as FontFileDialogItem;
+            FileDialogItem<FontFile> selectedItem = cmbTypes.SelectedItem as FileDialogItem<FontFile>;
             if (selectedItem == null)
                 return;
-            TargetFontFile = selectedItem.FontTypeObject;
-            btnConvert.Enabled = selectedItem.FontType != SourceFontFile.GetType();
+            TargetFontFile = selectedItem.ItemObject;
+            btnConvert.Enabled = selectedItem.ItemType != SourceFontFile.GetType();
             lblTypeInfo.Text = TargetFontFile.LongTypeDescription;
             lblGamesList.Text = "Games list:\n- " + String.Join("\n- ", TargetFontFile.GamesListForType).Replace("&", "&&");
             Boolean tooHighCol = SourceFontFile.BitsPerPixel > TargetFontFile.BitsPerPixel;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nyerguds.Util;
+using System;
 using System.Linq;
 
 namespace WWFontEditor.Domain.FontTypes
@@ -29,10 +30,10 @@ namespace WWFontEditor.Domain.FontTypes
         public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length < 0x104)
-                throw new LoadFailedException(ERR_NOHEADER);
+                throw new FileTypeLoadException(ERR_NOHEADER);
             Int16 fileSize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             if (fileSize != fileData.Length - 2)
-                throw new LoadFailedException(ERR_SIZECHECK);
+                throw new FileTypeLoadException(ERR_SIZECHECK);
             // the size of the file: already read. Skip this.
             //Int16 filesize = ArrayUtils.GetLEShortFromByteArray(fileData, 0x00);
             // the offset of the pixel data from the beginning of the file, the index is the ascii value (always 128 long)
@@ -58,7 +59,7 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x80; i++)
             {
                 FontFileSymbol fc = m_ImageDataList.Count > i ? this.m_ImageDataList[i] : new FontFileSymbol(this.BitsPerPixel);
-                imageData[i] = ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
+                imageData[i] = this.ConvertFrom8Bit(fc.ByteData, this.m_FontWidth, this.m_FontHeight, this.BitsPerPixel, true);
             }
             Int32 fontDataOffset = 0x104;
             Int32 dataOffset = fontDataOffset;

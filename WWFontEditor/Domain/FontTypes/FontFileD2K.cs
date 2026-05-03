@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using Nyerguds.Util;
 
 namespace WWFontEditor.Domain.FontTypes
 {
@@ -16,6 +17,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0x0; } }
         public override Int32 BitsPerPixel { get { return 8; } }
+        protected override Int32 InternalEditBPP { get { return 4; } }
         public override String ShortTypeName { get { return "IG D2K"; } }
         public override String ShortTypeDescription { get { return "IG Font (Dune 2000)"; } }
         public override String LongTypeDescription { get { return "An 8 BPP font with a fixed set of 256 characters, which allows separate symbols to specify their width and height. It has no Y offset, but instead optimizes the space to the right of all characters."; } }
@@ -25,7 +27,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             // Technically header + first symbol header, but whatev :p
             if (fileData.Length < 0x410)
-                throw new LoadFailedException(ERR_NOHEADER);
+                throw new FileTypeLoadException(ERR_NOHEADER);
             Byte fontLoadedFlag = fileData[00];
             Byte spaceSize = fileData[01];
             Byte firstSymbol = fileData[02];
@@ -36,7 +38,7 @@ namespace WWFontEditor.Domain.FontTypes
             Byte empty07 = fileData[07];
             //No clue if this is ok as test...
             if (fontLoadedFlag != 1 || empty05 != 0 || empty06 != 0 || empty07 != 0)
-                throw new LoadFailedException("Identifying bytes in header do not match.");
+                throw new FileTypeLoadException("Identifying bytes in header do not match.");
             this.m_FontHeight = maxHeight;
             // Wlll be increased to the max found in the file.
             this.m_FontWidth = spaceSize;

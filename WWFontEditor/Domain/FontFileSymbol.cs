@@ -56,9 +56,9 @@ namespace WWFontEditor.Domain
             return new FontFileSymbol(this.ByteData.ToArray(), this.Width, this.Height, this.YOffset, this.BitsPerPixel);
         }
 
-        public FontFileSymbol CloneFor(FontFile targetVersion)
+        public FontFileSymbol CloneFor(FontFile targetVersion, Boolean obeyEditableBpp)
         {
-            return CloneFor(targetVersion, null);
+            return CloneFor(targetVersion, null, obeyEditableBpp);
         }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
@@ -70,14 +70,13 @@ namespace WWFontEditor.Domain
             return this.ByteData.Any(x => x >= colValLimit);
         }
 
-        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue)
+        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue, Boolean obeyEditableBpp)
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
-
             Int32 myBpp = this.BitsPerPixel;
             Byte[] newByteData;
-            Int32 targetBpp = targetVersion.BitsPerPixel;
+            Int32 targetBpp = obeyEditableBpp ? targetVersion.EditableBitsPerPixel : targetVersion.BitsPerPixel;
             Int32 colValLimit = 1 << targetBpp;
             if (defaultValue.HasValue && defaultValue.Value >= colValLimit)
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
@@ -118,7 +117,7 @@ namespace WWFontEditor.Domain
                 // Remove Y offset; it's been replaced by actual offset
                 newSymbol.YOffset = 0;
             }
-            if (!targetVersion.CustomSymbSizesForType)
+            if (!targetVersion.CustomSymbSizesForType && targetVersion.FontHeight != newSymbol.Height)
                 newSymbol.ChangeHeight(targetVersion.FontHeight);
             // Reduce width if needed
             if (targetVersion.FontWidth < newSymbol.Width || !targetVersion.CustomSymbSizesForType)
@@ -128,19 +127,14 @@ namespace WWFontEditor.Domain
             else if (targetVersion.FontWidthTypeMax < newSymbol.Width)
                 newSymbol.ChangeWidth(targetVersion.FontWidthTypeMax);
 
-            // IF all sizes in the font are fixed (V1, V2) expand symbol to full size.
+            // If all sizes in the font are fixed (V1, V2) expand symbol to full size.
             // At this point, this should only increase the size.
-            if (!targetVersion.CustomSymbSizesForType)
-            {
-                if (targetVersion.FontWidth != newSymbol.Width)
-                    newSymbol.ChangeWidth(targetVersion.FontWidth);
-                if (targetVersion.FontHeight != newSymbol.Height)
-                    newSymbol.ChangeWidth(targetVersion.FontHeight);
-            }
+            if (!targetVersion.CustomSymbSizesForType && targetVersion.FontWidth != newSymbol.Width)
+                newSymbol.ChangeWidth(targetVersion.FontWidth);
             return newSymbol;
         }
 
-        public Bitmap GetBitmapFullSize(ColorPalette palette, FontFile baseFont)
+        public Bitmap GetBitmapFullSize(Color[] palette, FontFile baseFont)
         {
             FontFileSymbol ffs = this.Clone();
             ffs.ChangeHeight(baseFont.FontHeight);
@@ -149,9 +143,8 @@ namespace WWFontEditor.Domain
             return ffs.GetBitmap(palette);
         }
 
-        public Bitmap GetBitmap(ColorPalette palette)
+        public Bitmap GetBitmap(Color[] palette)
         {
-            PixelFormat pf = PixelFormat.Format8bppIndexed;
             Int32 width = this.Width;
             Int32 height = this.Height;
             if (width == 0 || height == 0)
@@ -159,7 +152,7 @@ namespace WWFontEditor.Domain
             Byte[] imageData = this.ByteData;
             if (imageData.Length == 0 || width == 0 | height == 0)
                 return null;
-            return ImageUtils.BuildImage(imageData, width, height, width, pf, palette);
+            return ImageUtils.BuildImage(imageData, width, height, width, PixelFormat.Format8bppIndexed, palette);
         }
 
         public void PaintPixel(Int32 x, Int32 y, Byte value)
