@@ -184,6 +184,9 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 Version history
 ---------------
 
+v1.5.6: (2017/04/08 15:28)
+-Fixed the fact changing the Y-offset didn't refresh the characters grid.
+
 v1.5.5: (2017/04/08 14:24)
 -Copying a symbol to the clipboard now also sets it in the clipboard as text.
 

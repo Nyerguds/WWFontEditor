@@ -931,6 +931,7 @@ namespace WWFontEditor
                 return;
             this.m_LoadedFont.GetSymbol(GetSelectedIndex()).YOffset = (Byte)this.numYOffset.Value;
             this.ReloadImageInfo(true);
+            this.ReloadDataGrid();
         }
 
         private void CmbEncodings_SelectedIndexChanged(object sender, EventArgs e)
