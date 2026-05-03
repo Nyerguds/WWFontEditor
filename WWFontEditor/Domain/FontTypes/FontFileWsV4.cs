@@ -34,18 +34,5 @@ namespace WWFontEditor.Domain.FontTypes
         {
             return this.SaveV3V4Font(true);
         }
-
-        /// <summary>
-        /// any actions to be taken after conversion to this type.
-        /// </summary>
-        protected override void PostConvertCleanup()
-        {
-
-            // Y-optimization.
-            Int32 imagesCount = this.m_ImageDataList.Count;
-            for (Int32 i = 0; i < imagesCount; ++i)
-                this.m_ImageDataList[i].OptimizeYHeight(this.YOffsetTypeMax);
-        }
-
     }
 }

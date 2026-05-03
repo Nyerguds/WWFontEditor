@@ -17,7 +17,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }
         /// <summary>Padding between the characters of the font. Used for the preview function and to determine if padding is needed when automatically optimizing symbol widths.</summary>
-        public override Int32 FontTypePaddingRight { get { return 1; } }
+        public override Int32 FontTypePaddingHorizontal { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 1; } }
 
         public override String ShortTypeName { get { return "WW BitFont (RA2)"; } }

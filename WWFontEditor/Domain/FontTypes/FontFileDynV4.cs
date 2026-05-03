@@ -48,8 +48,6 @@ namespace WWFontEditor.Domain.FontTypes
             }
         }
 
-        public Byte LineHeight { get; set; }
-
         public override void LoadFont(Byte[] fileData)
         {
             this.LoadFont(fileData, false);
@@ -63,8 +61,9 @@ namespace WWFontEditor.Domain.FontTypes
             Array.Copy(fileData, 0, sectionId, 0, 4);
             if (!sectionId.SequenceEqual(Encoding.ASCII.GetBytes("FNT:")))
                 throw new FileTypeLoadException(ERR_BADHEADER);
-            Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true);
-            if (fileSize != fileData.Length - 8)
+            // chunk length plus size of chunk header.
+            Int32 fileSize = (Int32)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 4, true) + 8;
+            if (fileSize > fileData.Length)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
             Int32 dataOffset = 0x08;
             if (asV5)
@@ -79,7 +78,7 @@ namespace WWFontEditor.Domain.FontTypes
             }
             this.m_FontWidth = fileData[dataOffset + 1];
             this.m_FontHeight = fileData[dataOffset + 2];
-            this.LineHeight = fileData[dataOffset + 3];
+            this.BaseLineHeight = fileData[dataOffset + 3];
             Byte startSymbol = fileData[dataOffset + 4];
             Byte nrOfSymbols = fileData[dataOffset + 5];
 
@@ -90,7 +89,7 @@ namespace WWFontEditor.Domain.FontTypes
                 throw new FileTypeLoadException(ERR_BADHEADERDATA);
 
             Int32 dataStart = dataOffset + 13;
-            Byte[] compressedData = new Byte[fileData.Length - dataStart];
+            Byte[] compressedData = new Byte[fileSize - dataStart];
             Array.Copy(fileData, dataStart, compressedData, 0, compressedData.Length);
             Byte[] data;
 
@@ -151,7 +150,7 @@ namespace WWFontEditor.Domain.FontTypes
                     throw new InvalidOperationException(CHAR_OVERFLOW);
             }
             // Line height. Default calculation uses the most commonly used lowest point in the font.
-            Int32 lHeight = this.LineHeight;
+            Int32 lHeight = this.BaseLineHeight;
             if (lHeight == 0)
                 lHeight = CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax, this.TransparencyColor);
 
@@ -174,7 +173,7 @@ namespace WWFontEditor.Domain.FontTypes
             Int32.TryParse(SaveOption.GetSaveOptionValue(saveOptions, "CMP"), out compressionType);
             Int32 lineHeight;
             Int32.TryParse(SaveOption.GetSaveOptionValue(saveOptions, "YOF"), out lineHeight);
-            this.LineHeight = (Byte)lineHeight;
+            this.BaseLineHeight = (Byte)lineHeight;
             Boolean optimise = GeneralUtils.IsTrueValue(SaveOption.GetSaveOptionValue(saveOptions, "OPT"));
             Boolean foundStart = false;
             Int32 startSymbol = 0;

@@ -14,7 +14,6 @@ using Nyerguds.Util.Ui.SaveOptions;
 using WWFontEditor.Domain;
 using WWFontEditor.Domain.FontTypes;
 using Nyerguds.Util.UI.Wrappers;
-using System.Drawing.Drawing2D;
 using System.Threading;
 
 namespace WWFontEditor.UI
@@ -356,6 +355,7 @@ namespace WWFontEditor.UI
                 Int32 curIndex = Math.Min(Math.Max(this.cmbRange.SelectedIndex, 0), this.m_LoadedFont.Length / 0x100);
                 this.cmbRange.Items.Clear();
                 this.cmbRange.Location = this.cmbEncodings.Location;
+                this.cmbRange.Size = this.cmbEncodings.Size;
                 for (Int32 i = 0; i < this.m_LoadedFont.Length; i += 0x100)
                     this.cmbRange.Items.Add(i.ToString("X4") + "-" + (i + 0xFF).ToString("X4"));
                 if (this.cmbRange.Items.Count > 0)
@@ -382,6 +382,8 @@ namespace WWFontEditor.UI
                 this.numYOffset.Maximum = this.m_LoadedFont.YOffsetTypeMax;
                 this.numWidth.Maximum = this.m_LoadedFont.FontWidthTypeMax;
                 this.numHeight.Maximum = this.m_LoadedFont.FontHeightTypeMax;
+                this.numPadding.Enabled = this.m_LoadedFont.FontTypePaddingHorizontal < 0;
+                this.numPadding.Value = this.m_LoadedFont.FontPaddingHorizontal;
                 this.tsmiOptimizeWidths.Enabled = this.m_LoadedFont.CustomSymbolWidthsForType;
             }
             else
@@ -1168,7 +1170,7 @@ namespace WWFontEditor.UI
                     symbol.OptimizeXWidth(true);
                 else
                     symbol.CropRightSide();
-                if (symbol.Width > 0 && symbol.Width < font.FontWidth && font.FontTypePaddingRight == 0)
+                if (symbol.Width > 0 && symbol.Width < font.FontWidth && font.FontTypePaddingHorizontal <= 0)
                     symbol.ChangeWidth(symbol.Width + 1, font.TransparencyColor);
                 // only count 'normal' characters, which contain data.
                 if (initialWidth > 0 && i > 0x20)
@@ -1294,7 +1296,7 @@ namespace WWFontEditor.UI
                 convertPopup.StartPosition = FormStartPosition.CenterParent;
                 if (convertPopup.ShowDialog() == DialogResult.OK)
                 {
-                    fc = clipboard.CloneFor(this.m_LoadedFont, (Byte)convertPopup.SelectedIndex, this.GetEditBpp(this.m_LoadedFont));
+                    fc = clipboard.CloneFor(this.m_LoadedFont, null, (Byte)convertPopup.SelectedIndex, this.GetEditBpp(this.m_LoadedFont));
                 }
             }
             try
@@ -1817,7 +1819,7 @@ namespace WWFontEditor.UI
         /// Asks if the current file should be saved before the next action is executed.
         /// </summary>
         /// <param name="question">Question to ask.</param>
-        /// <param name="continueAction">Action to execute after save. IS not executed if user presses Cancel.</param>
+        /// <param name="continueAction">Action to execute after save. Is not executed if the user presses Cancel.</param>
         /// <returns>True if the user pressed Cancel, aborting the execution of continueAction.</returns>
         private void AbortForChangesAskSave(String question, Action continueAction)
         {
@@ -2048,6 +2050,16 @@ namespace WWFontEditor.UI
             this.RefreshCurrentGridImage();
         }
 
+        private void NumPadding_ValueChanged(Object sender, EventArgs e)
+        {
+            if (this.m_Loading)
+                return;
+            if (this.m_LoadedFont.FontTypePaddingHorizontal >= 0)
+                return;
+            this.m_LoadedFont.FontPaddingHorizontal = (Int32)this.numPadding.Value;
+            this.RepaintPreview();
+        }
+
         private void CmbEncodings_SelectedIndexChanged(Object sender, EventArgs e)
         {
             if (this.m_Loading)
@@ -2166,13 +2178,13 @@ namespace WWFontEditor.UI
         {
             if (this.m_LoadedFont == null)
                 return;
-            this.SaveFontAs(false, null);
+            this.SaveFontAs(true, null);
         }
 
         private void TsmiExit_Click(Object sender, EventArgs e)
         {
             // changes check is done automatically on form close event
-            Application.Exit();
+            this.Close();
         }
 
         private void BtnShiftUp_Click(Object sender, EventArgs e)

@@ -16,6 +16,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontWidthTypeMax { get { return 0xFF; } }
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0x0; } }
+        public override Int32 FontTypePaddingHorizontal { get { return -1; } }
         public override Int32 BitsPerPixel { get { return 8; } }
         /// <summary>File extension typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "fnt" }; } }
@@ -72,9 +73,9 @@ namespace WWFontEditor.Domain.FontTypes
                     throw new Exception("File data too short for symbol data of symbol #" + firstSymbol + ".");
                 Array.Copy(fileData, readOffset, symbolData, 0, symbolData.Length);
                 FontFileSymbol ffs = new FontFileSymbol(symbolData, symbolWidth, symbolHeight, 0, this.BitsPerPixel, this.TransparencyColor);
-                // Add header padding.
-                if (padding > 0 && ffs.Width != 0 || ffs.Height != 0)
-                    ffs.ChangeWidth(ffs.Width + padding, this.TransparencyColor);
+                // Add header padding. - DISABLED to replace with FontPaddingHorizontal
+                //if (padding > 0 && ffs.Width != 0 || ffs.Height != 0)
+                //    ffs.ChangeWidth(ffs.Width + padding, this.TransparencyColor);
                 imageDataList[currentSymbol] = ffs;
                 readOffset += symbolData.Length;
                 // Byte will wrap around after 0xFF
@@ -84,9 +85,10 @@ namespace WWFontEditor.Domain.FontTypes
             for (Int32 i = 0; i < 0x100; ++i)
                 if (imageDataList[i] == null)
                     imageDataList[i] = new FontFileSymbol(this);
-            // interval is right-edge X optimization much like WW does Y optimization. Pad it onto the font. The Save will trim it off again.
-            if (padding > 0)
-                this.m_FontWidth += padding;
+            // REMOVED: interval is right-edge X optimization much like WW does Y optimization. Pad it onto the font. The Save will trim it off again.
+            //if (padding > 0)
+            //    this.m_FontWidth += padding;
+            this.FontPaddingHorizontal = padding;
             this.m_ImageDataList = new List<FontFileSymbol>(imageDataList);
         }
 
@@ -101,14 +103,16 @@ namespace WWFontEditor.Domain.FontTypes
             newSpace.ChangeHeight(0, this.TransparencyColor);
             baseList[0x20] = newSpace;
             Byte firstSymbol = 0x21;
-            // this is FF and not 100 because the space itself is omitted.
             Int32 remainingSymbols = 0x100 - firstSymbol; // 222 ?
             Array.Copy(baseList, firstSymbol, newList, 0, remainingSymbols);
             Array.Copy(baseList, 0, newList, remainingSymbols, firstSymbol);
 
+            Int32 padding = this.FontPaddingHorizontal;
+            // DISABLED:
             // Code to detect how much space at the right edge is added padding to create space between pixels.
             // This space is trimmed off and added in the header instead.
             // Start from max that can be trimmed off the space, since it's not in the list.
+            /*/
             Int32 globalOpenSpace = spaceWidth;
             Int32 images = this.m_ImageDataList.Count;
             for (Int32 i = 0; i < images; ++i)
@@ -144,12 +148,13 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 // font width should not be reduced by globalOpenSpace; it is unused in the saving process.
             }
+            //*/
             Int32 fileLen = 0x408 + newList.Select(x => x.ByteData.Length + 8).Sum();
             Byte[] fileData = new Byte[fileLen];
             fileData[0] = 0x01;
             fileData[1] = spaceWidth; // space width
             fileData[2] = firstSymbol;
-            fileData[3] = (Byte)globalOpenSpace; // space between characters
+            fileData[3] = (Byte)padding; // space between characters
             fileData[4] = (Byte) this.m_FontHeight;
             //fileData[5] = 0x00;
             //fileData[6] = 0x00;

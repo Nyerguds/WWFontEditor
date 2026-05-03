@@ -29,13 +29,15 @@ namespace WWFontEditor.Domain
         protected Int32 m_FontHeight;
         /// <summary>Overall maximum font width.</summary>
         protected Int32 m_FontWidth;
+        /// <summary>Overall maximum font width.</summary>
+        protected Int32 m_FontPadding = -1;
 
         /// <summary> array with the actual image data (as 8-bit) as byte arrays</summary>
         protected List<FontFileSymbol> m_ImageDataList = new List<FontFileSymbol>();
         #endregion
 
         #region overridable properties and functions
-        /// <summary>Lower limit for the amount of symbols in the font.</summary>
+        /// <summary>Lower limit for the amount of symbols in the font. These include any that are hidden by SymbolsTypeFirst</summary>
         public virtual Int32 SymbolsTypeMin { get {return 0;} }
         /// <summary>Upper limit for the amount of symbols in the font.</summary>
         public abstract Int32 SymbolsTypeMax { get; }
@@ -57,10 +59,29 @@ namespace WWFontEditor.Domain
         public virtual Boolean CustomSymbolWidthsForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
         public virtual Boolean CustomSymbolHeightsForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
-        /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
-        public virtual Int32 FontTypePaddingBottom { get { return 0; } }
-        /// <summary>Padding between the characters of the font. Used for the preview function and to determine if padding is needed when automatically optimizing symbol widths.</summary>
-        public virtual Int32 FontTypePaddingRight { get { return 0; } }
+        /// <summary>Padding between lines written in the font. Only used for the preview function.</summary>
+        public virtual Int32 FontTypePaddingVertical { get { return 0; } }
+        /// <summary>
+        /// Padding between the characters of the font. Used for the preview function and
+        /// to determine if padding is needed when automatically optimizing symbol widths.
+        /// If set to a negative number, the padding is editable on the UI, with a default
+        /// of the absolute value of the given number.
+        /// TODO: Take this into account in font conversions.
+        /// </summary>
+        public virtual Int32 FontTypePaddingHorizontal { get { return 0; } }
+        /// <summary>
+        /// Horizontal padding applied to the font. If FontTypePaddingHorizontal is 0 or greater,
+        /// it can't be changed and always just returns that. If FontTypePaddingHorizontal is 
+        /// smaller than 0, it returns m_FontPadding, unless that's undefined (set to -1), then 
+        /// the absolute value of FontTypePaddingHorizontal is returned.
+        /// </summary>
+        public virtual Int32 FontPaddingHorizontal
+        {
+            get { return this.FontTypePaddingHorizontal >= 0 ? this.FontTypePaddingHorizontal : (this.m_FontPadding >= 0 ? this.m_FontPadding : Math.Abs(this.FontTypePaddingHorizontal)); }
+            set { if (this.FontTypePaddingHorizontal < 0) this.m_FontPadding = value; }
+        }
+        /// <summary>Not used by the font editor, but used by some font types, so this allows it to be generally stored.</summary>
+        public virtual Int32 BaseLineHeight { get; set; }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
         /// <summary>File extensions typically used for this font type.</summary>
@@ -103,36 +124,46 @@ namespace WWFontEditor.Domain
 
         #region General functions and properties
         /// <summary>Adjustable maximum height of the loaded font.</summary>
-        public Int32 FontHeight
+        public virtual Int32 FontHeight
         {
             get { return this.m_FontHeight; }
             set
             {
-                this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
-                Int32 images = this.m_ImageDataList.Count;
-                for (Int32 i = 0; i < images; ++i)
-                {
-                    FontFileSymbol symbol = this.m_ImageDataList[i];
-                    if (symbol.Height > this.m_FontHeight || !this.CustomSymbolHeightsForType)
-                        symbol.ChangeHeight(this.m_FontHeight, this.TransparencyColor);
-                }
+                this.SetFontHeight(value);
+            }
+        }
+
+        protected void SetFontHeight(Int32 value)
+        {
+            this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
+            Int32 images = this.m_ImageDataList.Count;
+            for (Int32 i = 0; i < images; ++i)
+            {
+                FontFileSymbol symbol = this.m_ImageDataList[i];
+                if (symbol.Height > this.m_FontHeight || !this.CustomSymbolHeightsForType)
+                    symbol.ChangeHeight(this.m_FontHeight, this.TransparencyColor);
             }
         }
 
         /// <summary>Adjustable maximum width of the loaded font.</summary>
-        public Int32 FontWidth
+        public virtual Int32 FontWidth
         {
             get { return this.m_FontWidth; }
             set
             {
-                this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
-                Int32 images = this.m_ImageDataList.Count;
-                for (Int32 i = 0; i < images; ++i)
-                {
-                    FontFileSymbol symbol = this.m_ImageDataList[i];
-                    if (symbol.Width > this.m_FontWidth || !this.CustomSymbolWidthsForType)
-                        symbol.ChangeWidth(this.m_FontWidth, this.TransparencyColor);
-                }
+                this.SetFontWidth(value);
+            }
+        }
+
+        protected void SetFontWidth(Int32 value)
+        {
+            this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
+            Int32 images = this.m_ImageDataList.Count;
+            for (Int32 i = 0; i < images; ++i)
+            {
+                FontFileSymbol symbol = this.m_ImageDataList[i];
+                if (symbol.Width > this.m_FontWidth || !this.CustomSymbolWidthsForType)
+                    symbol.ChangeWidth(this.m_FontWidth, this.TransparencyColor);
             }
         }
 
@@ -166,6 +197,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileWsBfNox),
             typeof(FontFileWsBfUni),
             typeof(FontFileD2K),
+            typeof(FontFileEsi),
             typeof(FontFileTran),
             typeof(FontFileDynV1a),
             typeof(FontFileDynV1b),
@@ -205,6 +237,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileWsV2),
             typeof(FontFileD2K),
             typeof(FontFileKort),
+            typeof(FontFileEsi),
             // rather weak file size / content based checks.
             typeof(FontFileEmo),
             typeof(FontFileDynSQ5),
@@ -364,14 +397,15 @@ namespace WWFontEditor.Domain
             newFont.FontWidth = this.FontWidth;
             // automatically adjusts the images to the given font height.
             newFont.FontHeight = this.FontHeight;
+            newFont.BaseLineHeight = this.BaseLineHeight;
             newFont.m_ImageDataList = new List<FontFileSymbol>();
             Int32 newTypeMin = newFont.SymbolsTypeMin;
             Int32 images = this.m_ImageDataList.Count;
             for (Int32 i = 0; i < newTypeMin; ++i)
-                newFont.m_ImageDataList.Add(i < images ? this.m_ImageDataList[i].CloneFor(newFont, overflowColor, targetBpp) : new FontFileSymbol(newFont));
+                newFont.m_ImageDataList.Add(i < images ? this.m_ImageDataList[i].CloneFor(newFont, this, overflowColor, targetBpp) : new FontFileSymbol(newFont));
             Int32 end = Math.Min(images, newFont.SymbolsTypeMax);
             for (Int32 i = newTypeMin; i < end; ++i)
-                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, overflowColor, targetBpp));
+                newFont.m_ImageDataList.Add(this.m_ImageDataList[i].CloneFor(newFont, this, overflowColor, targetBpp));
             newFont.PostConvertCleanup();
         }
 
@@ -440,6 +474,7 @@ namespace WWFontEditor.Domain
 
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
+            Int32 padding = this.FontPaddingHorizontal;
             Int32 fullWidth = 0;
             Int32 fullHeight = this.m_FontHeight;
             Int32 curWidth = 0;
@@ -466,7 +501,7 @@ namespace WWFontEditor.Domain
                 if (isStart)
                     isStart = false;
                 else
-                    curWidth += this.FontTypePaddingRight;
+                    curWidth += padding;
                 Int32 code;
                 if (this.IsUnicode || enc == null)
                 {
@@ -514,13 +549,13 @@ namespace WWFontEditor.Domain
                     if (isStart)
                         isStart = false;
                     else
-                        curWidth += this.FontTypePaddingRight;
+                        curWidth += padding;
                     Boolean isBreak = ffs == null;
                     if (isBreak || curWidth + ffs.Width > wrapAt)
                     {
                         // Remove padding since symbol isn't added
                         if (!wasStart)
-                            curWidth -= this.FontTypePaddingRight;
+                            curWidth -= padding;
                         fullWidth = Math.Max(fullWidth, curWidth);
                         // A wrap break never puts IsStart back to true since it immediately add the character behind the break.
                         curWidth = 0;
@@ -544,7 +579,7 @@ namespace WWFontEditor.Domain
             {
                 FontFileSymbol ffs = symbols[i];
                 if (ffs == null) // Line break
-                    curLineTop += this.m_FontHeight + this.FontTypePaddingBottom;
+                    curLineTop += this.m_FontHeight + this.FontTypePaddingVertical;
                 else
                     fullHeight = Math.Max(fullHeight, curLineTop + ffs.Height + ffs.YOffset);
             }
@@ -570,7 +605,7 @@ namespace WWFontEditor.Domain
                     if (ffs == null)
                     {
                         // special case: Line break. Increase height, reset width, and go to next symbol.
-                        curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
+                        curHeight += this.m_FontHeight + this.FontTypePaddingVertical;
                         curWidth = 0;
                         continue;
                     }
@@ -583,7 +618,7 @@ namespace WWFontEditor.Domain
                             curWidth += ffs.Width;
                         }
                     }
-                    curWidth += this.FontTypePaddingRight;
+                    curWidth += padding;
                 }
             }
             return fullBm;

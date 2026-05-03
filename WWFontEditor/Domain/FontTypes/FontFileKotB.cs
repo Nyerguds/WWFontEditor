@@ -21,7 +21,7 @@ namespace WWFontEditor.Domain.FontTypes
         /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
-        public override Int32 FontTypePaddingBottom { get { return 1; } }
+        public override Int32 FontTypePaddingVertical { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 1; } }
         /// <summary>File extension typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "fnt" }; } }

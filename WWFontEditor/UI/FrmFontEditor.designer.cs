@@ -81,9 +81,11 @@
             this.chkWrapPreview = new System.Windows.Forms.CheckBox();
             this.lblZoomPreview = new System.Windows.Forms.Label();
             this.btnSetShadow = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             this.cmbRange = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.pnlImagePreview = new Nyerguds.Util.UI.SelectablePanel();
             this.pxbPreview = new Nyerguds.Util.UI.PixelBox();
+            this.numPadding = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
             this.numFontWidth = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -105,6 +107,7 @@
             this.menuStrip1.SuspendLayout();
             this.pnlImagePreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numPadding)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSymbols)).BeginInit();
@@ -718,12 +721,22 @@
             this.btnSetShadow.UseVisualStyleBackColor = true;
             this.btnSetShadow.Click += new System.EventHandler(this.BtnSetShadow_Click);
             // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(215, 444);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(133, 13);
+            this.label1.TabIndex = 308;
+            this.label1.Text = "Padding between symbols:";
+            // 
             // cmbRange
             // 
             this.cmbRange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cmbRange.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbRange.FormattingEnabled = true;
-            this.cmbRange.Location = new System.Drawing.Point(213, 440);
+            this.cmbRange.Location = new System.Drawing.Point(26, 452);
             this.cmbRange.Name = "cmbRange";
             this.cmbRange.Size = new System.Drawing.Size(196, 21);
             this.cmbRange.TabIndex = 21;
@@ -760,6 +773,29 @@
             this.pxbPreview.TabIndex = 315;
             this.pxbPreview.TabStop = false;
             this.pxbPreview.Click += new System.EventHandler(this.PreviewImageBox_Click);
+            // 
+            // numPadding
+            // 
+            this.numPadding.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.numPadding.Enabled = false;
+            this.numPadding.EnteredValue = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.numPadding.Location = new System.Drawing.Point(354, 441);
+            this.numPadding.Maximum = new decimal(new int[] {
+            255,
+            0,
+            0,
+            0});
+            this.numPadding.Name = "numPadding";
+            this.numPadding.SelectedText = "";
+            this.numPadding.SelectionLength = 0;
+            this.numPadding.SelectionStart = 0;
+            this.numPadding.Size = new System.Drawing.Size(53, 20);
+            this.numPadding.TabIndex = 66;
+            this.numPadding.ValueChanged += new System.EventHandler(this.NumPadding_ValueChanged);
             // 
             // cmbPalettes
             // 
@@ -1045,6 +1081,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 612);
             this.Controls.Add(this.cmbRange);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.btnSetShadow);
             this.Controls.Add(this.chkWrapPreview);
             this.Controls.Add(this.pnlImagePreview);
@@ -1053,6 +1090,7 @@
             this.Controls.Add(this.txtPreview);
             this.Controls.Add(this.btnResetPalette);
             this.Controls.Add(this.btnSavePalette);
+            this.Controls.Add(this.numPadding);
             this.Controls.Add(this.cmbPalettes);
             this.Controls.Add(this.chkPicker);
             this.Controls.Add(this.chkPaint);
@@ -1096,6 +1134,7 @@
             this.menuStrip1.PerformLayout();
             this.pnlImagePreview.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numPadding)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numSymbols)).EndInit();
@@ -1184,6 +1223,8 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiOptimizeWidths;
         private System.Windows.Forms.Button btnSetShadow;
         private Nyerguds.Util.UI.ComboBoxSmartWidth cmbRange;
+        private System.Windows.Forms.Label label1;
+        private Nyerguds.Util.UI.EnhNumericUpDown numPadding;
     }
 }
 

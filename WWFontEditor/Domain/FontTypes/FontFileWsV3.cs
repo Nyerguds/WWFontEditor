@@ -25,21 +25,23 @@ namespace WWFontEditor.Domain.FontTypes
             get
             {
                 return new String[]
-        {
-            "Dune II",
-            "Lands of Lore The Throne of Chaos",
-            "The Legend of Kyrandia Hand of Fate",
-            "The Legend of Kyrandia Malcolm's Revenge",
-            "The Legend of Kyrandia Malcolm's Revenge Installer",
-            "Command & Conquer",
-            "Command & Conquer Installer",
-            "Command & Conquer Red Alert",
-            "Command & Conquer Red Alert Installer",
-            "Lands of Lore Guardians of Destiny",
-            "Lands of Lore Guardians of Destiny Installer",
-            "Command & Conquer Sole Survivor",
-            "Lands of Lore III",
-        }; } }
+                {
+                    "Dune II",
+                    "Lands of Lore The Throne of Chaos",
+                    "The Legend of Kyrandia Hand of Fate",
+                    "The Legend of Kyrandia Malcolm's Revenge",
+                    "The Legend of Kyrandia Malcolm's Revenge Installer",
+                    "Command & Conquer",
+                    "Command & Conquer Installer",
+                    "Command & Conquer Red Alert",
+                    "Command & Conquer Red Alert Installer",
+                    "Lands of Lore Guardians of Destiny",
+                    "Lands of Lore Guardians of Destiny Installer",
+                    "Command & Conquer Sole Survivor",
+                    "Lands of Lore III",
+                };
+            }
+        }
 
         public override void LoadFont(Byte[] fileData)
         {
@@ -59,68 +61,68 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fileLength = fileData.Length;
             if (fileLength < 0x14)
                 throw new FileTypeLoadException(ERR_NOHEADER);
-            Int32 fileLSizeHeader = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
-            if (fileLSizeHeader != fileLength)
+            Int32 fontHeaderLength = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x00, 2, true);
+            if (fontHeaderLength != fileLength)
                 throw new FileTypeLoadException(ERR_SIZEHEADER);
-            Byte dataFormat = fileData[0x02];
-            //Byte unknown03 = fileData[0x03];
-            //this.Unknown04 = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 2, true);
-            Int32 fontDataOffsetsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x06, 2, true);
-            Int32 widthsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 2, true);
+            Byte fontHeaderCompress = fileData[0x02];
+            //Byte dataBlocks = fileData[0x03];
+            //Int16 infoBlockOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x04, 2, true);
+            Int32 fontHeaderOffsetBlockOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x06, 2, true);
+            Int32 fontHeaderWidthBlockOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x08, 2, true);
             // use this for pos on TS format
-            Int32 fontDataOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0A, 2, true);
-            Int32 heightsListOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 2, true);
+            Int32 fontHeaderDataBlockOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0A, 2, true);
+            Int32 fontHeaderHeightOffset = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0C, 2, true);
             //UInt16 unknown0E = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, 0x0E, 2, true);
             //Byte AlwaysZero = fileData[0x10];
-            Int32 length;
-            Boolean isV4 = dataFormat == 0x02;
+            Int32 nrOfSymbols;
+            Boolean isV4 = fontHeaderCompress == 0x02;
             if (isV4)
             {
                 if (!forV4)
                     throw new FileTypeLoadException("Load type identifies as v4.");
                 // "last symbol" byte 0x11 is not filled in on TS fonts, so instead, calculate it from the header offsets. Sort by offset and take the lowest two.
-                Int32[] headerVals = new Int32[] {fontDataOffsetsListOffset, widthsListOffset, fontDataOffset, heightsListOffset}.OrderBy(n => n).Take(2).ToArray();
+                Int32[] headerVals = new Int32[] {fontHeaderOffsetBlockOffset, fontHeaderWidthBlockOffset, fontHeaderDataBlockOffset, fontHeaderHeightOffset}.OrderBy(n => n).Take(2).ToArray();
                 // The difference between these two, divided by the item length in that particular list, is the amount of symbols.
                 Int32 divval = 1;
-                if (headerVals[0] == fontDataOffsetsListOffset || headerVals[0] == heightsListOffset)
+                if (headerVals[0] == fontHeaderOffsetBlockOffset || headerVals[0] == fontHeaderHeightOffset)
                     divval = 2;
-                length = (headerVals[1] - headerVals[0]) / divval;
+                nrOfSymbols = (headerVals[1] - headerVals[0]) / divval;
             }
-            else if (dataFormat == 0x00)
+            else if (fontHeaderCompress == 0x00)
             {
                 if (forV4)
                     throw new FileTypeLoadException("Load type identifies as v3.");
-                length = fileData[0x11] + 1; // "last symbol" byte, so actual amount is this value + 1.
+                nrOfSymbols = fileData[0x11] + 1; // "last symbol" byte, so actual amount is this value + 1.
             }
             else
-                throw new FileTypeLoadException(String.Format("Unknown font type identifier, '{0}'.", dataFormat));
-            this.m_FontHeight = fileData[0x12];
-            this.m_FontWidth = fileData[0x13];
-            if (fontDataOffsetsListOffset + length * 2 > fileLength)
+                throw new FileTypeLoadException(String.Format("Unknown font type identifier, '{0}'.", fontHeaderCompress));
+            this.m_FontHeight = fileData[0x12]; // MaxHeight
+            this.m_FontWidth = fileData[0x13]; // MaxWidth
+            if (fontHeaderOffsetBlockOffset + nrOfSymbols * 2 > fileLength)
                 throw new FileTypeLoadException("File data too short for offsets list!");
-            if (widthsListOffset + length > fileLength)
+            if (fontHeaderWidthBlockOffset + nrOfSymbols > fileLength)
                 throw new FileTypeLoadException("File data too short for symbol widths list starting from offset!");
-            if (heightsListOffset + length * 2 > fileLength)
+            if (fontHeaderHeightOffset + nrOfSymbols * 2 > fileLength)
                 throw new FileTypeLoadException("File data too short for symbol heights list!");
 
             //FontDataOffset
-            Int32[] fontDataOffsetsList = new Int32[length];
-            for (Int32 i = 0; i < length; ++i)
-                fontDataOffsetsList[i] = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, fontDataOffsetsListOffset + i * 2, 2, true) + (isV4 ? fontDataOffset : 0);
+            Int32[] fontDataOffsetsList = new Int32[nrOfSymbols];
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
+                fontDataOffsetsList[i] = (UInt16)ArrayUtils.ReadIntFromByteArray(fileData, fontHeaderOffsetBlockOffset + i * 2, 2, true) + (isV4 ? fontHeaderDataBlockOffset : 0);
             List<Byte> widthsList = new List<Byte>();
-            for (Int32 i = 0; i < length; ++i)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
-                Byte width = fileData[widthsListOffset + i];
+                Byte width = fileData[fontHeaderWidthBlockOffset + i];
                 if (width > this.FontWidth)
                     throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol widths list at entry #{1}: the value is larger than global width '{2}'.", width, i, this.FontWidth));
                 widthsList.Add(width);
             }
             List<Byte> yOffsetsList = new List<Byte>();
             List<Byte> heightsList = new List<Byte>();
-            for (Int32 i = 0; i < length; ++i)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
-                yOffsetsList.Add(fileData[heightsListOffset + i * 2]);
-                Byte height = fileData[heightsListOffset + i * 2 + 1];
+                yOffsetsList.Add(fileData[fontHeaderHeightOffset + i * 2]);
+                Byte height = fileData[fontHeaderHeightOffset + i * 2 + 1];
                 if (height > this.FontHeight)
                     throw new FileTypeLoadException(String.Format("Illegal value '{0}' in symbol heights list at entry #{1}: the value is larger than global height '{2}'.", height, i, this.FontHeight));
                 heightsList.Add(height);
@@ -128,7 +130,7 @@ namespace WWFontEditor.Domain.FontTypes
             // End of FileTypeLoadExceptions. After this, assume the type is identified.
             this.m_ImageDataList = new List<FontFileSymbol>();
             Int32 bitsLength = this.BitsPerPixel;
-            for (Int32 i = 0; i < length; ++i)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Int32 start = fontDataOffsetsList[i];
                 Byte width = widthsList[i];
@@ -221,7 +223,6 @@ namespace WWFontEditor.Domain.FontTypes
             // return data
             return fullData;
         }
-
         #endregion
 
         /// <summary>

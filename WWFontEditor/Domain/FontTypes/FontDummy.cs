@@ -16,9 +16,9 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
         public override Byte TransparencyColor { get { return 0x00; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
-        public override Int32 FontTypePaddingBottom { get { return 0; } }
-        /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
-        public override Int32 FontTypePaddingRight { get { return 0; } }
+        public override Int32 FontTypePaddingVertical { get { return 0; } }
+        /// <summary>Padding between the characters of the font.</summary>
+        public override Int32 FontTypePaddingHorizontal { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 2; } }
         /// <summary>File extensions typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[0]; } }

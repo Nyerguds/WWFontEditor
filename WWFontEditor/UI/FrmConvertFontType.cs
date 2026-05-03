@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using WWFontEditor.Domain;
-using WWFontEditor.Domain.FontTypes;
 
 namespace WWFontEditor.UI
 {

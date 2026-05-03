@@ -15,7 +15,7 @@ Have fun with it!
 
 
 If you like what I'm doing, and you have too much money, feel free to donate:
-https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=nyerguds@gmail.com&currency_code=EUR
+https://www.paypal.com/donate/?business=nyerguds@gmail.com&currency_code=EUR
 
 
 =================
@@ -318,6 +318,11 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.14.0: (2021/05/01 01:28)
+-Added padding between symbols as actual UI option.
+-Added support for ESI font
+-Fixed extra options window so its buttons move correctly on resize.
 
 v1.13.5: (2020/03/24 18:12)
 -Fixed crash when using the revert function after saving a new font.

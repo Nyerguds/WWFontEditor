@@ -79,7 +79,7 @@ namespace WWFontEditor.Domain
                         this.ByteData[y * this.Width + x] = (Byte)ColorUtils.GetClosestPaletteIndexMatch(col, palette, trans);
                 }
             }
-            this.AdaptSizeToFont(this, source);
+            this.AdaptSizeToFont(this, null, source);
         }
 
         /// <summary>
@@ -109,11 +109,11 @@ namespace WWFontEditor.Domain
 
         public FontFileSymbol CloneFor(FontFile targetVersion)
         {
-            return this.CloneFor(targetVersion, null, targetVersion.BitsPerPixel);
+            return this.CloneFor(targetVersion, null, null, targetVersion.BitsPerPixel);
         }
         public FontFileSymbol CloneFor(FontFile targetVersion, Int32 targetBpp)
         {
-            return this.CloneFor(targetVersion, null, targetBpp);
+            return this.CloneFor(targetVersion, null, null, targetBpp);
         }
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
@@ -125,17 +125,17 @@ namespace WWFontEditor.Domain
             return this.ByteData.Any(x => x >= colValLimit);
         }
 
-        public FontFileSymbol CloneFor(FontFile font, Byte? defaultValue, Int32 targetBpp)
+        public FontFileSymbol CloneFor(FontFile font, FontFile sourceFont, Byte? defaultValue, Int32 targetBpp)
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
             Byte[] newByteData = this.GetFontSymbolDataLimitedBpp(defaultValue, targetBpp);
             FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp, font.TransparencyColor);
-            this.AdaptSizeToFont(newSymbol, font);
+            this.AdaptSizeToFont(newSymbol, sourceFont, font);
             return newSymbol;
         }
 
-        private void AdaptSizeToFont(FontFileSymbol symbol, FontFile newFont)
+        private void AdaptSizeToFont(FontFileSymbol symbol, FontFile oldFont, FontFile newFont)
         {
             if (this.YOffset > newFont.YOffsetTypeMax)
             {
@@ -149,6 +149,9 @@ namespace WWFontEditor.Domain
             // Adapt to font width
             if (!newFont.CustomSymbolWidthsForType || newFont.FontWidth < symbol.Width)
                 symbol.ChangeWidth(newFont.FontWidth, newFont.TransparencyColor);
+            //if (oldFont.FontPaddingHorizontal > 0 && newFont.FontTypePaddingHorizontal > 0)
+
+
             // Adapt to font height
             if (!newFont.CustomSymbolHeightsForType || newFont.FontHeight < symbol.Height)
                 symbol.ChangeHeight(newFont.FontHeight, newFont.TransparencyColor);

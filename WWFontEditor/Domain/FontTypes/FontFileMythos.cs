@@ -22,9 +22,9 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
         public override Byte TransparencyColor { get { return 0xFF; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
-        public override Int32 FontTypePaddingBottom { get { return 0; } }
+        public override Int32 FontTypePaddingVertical { get { return 0; } }
         /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
-        public override Int32 FontTypePaddingRight { get { return 1; } }
+        public override Int32 FontTypePaddingHorizontal { get { return 1; } }
         public override Int32 BitsPerPixel { get { return 8; } }
         /// <summary>File extensions typically used for this font type.</summary>
         public override String[] FileExtensions { get { return new String[] { "vgs" }; } }
@@ -76,7 +76,6 @@ namespace WWFontEditor.Domain.FontTypes
                 Int32 yOffset = fileData[offset + 7];
                 offset += 8;
                 Int32 dataLen = symbWidth * symbHeight;
-                Byte[] imageData = new Byte[dataLen];
                 if (compressed)
                 {
                     if (comprByte != 1)
@@ -89,6 +88,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 if (fileData.Length < offset + skipLen)
                     throw new FileTypeLoadException("Header references offset outside file data.");
+                Byte[] imageData;
 
                 if (compressed)
                 {
@@ -108,6 +108,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 else
                 {
+                    imageData = new Byte[dataLen];
                     Array.Copy(fileData, offset, imageData, 0, dataLen);
                 }
                 FontFileSymbol fc = new FontFileSymbol(imageData, symbWidth, symbHeight, yOffset, this.BitsPerPixel, this.TransparencyColor);
