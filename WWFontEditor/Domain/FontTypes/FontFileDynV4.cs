@@ -147,7 +147,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             // Not sure about this value; there is no support in the editor for indicating anything like this.
             // But the most commonly used lowest point in the font seems like a logical value. It matches the existing fonts.
-            this.lineHeight = CalculateLineHeight(m_ImageDataList, this.BitsPerPixel);
+            this.lineHeight = CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
             Boolean foundStart = false;
             Int32 startSymbol = 0;
             Int32 fullNrOfSymbols = m_ImageDataList.Count;
@@ -232,13 +232,13 @@ namespace WWFontEditor.Domain.FontTypes
             return fileData;
         }
 
-        public static Int32 CalculateLineHeight(List<FontFileSymbol> imageDataList, Int32 bitsPerPixel)
+        public static Int32 CalculateLineHeight(List<FontFileSymbol> imageDataList, Int32 bitsPerPixel, Int32 yOffsetMax)
         {
             Dictionary<Int32,Int32> frequencies = new Dictionary<Int32, Int32>();
             foreach (FontFileSymbol symbol in imageDataList)
             {
                 FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel, 0);
-                ffs.OptimizeYHeight();
+                ffs.OptimizeYHeight(yOffsetMax);
                 Int32 fullHeight = ffs.Height == 0? 0 : ffs.YOffset + ffs.Height;
                 if (fullHeight == 0)
                     continue;

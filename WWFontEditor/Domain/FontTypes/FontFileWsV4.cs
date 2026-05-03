@@ -41,7 +41,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             // Y-optimization.
             foreach (FontFileSymbol ffs in m_ImageDataList)
-                ffs.OptimizeYHeight();
+                ffs.OptimizeYHeight(this.YOffsetTypeMax);
         }
 
     }

@@ -182,7 +182,7 @@ namespace Nyerguds.ImageManipulation
         /// <returns>A color palette containing the given colors.</returns>
         public static ColorPalette GetPalette(Color[] colors)
         {
-            // Silliest idea ever, but it works, lol.
+            // Silliest idea ever, but it works...
             const Int32 chunkExtraLen = 0x0C;
             Int32 lenPng = PNG_IDENTIFIER.Length;
             const Int32 lenHdr = 0x0D;
@@ -215,6 +215,7 @@ namespace Nyerguds.ImageManipulation
             using (Bitmap loadedImage = new Bitmap(ms))
             {
                 ColorPalette pal = loadedImage.Palette;
+                // Since we just gave an empty array as palette before, let's fill it in now.
                 for (Int32 i = 0; i < pal.Entries.Length; i++)
                     pal.Entries[i] = colors[i];
                 return pal;

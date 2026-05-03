@@ -47,7 +47,7 @@ namespace Nyerguds.Util
         {
             Int32 lastByte = bytes - 1;
             if (data.Length < startIndex + bytes)
-                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset" + startIndex + ".");
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset " + startIndex + ".");
             for (Int32 index = 0; index < bytes; index++)
             {
                 Int32 offs = startIndex + (littleEndian ? index : lastByte - index);
@@ -59,7 +59,7 @@ namespace Nyerguds.Util
         {
             Int32 lastByte = bytes - 1;
             if (data.Length < startIndex + bytes)
-                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to write a " + bytes + "-byte value at offset" + startIndex + ".");
+                throw new ArgumentOutOfRangeException("startIndex", "Data array is too small to read a " + bytes + "-byte value at offset " + startIndex + ".");
             UInt32 value = 0;
             for (Int32 index = 0; index < bytes; index++)
             {

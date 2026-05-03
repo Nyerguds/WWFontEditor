@@ -152,7 +152,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             // Y-optimization.
             foreach (FontFileSymbol ffs in m_ImageDataList)
-                ffs.OptimizeYHeight();
+                ffs.OptimizeYHeight(this.YOffsetTypeMax);
             Int32 imagesCount = this.m_ImageDataList.Count;
             Byte[][] imageData = new Byte[imagesCount][];
             Byte[] widthsList = new Byte[imagesCount];
@@ -229,7 +229,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             // Y-optimization.
             foreach (FontFileSymbol ffs in m_ImageDataList)
-                ffs.OptimizeYHeight();
+                ffs.OptimizeYHeight(this.YOffsetTypeMax);
         }
     }
 }

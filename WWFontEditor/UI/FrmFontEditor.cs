@@ -1341,34 +1341,18 @@ namespace WWFontEditor
             FontFileSymbol ffs = this.m_LoadedFont.GetSymbol(curIndex);
             if (ffs == null)
                 return;
-
-            Clipboard.Clear();
-            DataObject data = new DataObject();
             Color[] noTransPal = m_CurrentPalette.ToArray();
             if (noTransPal.Length > this.m_LoadedFont.TransparencyColor)
                 noTransPal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(255, noTransPal[this.m_LoadedFont.TransparencyColor]);
-
-            using (MemoryStream pngMemStream = new MemoryStream())
-            using (MemoryStream dibMemStream = new MemoryStream())
+            DataObject data = new DataObject();
             using (Bitmap imageNoTr = ffs.GetBitmapFullSize(noTransPal, m_LoadedFont, true))
             using (Bitmap image = ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true))
             {
                 // As text character
                 data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
-                // As standard bitmap, without transparency support
-                data.SetData(DataFormats.Bitmap, true, imageNoTr);
-                // As PNG. Gimp will prefer this over the other two.
-                Byte[] pngData = BitmapHandler.GetPngImageData(image, 0);
-                pngMemStream.Write(pngData, 0, pngData.Length);
-                data.SetData("PNG", false, pngMemStream);
-                // As DIB. This is (wrongly) accepted as ARGB by many applications.
-                Byte[] dibData = ClipboardImage.ConvertToDib(image);
-                dibMemStream.Write(dibData, 0, dibData.Length);
-                data.SetData(DataFormats.Dib, false, dibMemStream);
                 // As Font Editor object
                 data.SetData(typeof(FontFileSymbol), ffs.Clone());
-                // The 'copy=true' argument means the MemoryStreams can be safely disposed after the operation.
-                Clipboard.SetDataObject(data, true);
+                ClipboardImage.SetClipboardImage(image, imageNoTr, data);
             }
         }
 
@@ -1444,24 +1428,7 @@ namespace WWFontEditor
         {
             if (retrievedData.GetDataPresent(typeof(FontFileSymbol)))
                 return retrievedData.GetData(typeof(FontFileSymbol)) as FontFileSymbol;
-            Bitmap clipboardimage = null;
-            // Order: try PNG, move on to try 32-bit ARGB DIB, then try the normal Bitmap and Image types.
-            if (Clipboard.ContainsData("PNG"))
-            {
-                MemoryStream png_stream = Clipboard.GetData("PNG") as MemoryStream;
-                if (png_stream != null)
-                    using (Bitmap bm = new Bitmap(png_stream))
-                        clipboardimage = ImageUtils.CloneImage(bm, null);
-            }
-            if (clipboardimage == null && retrievedData.GetDataPresent(DataFormats.Dib))
-            {
-                Byte[] dibdata = ClipboardImage.TryGetDibDataClipboard(retrievedData);
-                clipboardimage = ClipboardImage.ImageFromClipboardDib(dibdata);
-            }
-            if (clipboardimage == null && retrievedData.GetDataPresent(DataFormats.Bitmap))
-                clipboardimage = new Bitmap(retrievedData.GetData(DataFormats.Bitmap) as Image);
-            if (clipboardimage == null && retrievedData.GetDataPresent(typeof(Image)))
-                clipboardimage = new Bitmap(retrievedData.GetData(typeof(Image)) as Image);
+            Bitmap clipboardimage = ClipboardImage.GetClipboardImage(retrievedData);
             if (clipboardimage == null)
                 return null;
             return new FontFileSymbol(clipboardimage, this.m_CurrentPalette, this.m_LoadedFont);
@@ -1830,31 +1797,12 @@ namespace WWFontEditor
             if (m_LoadedFont == null)
                 return;
             Clipboard.Clear();
-            DataObject data = new DataObject();
-
             Color[] noTransPal = m_CurrentPalette.ToArray();
             if (noTransPal.Length > this.m_LoadedFont.TransparencyColor)
                 noTransPal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(255, noTransPal[this.m_LoadedFont.TransparencyColor]);
-            using (MemoryStream pngMemStream = new MemoryStream())
-            using (MemoryStream dibMemStream = new MemoryStream())
             using (Bitmap prevNoTrans = GeneratePreview(0, false))
             using (Bitmap prevTrans = GeneratePreview(0, asTransparent))
-            {
-                // Add version without transparency support
-                data.SetData(DataFormats.Bitmap, prevNoTrans);
-                data.SetImage(asTransparent ? prevTrans : prevNoTrans);
-                
-                // Add as PNG. Gimp will prefer this over the other two.
-                Byte[] pngData = BitmapHandler.GetPngImageData(asTransparent ? prevTrans : prevNoTrans, 0);
-                pngMemStream.Write(pngData, 0, pngData.Length);
-                data.SetData("PNG", false, pngMemStream);
-
-                // Add as DIB. This is (wrongly) accepted as ARGB by many applications.
-                Byte[] dibData = ClipboardImage.ConvertToDib(asTransparent ? prevTrans : prevNoTrans);
-                dibMemStream.Write(dibData, 0, dibData.Length);
-                data.SetData(DataFormats.Dib, false, dibMemStream);
-                Clipboard.SetDataObject(data, true);
-            }
+                ClipboardImage.SetClipboardImage(prevTrans, prevNoTrans, null);
         }
 
         private void CopyCharacter(object sender, EventArgs e)

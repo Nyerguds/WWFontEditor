@@ -47,11 +47,16 @@ namespace WWFontEditor.Domain
             this.Width = Math.Min(source.FontWidth, image.Width);
             this.Height = Math.Min(source.FontHeight, image.Height);
             this.ByteData = new Byte[Width * Height];
-
-            Bitmap srcImage = ImageUtils.PaintOn32bpp(image, null);
-            Boolean hasTrans = ImageUtils.HasTransparency(srcImage);
+            Byte[] hiColImg;
             Int32 stride;
-            Byte[] hiColImg = ImageUtils.GetImageData(srcImage, out stride);
+            Boolean hasTrans;
+            using (Bitmap srcImage = ImageUtils.PaintOn32bpp(image, null))
+            {
+                hasTrans = ImageUtils.HasTransparency(srcImage);
+                hiColImg = ImageUtils.GetImageData(srcImage, out stride);
+                //Byte[] pngdata = BitmapHandler.GetPngImageData(srcImage, 0);
+                //System.IO.File.WriteAllBytes("imgDump.png", pngdata);
+            }
             List<Int32> trans = null;
             if (hasTrans)
             {
@@ -296,11 +301,13 @@ namespace WWFontEditor.Domain
         /// Crop the image in Y-dimension and adjust the Y offset instead.
         /// This can not be performed on fonts that don't support Y-offset!
         /// </summary>
-        public void OptimizeYHeight()
+        public void OptimizeYHeight(Int32 yOffsetMax)
         {
-            Int32 height = Height;
-            Int32 yoffSet = YOffset;
-            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor);
+            if(yOffsetMax == 0)
+                return;
+            Int32 height = this.Height;
+            Int32 yoffSet = this.YOffset;
+            this.ByteData = ImageUtils.OptimizeYHeight(this.ByteData, this.Width, ref height, ref yoffSet, true, TransparencyColor, yOffsetMax);
             this.Height = height;
             this.YOffset = yoffSet;
         }
@@ -319,7 +326,7 @@ namespace WWFontEditor.Domain
                 new Rectangle(0, secondLayer.YOffset, secondLayer.Width, secondLayer.Height), trans, true);
             secondLayer = new FontFileSymbol(newSymbolData, newWidth, newHeight, 0, firstLayer.BitsPerPixel, fontFile.TransparencyColor);
             if (fontFile.YOffsetTypeMax != 0)
-                secondLayer.OptimizeYHeight();
+                secondLayer.OptimizeYHeight(fontFile.YOffsetTypeMax);
             return secondLayer.CloneFor(fontFile, fontFile.BitsPerPixel);
         }
     }

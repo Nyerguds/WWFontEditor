@@ -165,6 +165,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileCent),
             typeof(FontFileKort),
             typeof(FontFileMythos),
+            typeof(FontFileKotB),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
         };
 
@@ -195,6 +196,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileMythos),
             // File size only; leave it at the end.
             typeof(FontFileWsV1),
+            typeof(FontFileKotB),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO LOAD FAIL CONDITIONS.
         };
 

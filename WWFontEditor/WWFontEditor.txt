@@ -217,6 +217,8 @@ KORT font
 Mythos font
 -Sherlock Holmes: The Case of Serrated Scalpel
 
+KotB font (extracted from the exe file)
+-Kings of the Beach
 
 --------------------------
 Notes on Dune 2000 support
@@ -299,7 +301,10 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
-v1.10.5: (2017/09/19 7:35)
+v1.10.6: (2017/09/27 10:15)
+-Added Kings of the Beach font. It's an exe-extracted font, though.
+
+v1.10.5: (2017/09/19 07:35)
 -Fixed a serious bug in the Y-offset optimisation logic.
 -Added new clipboard types (DIB and PNG) to character copy function too.
 

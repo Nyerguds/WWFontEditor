@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
     <Compile Include="Domain\Utils\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
     <None Include="Domain\Compression\WestwoodCompression.cs" />

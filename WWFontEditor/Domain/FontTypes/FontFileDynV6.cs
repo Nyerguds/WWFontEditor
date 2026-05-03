@@ -93,7 +93,7 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont(Boolean disableCompression)
         {
-            this.m_lineHeight = (Byte)FontFileDynV4.CalculateLineHeight(m_ImageDataList, this.BitsPerPixel);
+            this.m_lineHeight = (Byte)FontFileDynV4.CalculateLineHeight(m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax);
             Int32 len = this.m_ImageDataList.Count;
             Int32[] symbolOffsets = new Int32[len];
             Byte[] symbolWidths = new Byte[len];
@@ -127,7 +127,7 @@ namespace WWFontEditor.Domain.FontTypes
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x00, 4, true, (UInt32)(offsetsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x04, 4, true, (UInt32)(widthsIndex));
             ArrayUtils.WriteIntToByteArray(fileData, chunkOffset + 0x08, 4, true, (UInt32)(dataIndex));
-            fileData[chunkOffset + 0x0C] = (Byte)(m_FontWidth-m_lineHeight);
+            fileData[chunkOffset + 0x0C] = (Byte)(m_FontWidth - m_lineHeight);
             fileData[chunkOffset + 0x0D] = m_lineHeight;
             fileData[chunkOffset + 0x0E] = (Byte)startSymbol;
             fileData[chunkOffset + 0x0F] = (Byte)(actualSymbols);
