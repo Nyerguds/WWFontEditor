@@ -12,8 +12,8 @@ namespace WWFontEditor.UI
 
         public FrmSettings()
         {
-            InitializeComponent();
-            this.tabControl1.TabPages.Remove(tabPage3);
+            this.InitializeComponent();
+            this.tabControl1.TabPages.Remove(this.tabPage3);
         }
 
         public FrmSettings(Int32[] customColors, FontEditSettings fontEditSettings)
@@ -21,17 +21,17 @@ namespace WWFontEditor.UI
         {
             this.CustomColors = customColors;
             this.m_Settings = fontEditSettings;
-            LoadSettings();
+            this.LoadSettings();
         }
 
         private void LoadSettings()
         {
-            this.SetLabelColor(lblValEditorBackColor, m_Settings.Background);
+            this.SetLabelColor(this.lblValEditorBackColor, this.m_Settings.Background);
             this.chkUsePaletteBg.Checked = this.m_Settings.UsePaletteBG;
-            this.SetLabelColor(lblValEditorGridColor, m_Settings.BackgroundGrid);
-            this.SetLabelColor(lblValEditorOutlineColor, m_Settings.BackgroundFrame);
-            this.SetLabelColor(lblValEditAreaOutlineColor, m_Settings.EditAreaFrame);
-            this.SetLabelColor(lblValEditAreaGridColor, m_Settings.EditAreaGrid);
+            this.SetLabelColor(this.lblValEditorGridColor, this.m_Settings.BackgroundGrid);
+            this.SetLabelColor(this.lblValEditorOutlineColor, this.m_Settings.BackgroundFrame);
+            this.SetLabelColor(this.lblValEditAreaOutlineColor, this.m_Settings.EditAreaFrame);
+            this.SetLabelColor(this.lblValEditAreaGridColor, this.m_Settings.EditAreaGrid);
             this.chkEnablePreviewWrap.Checked = this.m_Settings.EnablePreviewWrap;
             this.numDefaultZoom.Value = this.m_Settings.Zoom;
             this.numDefaultSelectedSymbol.Value = this.m_Settings.SelectedSymbol;
@@ -59,7 +59,7 @@ namespace WWFontEditor.UI
             label.ForeColor = color;
         }
 
-        private void ChkUsePaletteBg_CheckedChanged(object sender, EventArgs e)
+        private void ChkUsePaletteBg_CheckedChanged(Object sender, EventArgs e)
         {
             Boolean useBg = this.chkUsePaletteBg.Checked;
             this.lblEditorBackColor.Enabled = !useBg;
@@ -70,7 +70,7 @@ namespace WWFontEditor.UI
                 this.lblValEditorBackColor.BackColor = this.lblValEditorBackColor.ForeColor;
         }
 
-        private void ColorLabel_Click(object sender, EventArgs e)
+        private void ColorLabel_Click(Object sender, EventArgs e)
         {
             Label label = sender as Label;
             if (label == null)
@@ -82,16 +82,16 @@ namespace WWFontEditor.UI
             DialogResult res = cdl.ShowDialog();
             this.CustomColors = cdl.CustomColors;
             if (res == DialogResult.OK)
-                SetLabelColor(label, cdl.Color);
+                this.SetLabelColor(label, cdl.Color);
         }
 
-        private void ColorLabel_KeyPress(object sender, KeyPressEventArgs e)
+        private void ColorLabel_KeyPress(Object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == ' ' || e.KeyChar == '\r' || e.KeyChar == '\n')
-                ColorLabel_Click(sender, e);
+                this.ColorLabel_Click(sender, e);
         }
 
-        private void chkLimit8Bit_CheckedChanged(object sender, EventArgs e)
+        private void chkLimit8Bit_CheckedChanged(Object sender, EventArgs e)
         {
             Boolean limit = this.chkLimit8Bit.Checked;
 
@@ -107,7 +107,7 @@ namespace WWFontEditor.UI
                 this.chkPal8BppRainbow.Checked = true;
         }
 
-        private void btnOk_Click(object sender, EventArgs e)
+        private void btnOk_Click(Object sender, EventArgs e)
         {
             if ((!this.chkPal1BppBR.Checked && !this.chkPal1BppBW.Checked && !this.chkPal1BppWB.Checked)
                 || (!this.chkPal4BppRainbow.Checked && !this.chkPal4BppWin.Checked && !this.chkPal4BppBW.Checked && !this.chkPal4BppWB.Checked)
@@ -116,12 +116,12 @@ namespace WWFontEditor.UI
                 MessageBox.Show(this, "Error: at least one default palette must be selected for each image color type!", "Font Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            this.m_Settings.Background = lblValEditorBackColor.ForeColor;
+            this.m_Settings.Background = this.lblValEditorBackColor.ForeColor;
             this.m_Settings.UsePaletteBG = this.chkUsePaletteBg.Checked;
-            this.m_Settings.BackgroundGrid = lblValEditorGridColor.ForeColor;
-            this.m_Settings.BackgroundFrame = lblValEditorOutlineColor.ForeColor;
-            this.m_Settings.EditAreaFrame = lblValEditAreaOutlineColor.ForeColor;
-            this.m_Settings.EditAreaGrid = lblValEditAreaGridColor.ForeColor;
+            this.m_Settings.BackgroundGrid = this.lblValEditorGridColor.ForeColor;
+            this.m_Settings.BackgroundFrame = this.lblValEditorOutlineColor.ForeColor;
+            this.m_Settings.EditAreaFrame = this.lblValEditAreaOutlineColor.ForeColor;
+            this.m_Settings.EditAreaGrid = this.lblValEditAreaGridColor.ForeColor;
             this.m_Settings.EnablePreviewWrap = this.chkEnablePreviewWrap.Checked;
             this.m_Settings.Zoom = (Int32)this.numDefaultZoom.Value;
             this.m_Settings.SelectedSymbol = (Int32)this.numDefaultSelectedSymbol.Value;
@@ -147,14 +147,14 @@ namespace WWFontEditor.UI
             this.Close();
         }
 
-        private void btnReset_Click(object sender, EventArgs e)
+        private void btnReset_Click(Object sender, EventArgs e)
         {
-            this.SetLabelColor(lblValEditorBackColor, FontEditSettings.DefBackground);
+            this.SetLabelColor(this.lblValEditorBackColor, FontEditSettings.DefBackground);
             this.chkUsePaletteBg.Checked = FontEditSettings.DefUsePaletteBG;
-            this.SetLabelColor(lblValEditorGridColor, FontEditSettings.DefBackgroundGrid);
-            this.SetLabelColor(lblValEditorOutlineColor, FontEditSettings.DefBackgroundFrame);
-            this.SetLabelColor(lblValEditAreaOutlineColor, FontEditSettings.DefEditAreaFrame);
-            this.SetLabelColor(lblValEditAreaGridColor, FontEditSettings.DefEditAreaGrid);
+            this.SetLabelColor(this.lblValEditorGridColor, FontEditSettings.DefBackgroundGrid);
+            this.SetLabelColor(this.lblValEditorOutlineColor, FontEditSettings.DefBackgroundFrame);
+            this.SetLabelColor(this.lblValEditAreaOutlineColor, FontEditSettings.DefEditAreaFrame);
+            this.SetLabelColor(this.lblValEditAreaGridColor, FontEditSettings.DefEditAreaGrid);
             this.numDefaultZoom.Value = FontEditSettings.DefZoom;
             this.numDefaultSelectedSymbol.Value = FontEditSettings.DefSelectedSymbol;
             this.chkEnableGrid.Checked = FontEditSettings.DefEnableGrid;

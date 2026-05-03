@@ -714,8 +714,9 @@ namespace Nyerguds.Util.UI
     }
 
     /// <summary>
-    /// Disables the "feature" that double-clicking a label copies its text. Since said copy apparently happens
-    /// on the internal text variable in the Label class, an override fixes this problem.
+    /// Disables the "feature" that double-clicking a label copies its text.
+    /// Since said copy takes the internal text variable in the Label class,
+    /// and is skipped when that is empty, an override fixes this problem.
     /// </summary>
     public class LabelNoCopyOnDblClick : Label
     {

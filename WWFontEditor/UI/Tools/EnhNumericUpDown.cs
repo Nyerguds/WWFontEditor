@@ -1,8 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Linq;
+
 namespace Nyerguds.Util.UI
 {
     /// <summary>
@@ -25,11 +26,11 @@ namespace Nyerguds.Util.UI
         [Category("Data")]
         [Description("True to make the scrollwheel action cause validation on EnteredValue.")]
         [DefaultValue(true)]
-        public Boolean ScrollValidatesEnter { get { return _ScrollValidatesEnter; } set { _ScrollValidatesEnter = value; } }
+        public Boolean ScrollValidatesEnter { get { return this._ScrollValidatesEnter; } set { this._ScrollValidatesEnter = value; } }
         [Category("Data")]
         [DefaultValue(true)]
         [Description("True to make the up-down arrow keys or controls cause validation on EnteredValue.")]
-        public Boolean UpDownValidatesEnter { get { return _UpDownValidatesEnter; } set { _UpDownValidatesEnter = value; } }
+        public Boolean UpDownValidatesEnter { get { return this._UpDownValidatesEnter; } set { this._UpDownValidatesEnter = value; } }
         
         /// <summary>
         /// Last validated entered value.
@@ -39,11 +40,11 @@ namespace Nyerguds.Util.UI
         [Description("The last validated value of the EnhNumericUpDownControl.")]
         public Decimal EnteredValue
         {
-            get { return LimitRange(_EnteredValue);  }
+            get { return this.Constrain(this._EnteredValue);  }
             set
             {
-                this.Value = value;
-                ValidateValue();
+                this.Value = this.Constrain(value);
+                this.ValidateValue();
             }
         }
 
@@ -55,52 +56,75 @@ namespace Nyerguds.Util.UI
         public EnhNumericUpDown()
         {
             this.MouseWheelIncrement = 1;
-            this.KeyDown += CheckKeyPress;
+            this.KeyDown += this.CheckKeyPress;
             foreach (Control control in this.Controls)
             {
                 if (control is TextBox)
                 {
-                    textBox = control as TextBox;
+                    this.textBox = control as TextBox;
                     break;
                 }
             }
         }
-        
+
+        public TextBox TextBox { get { return this.textBox; } }
+
+        protected override void OnTextChanged(EventArgs e)
+        {
+            Boolean allowminus = this.Minimum < 0;
+            if (Regex.IsMatch(this.Text, allowminus ? "^-?\\d*$" : "^\\d*$"))
+                return;
+            // something snuck in, probably with ctrl+v. Remove it.
+            System.Media.SystemSounds.Beep.Play();
+            StringBuilder text = new StringBuilder();
+            String txt = this.Text;
+            Int32 firstIllegalChar = 0;
+            for (Int32 i = 0; i < txt.Length; i++)
+            {
+                Char c = txt[i];
+                if ((c < '0' || c > '9') && (!allowminus || i > 0 || c != '-'))
+                {
+                    if (firstIllegalChar == 0)
+                        firstIllegalChar = i;
+                    continue;
+                }
+                text.Append(c);
+            }
+            Int32 value;
+            if (Int32.TryParse(text.ToString(), out value))
+            {
+                value = Math.Max((Int32)this.Minimum, Math.Min((Int32)this.Maximum, value));
+                // will trigger this function again, but that's okay, it'll immediately fail the regex and abort.
+                this.Text = value.ToString();
+            }
+            this.Select(firstIllegalChar, 0);
+        }
+
         /// <summary>Gets or sets the starting point of text selected in the text box.</summary>
         public Int32 SelectionStart
         {
-            get { return textBox.SelectionStart; }
-            set { textBox.SelectionStart = value; }
+            get { return this.textBox.SelectionStart; }
+            set { this.textBox.SelectionStart = value; }
         }
 
         /// <summary>Gets or sets the number of characters selected in the text box.</summary>
         public Int32 SelectionLength
         {
-            get { return textBox.SelectionLength; }
-            set { textBox.SelectionLength = value; }
+            get { return this.textBox.SelectionLength; }
+            set { this.textBox.SelectionLength = value; }
         }
 
         /// <summary>Gets or sets a value indicating the currently selected text in the control.</summary>
         public String SelectedText
         {
-            get { return textBox.SelectedText; }
-            set { textBox.SelectedText = value; }
+            get { return this.textBox.SelectedText; }
+            set { this.textBox.SelectedText = value; }
         }
 
-        protected override void OnTextChanged(EventArgs e)
+        public void SelectAll()
         {
-            if (!Regex.IsMatch(this.Text, "^\\d*$"))
-            {
-                // something snuck in, probably with ctrl+v. Remove it.
-                System.Media.SystemSounds.Beep.Play();
-                String text = Regex.Replace(this.Text, "[^\\d]+", String.Empty);
-                Int32 value;
-                if (Int32.TryParse(text, out value))
-                {
-                    value = Math.Max((Int32)this.Minimum, Math.Min((Int32)this.Maximum, value));
-                    this.Text = value.ToString();
-                }
-            }
+            this.textBox.SelectionStart = 0;
+            this.textBox.SelectionLength = this.TextBox.TextLength;
         }
 
         protected override void OnMouseWheel(MouseEventArgs e)
@@ -124,17 +148,17 @@ namespace Nyerguds.Util.UI
             }
             else
                 return;
-            if (ScrollValidatesEnter)
-                ValidateValue();
-            if (ValueUpDown != null)
-                ValueUpDown(this, new UpDownEventArgs(action, this.MouseWheelIncrement, true));
+            if (this.ScrollValidatesEnter)
+                this.ValidateValue();
+            if (this.ValueUpDown != null)
+                this.ValueUpDown(this, new UpDownEventArgs(action, this.MouseWheelIncrement, true));
         }
 
         private void CheckKeyPress(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = ValidateValue();
+                e.SuppressKeyPress = this.ValidateValue();
             }
         }
 
@@ -142,12 +166,12 @@ namespace Nyerguds.Util.UI
         {
             Decimal oldval = this._EnteredValue;
             this._EnteredValue = this.Value;
-            if (ValueEntered != null)
-                ValueEntered(this, new ValueEnteredEventArgs(oldval));
+            if (this.ValueEntered != null)
+                this.ValueEntered(this, new ValueEnteredEventArgs(oldval));
             return true;
         }
 
-        public Decimal LimitRange(Decimal value)
+        public Decimal Constrain(Decimal value)
         {
             if (value > this.Maximum)
                 value = this.Maximum;
@@ -162,10 +186,10 @@ namespace Nyerguds.Util.UI
         public override void DownButton()
         {
             base.DownButton();
-            if (UpDownValidatesEnter)
-                ValidateValue();
-            if (ValueUpDown != null)
-                ValueUpDown(this, new UpDownEventArgs(UpDownAction.Up));
+            if (this.UpDownValidatesEnter)
+                this.ValidateValue();
+            if (this.ValueUpDown != null)
+                this.ValueUpDown(this, new UpDownEventArgs(UpDownAction.Up));
         }
 
         /// <summary>
@@ -174,10 +198,10 @@ namespace Nyerguds.Util.UI
         public override void UpButton()
         {
             base.UpButton();
-            if (UpDownValidatesEnter)
-                ValidateValue();
-            if (ValueUpDown != null)
-                ValueUpDown(this, new UpDownEventArgs(UpDownAction.Down));
+            if (this.UpDownValidatesEnter)
+                this.ValidateValue();
+            if (this.ValueUpDown != null)
+                this.ValueUpDown(this, new UpDownEventArgs(UpDownAction.Down));
         }
     }
 

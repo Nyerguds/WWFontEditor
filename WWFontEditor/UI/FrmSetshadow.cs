@@ -12,42 +12,42 @@ namespace WWFontEditor.UI
 {
     public partial class FrmSetshadow : Form
     {
-        private Regex parse = new Regex("\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*\\],?\\s*");
+        private Regex coordsPattern = new Regex("\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*\\]");
         
         public Int32[] CustomColors { get; set; }
 
         private Point[] m_ShadowCoords;
         public Point[] ShadowCoords
         {
-            get {return m_ShadowCoords;}
+            get {return this.m_ShadowCoords;}
             set
             {
-                m_ShadowCoords = value;
-                SetCoordsText(m_ShadowCoords);
+                this.m_ShadowCoords = value;
+                this.SetCoordsText(this.m_ShadowCoords);
             }
         }
         
         private Color m_ShadowColor = Color.Black;
         public Color ShadowColor
         {
-            get {return m_ShadowColor;}
+            get {return this.m_ShadowColor;}
             set
             {
-                m_ShadowColor = value;
+                this.m_ShadowColor = value;
                 this.lblValShadowColor.BackColor = value;
             }
         }
 
         public FrmSetshadow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
         }
 
         private void SetCoordsText(Point[] coords)
         {
             if (coords == null || coords.Length == 0)
-            {                
-                txtCoords.Text = String.Empty;
+            {
+                this.txtCoords.Text = String.Empty;
                 return;
             }
             StringBuilder sb = new StringBuilder();
@@ -57,13 +57,19 @@ namespace WWFontEditor.UI
                 if (first)
                     first = false;
                 else
-                    sb.Append(", ");
+                    sb.Append(" ");
                 sb.Append('[').Append(p.X).Append(',').Append(p.Y).Append(']');
             }
-            txtCoords.Text = sb.ToString();
+            this.txtCoords.Text = sb.ToString();
+        }
+
+        private void ColorLabel_KeyPress(Object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == ' ' || e.KeyChar == '\r' || e.KeyChar == '\n')
+                this.ColorLabel_Click(sender, e);
         }
         
-        private void ColorLabel_Click(object sender, EventArgs e)
+        private void ColorLabel_Click(Object sender, EventArgs e)
         {
             Label label = sender as Label;
             if (label == null)
@@ -81,11 +87,11 @@ namespace WWFontEditor.UI
             }
         }
 
-        private void btnOk_Click(object sender, EventArgs e)
+        private void btnOk_Click(Object sender, EventArgs e)
         {
-            String coords = txtCoords.Text;
+            String coords = this.txtCoords.Text;
             List<Point> newPoints = new List<Point>();
-            Match match = parse.Match(coords);
+            Match match = this.coordsPattern.Match(coords);
             while (match.Success)
             {
                 Int32 x = Int32.Parse(match.Groups[1].Value);
@@ -93,16 +99,28 @@ namespace WWFontEditor.UI
                 newPoints.Add(new Point(x,y));
                 match = match.NextMatch();
             }
-            m_ShadowCoords = newPoints.Distinct().ToArray();
-            m_ShadowColor = lblValShadowColor.BackColor;
+            this.m_ShadowCoords = newPoints.Distinct().ToArray();
+            this.m_ShadowColor = this.lblValShadowColor.BackColor;
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
 
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(Object sender, EventArgs e)
         {
             this.DialogResult = DialogResult.Cancel;
             this.Close();
+        }
+
+        private void TextBoxSelectAll(Object sender, KeyEventArgs e)
+        {
+            if (!e.Control || e.Alt || e.Shift || e.KeyCode != Keys.A)
+                return;
+            TextBox tb = sender as TextBox;
+            if (tb == null)
+                return;
+            tb.SelectAll();
+            e.SuppressKeyPress = true;
+            e.Handled = true;
         }
 
     }

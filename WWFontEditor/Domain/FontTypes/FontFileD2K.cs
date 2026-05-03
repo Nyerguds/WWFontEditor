@@ -123,7 +123,7 @@ namespace WWFontEditor.Domain.FontTypes
                 for (Int32 y = 0; y < height; y++)
                 {
                     Byte[] line = new Byte[width];
-                    Array.Copy(byteData, y*width, line, 0, width);
+                    Array.Copy(byteData, y * width, line, 0, width);
                     minOpenSpace = Math.Min(minOpenSpace, line.Reverse().TakeWhile(x => x == 0).Count());
                 }
                 globalOpenSpace = Math.Min(globalOpenSpace, minOpenSpace);
@@ -137,7 +137,8 @@ namespace WWFontEditor.Domain.FontTypes
                 {
                     // change list to clones with adapted width
                     FontFileSymbol fs = newList[i].Clone();
-                    fs.ChangeWidth(fs.Width - globalOpenSpace, this.TransparencyColor);
+                    if (fs.Width > 0 && fs.Height > 0)
+                        fs.ChangeWidth(fs.Width - globalOpenSpace, this.TransparencyColor);
                     newList[i] = fs;
                 }
                 // font width should not be reduced by globalOpenSpace; it is unused in the saving process.

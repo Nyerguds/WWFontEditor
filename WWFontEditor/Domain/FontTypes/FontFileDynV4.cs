@@ -83,9 +83,9 @@ namespace WWFontEditor.Domain.FontTypes
             Byte startSymbol = fileData[dataOffset + 4];
             Byte nrOfSymbols = fileData[dataOffset + 5];
 
-            UInt32 symbolDataSize = ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 6, 2, true); // 0x0E
+            UInt32 symbolDataSize = (UInt32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 6, 2, true); // 0x0E
             Int32 compressionMethod = fileData[dataOffset + 8];
-            UInt32 uncompressedSize = ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 9, 2, true); // 0x11
+            UInt32 uncompressedSize = (UInt32)ArrayUtils.ReadIntFromByteArray(fileData, dataOffset + 9, 2, true); // 0x11
             if (uncompressedSize != symbolDataSize)
                 throw new FileTypeLoadException("Error in complex-type Dynamix font: font data size doesn't match uncompressed data size!");
 

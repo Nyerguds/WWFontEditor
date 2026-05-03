@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Text;
 using System.Windows.Forms;
-using System.Collections.Generic;
 using System.Drawing;
 using System.ComponentModel;
 using System.Reflection;

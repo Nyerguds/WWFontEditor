@@ -1,6 +1,7 @@
 ﻿using Nyerguds.Util;
 using System;
 using System.Linq;
+using Nyerguds.GameData.Mythos;
 using Nyerguds.ImageManipulation;
 
 namespace WWFontEditor.Domain.FontTypes
@@ -92,30 +93,21 @@ namespace WWFontEditor.Domain.FontTypes
 
                 if (compressed)
                 {
-                    // Is compressed. Doesn't actually work...
-                    //Array.Copy(fileData, offset, imageData, 0, skipLen);
-                    // TODO: LZW MAGIC! ...or not. Bah.
-
-                    // Draw a nice little "Nope" box instead...
-                    for (Int32 i = 0; i < imageData.Length; i++)
-                        imageData[i] = this.TransparencyColor;
-                    Byte drawColor = (Byte)(this.TransparencyColor + 1);
-                    Int32 crossDim = Math.Min(symbHeight, symbWidth);
-                    Int32 skipW = (symbWidth - crossDim) / 2;
-                    Int32 skipH = (symbHeight - crossDim) / 2;
-                    for (Int32 y = 0; y < symbHeight; y++)
+                    UInt32 endOffset = (UInt32)(offset + skipLen);
+                    try
                     {
-                        for (Int32 x = 0; x < symbWidth; x++)
-                            if (
-                                (x - skipW == y - skipH) || // diagonal '\'
-                                (crossDim - x + skipW-1 == y - skipH) || // diagonal '/'
-                                (x == 0) || // line left
-                                (y == 0) || // line top
-                                (x == symbWidth - 1) || // line right
-                                (y == symbHeight - 1) // line bottom
-                                )
-                                imageData[y * symbWidth + x] = drawColor;
+                        MythosCompression mc = new MythosCompression();
+                        imageData = mc.FlagRleDecode(fileData, (UInt32)offset, endOffset, dataLen, true);
+                        if (imageData == null)
+                            imageData = mc.CollapsedTransparencyDecode(fileData, (UInt32)offset, endOffset, dataLen, symbWidth, this.TransparencyColor, true);
+                        
                     }
+                    catch (Exception e)
+                    {
+                        throw new FileTypeLoadException("Cannot decompress VGS file!", e);
+                    }
+                    if (imageData == null)
+                        throw new FileTypeLoadException("Cannot decompress VGS file!");
                 }
                 else
                 {
@@ -140,6 +132,15 @@ namespace WWFontEditor.Domain.FontTypes
             {
                 Int32 writeIndex = i - this.SymbolsTypeFirst;
                 FontFileSymbol ffs = this.m_ImageDataList[i];
+
+                if (i == 127)
+                {
+                    symbolData[writeIndex] = new Byte[0];
+                    widths[writeIndex] = 0;
+                    heighths[writeIndex] = 0;
+                    yOffsets[writeIndex] = 0;
+                    continue;
+                }
                 if (ffs.Width > 0 && ffs.Height > 0)
                 {
                     symbolData[writeIndex] = ffs.ByteData;
@@ -154,22 +155,21 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 yOffsets[writeIndex] = (Byte)ffs.YOffset;
             }
-            Byte[] finalData = new Byte[actualLen * 8 + symbolData.Sum(sd => sd.Length)];
+            Byte[] finalData = new Byte[(actualLen - 1) * 8 + symbolData.Sum(sd => sd.Length)];
             Int32 offset = 0;
+            Int32 skipIndex = 127 - this.SymbolsTypeFirst;
             for (Int32 i = 0; i < actualLen; i++)
             {
                 // Skip 127. It does not get written to the file.
-                if (i == 127 - this.SymbolsTypeFirst)
+                if (i == skipIndex)
                     continue;
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 0, 2, true, (UInt32)(widths[i] - 1));
                 ArrayUtils.WriteIntToByteArray(finalData, offset + 2, 2, true, (UInt32)(heighths[i]-1));
                 finalData[offset + 7] = yOffsets[i];
                 offset += 8;
-
                 Byte[] curSymbolData = symbolData[i];
-                Byte[] saveSymbolData = new Byte[curSymbolData.Length];
-                Array.Copy(saveSymbolData, 0, finalData, offset, saveSymbolData.Length);
-                offset += saveSymbolData.Length;
+                Array.Copy(curSymbolData, 0, finalData, offset, curSymbolData.Length);
+                offset += curSymbolData.Length;
             }
             return finalData;
         }

@@ -14,6 +14,10 @@ there's already an editor for that, anyway ;)
 Have fun with it!
 
 
+If you like what I'm doing, and you have too much money, feel free to donate:
+https://www.paypal.com/donate/?token=ATYlH9LdfgV3n-LXbIKxJh20H9NUwt85u3TECWCY-rvrECEGZ26wqf6sREWk9Cejao9-pG
+
+
 =================
 Table of Contents
 =================
@@ -306,6 +310,22 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.12.6: (2019/01/25 11:15)
+-Fixed Mythos font support: fixed saving bugs, added compression support.
+
+v1.12.5: (2018/09/17 18:30)
+-Fixed Dune 2000 font saving so empty symbols can't get negative widths.
+
+v1.12.4: (2018/07/31 17:00)
+-Fixed drop shadow options box so its controls properly adjust to resizing.
+-Fixed tab order and shortcuts in shadow options box.
+-Fixed bugs in the calculation of the preview's wrapping width.
+-Adapted wrapping width calculation to compensate for drop shadow.
+-Fixed preview wrapping on types that have padding between symbols.
+-Added one pixel of line padding to the Kings of the Beach font.
+-Pressing shortcuts with Ctrl that cause a pôpup box to appear will no longer
+ make the fast colour picker get stuck.
 
 v1.12.3: (2018/07/30 21:00)
 -Added an option that allows enhancing the preview with a dropped shadow.

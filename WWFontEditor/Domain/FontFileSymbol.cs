@@ -116,7 +116,7 @@ namespace WWFontEditor.Domain
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
-            Byte[] newByteData = this.ConvertDataToBpp(defaultValue, targetBpp);
+            Byte[] newByteData = this.GetFontSymbolDataLimitedBpp(defaultValue, targetBpp);
             FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp, font.TransparencyColor);
             this.AdaptSizeToFont(newSymbol, font);
             return newSymbol;
@@ -151,7 +151,7 @@ namespace WWFontEditor.Domain
         {
             if (this.BitsPerPixel == targetBpp)
                 return;
-            this.ByteData = this.ConvertDataToBpp(defaultValue, targetBpp);
+            this.ByteData = this.GetFontSymbolDataLimitedBpp(defaultValue, targetBpp);
             this.BitsPerPixel = targetBpp;
         }
 
@@ -162,7 +162,7 @@ namespace WWFontEditor.Domain
         /// <param name="defaultValue">Default value when exceeding the maximum of the target format.</param>
         /// <param name="targetBpp">Target bits per pixel format.</param>
         /// <returns>The adapted buffer.</returns>
-        private Byte[] ConvertDataToBpp(Byte? defaultValue, Int32 targetBpp)
+        private Byte[] GetFontSymbolDataLimitedBpp(Byte? defaultValue, Int32 targetBpp)
         {
             Int32 myBpp = this.BitsPerPixel;
             Byte[] newByteData;
@@ -171,7 +171,7 @@ namespace WWFontEditor.Domain
                 throw new InvalidOperationException(String.Format("Cannot use value {0} as default on a {1} bit per pixel font.", defaultValue, targetBpp));
             if (myBpp > targetBpp && this.ByteData.Any(x => x >= colValLimit))
             {
-                if (defaultValue == null)
+                if (!defaultValue.HasValue)
                     throw new InvalidOperationException(String.Format("Cannot insert a {0} bit per pixel image into a {1} bit per pixel font.", myBpp, targetBpp));
                 newByteData = this.ByteData.Select(x => x >= colValLimit ? defaultValue.Value : x).ToArray();
             }

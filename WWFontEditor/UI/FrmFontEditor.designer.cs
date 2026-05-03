@@ -669,7 +669,7 @@
             this.txtPreview.TabIndex = 120;
             this.txtPreview.Text = "Hello, world!";
             this.txtPreview.TextChanged += new System.EventHandler(this.txtPreview_TextChanged);
-            this.txtPreview.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBoxSelectAll);
+            this.txtPreview.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextBoxShortcuts);
             // 
             // btnValType
             // 
@@ -739,6 +739,7 @@
             // 
             this.pxbPreview.BackColor = System.Drawing.Color.Silver;
             this.pxbPreview.Location = new System.Drawing.Point(0, 0);
+            this.pxbPreview.Margin = new System.Windows.Forms.Padding(0);
             this.pxbPreview.Name = "pxbPreview";
             this.pxbPreview.Size = new System.Drawing.Size(181, 53);
             this.pxbPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;

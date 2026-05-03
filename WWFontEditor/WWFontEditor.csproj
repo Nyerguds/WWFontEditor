@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domain\Compression\DynamixLzHuffDecoder.cs" />
+    <Compile Include="Domain\Compression\MythosCompression.cs" />
     <Compile Include="Domain\Compression\RleCompression.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />
@@ -81,10 +82,12 @@
     <Compile Include="Domain\FontTypes\FontFileWsV2.cs" />
     <Compile Include="Domain\FontTypes\FontFileWsV3.cs" />
     <Compile Include="Domain\Utils\GeneralUtils.cs" />
+    <Compile Include="Domain\Utils\ImageUtils\DibHandler.cs" />
     <Compile Include="Domain\Utils\ImageUtils\ImageUtils.cs" />
     <Compile Include="Domain\FontEditSettings.cs" />
     <Compile Include="Domain\Utils\ImageUtils\PaletteUtils.cs" />
     <Compile Include="Domain\Utils\ImageUtils\PixelFormatter.cs" />
+    <Compile Include="Domain\Utils\ImageUtils\WindowsGraphics2d.cs" />
     <Compile Include="Domain\Utils\SaveOption.cs" />
     <Compile Include="Domain\Utils\TextUtils.cs" />
     <Compile Include="UI\FrmImportFromImage.cs">
@@ -185,7 +188,7 @@
     <Compile Include="UI\Tools\DataGridViewScrollSupport.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="UI\Tools\ImageToggleButton.cs">
+    <Compile Include="UI\Tools\ImageButtonCheckBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\Tools\EnhNumericUpDown.cs">

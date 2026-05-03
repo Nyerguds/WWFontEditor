@@ -1,10 +1,8 @@
-﻿using Nyerguds.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using Nyerguds.Util;
 
 namespace Nyerguds.ImageManipulation
 {
@@ -16,18 +14,19 @@ namespace Nyerguds.ImageManipulation
     /// </summary>
     public class PixelFormatter
     {
-        /// <summary>Standard PixelFormatter for .Net's RGBA format.</summary>
+        /// <summary>Standard PixelFormatter for .Net's 32-bit RGBA format.</summary>
         public static PixelFormatter Format32BitArgb = new PixelFormatter(4, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF, true);
+        /// <summary>Standard PixelFormatter for .Net's 16-bit RGBA format with 1-bit transparency.</summary>
         public static PixelFormatter Format16BitArgb1555 = new PixelFormatter(2, 0x8000, 0x7C00, 0x3E0, 0x1F, true);
 
         public Int32 BytesPerPixel { get { return this.bytesPerPixel; } }
         public Boolean LittleEndian { get { return this.littleEndian; } }
         public ReadOnlyCollection<UInt32> LimitMasks { get { return new List<UInt32>(this.limitMasks).AsReadOnly(); } }
-        public ReadOnlyCollection<Byte> BitsAmounts { get { return new List<Byte>(this.bytesPerPixel).AsReadOnly(); } }
+        public ReadOnlyCollection<Byte> BitsAmounts { get { return new List<Byte>(this.bitsAmounts).AsReadOnly(); } }
 
         /// <summary>Number of bytes to read per pixel.</summary>
         private Byte bytesPerPixel;
-        /// <summary>Masks to limit the amount of bits for each component, derived from the bitsAmounts.</summary>
+        /// <summary>Masks to limit the amount of bits for each component. If not explicitly given this can be derived from the number of bits.</summary>
         private UInt32[] limitMasks = new UInt32[4];
         /// <summary>Amount of bits for each component (A,R,G,B)</summary>
         private Byte[] bitsAmounts = new Byte[4];
@@ -36,12 +35,12 @@ namespace Nyerguds.ImageManipulation
         /// <summary>Maximum value for each component (A,R,G,B)</summary>
         private UInt32[] maxChan = new UInt32[4];
         /// <summary>Defaults for each component (A,R,G,B)</summary>
-        private UInt32[] defaultsChan = new UInt32[4];
+        private Byte[] defaultsChan = new Byte[] { 255, 0, 0, 0 };
         /// <summary>True to read the input bytes as little-endian.</summary>
         private Boolean littleEndian;
 
         /// <summary>The colour components. Though most stuff will just loop an int from 0 to 4, this shows the order.</summary>
-        public enum ColorComponent
+        private enum ColorComponent
         {
             Alpha = 0,
             Red = 1,
@@ -60,8 +59,7 @@ namespace Nyerguds.ImageManipulation
         /// <param name="littleEndian">True if the read bytes are interpreted as little-endian.</param>
         public PixelFormatter(Byte bytesPerPixel, UInt32 maskAlpha, UInt32 maskRed, UInt32 maskGreen, UInt32 maskBlue, Boolean littleEndian)
             : this(bytesPerPixel, maskAlpha, -1, maskRed, -1, maskGreen, -1, maskBlue, -1, littleEndian)
-        {
-        }
+        { }
 
         /// <summary>
         /// Creates a new PixelFormatter based on bit masks.
@@ -95,41 +93,35 @@ namespace Nyerguds.ImageManipulation
             this.multipliers[(Int32)ColorComponent.Alpha] = alphaMultiplier >= 0 ? alphaMultiplier : MakeMultiplier(alphaBits);
             this.limitMasks[(Int32)ColorComponent.Alpha] = maskAlpha;
             this.maxChan[(Int32)ColorComponent.Alpha] = MakeMaxVal(alphaBits);
-            this.defaultsChan[(Int32)ColorComponent.Alpha] = this.maxChan[(Int32)ColorComponent.Alpha];
 
             this.bitsAmounts[(Int32)ColorComponent.Red] = redBits;
             this.multipliers[(Int32)ColorComponent.Red] = redMultiplier >= 0 ? redMultiplier : MakeMultiplier(redBits);
             this.limitMasks[(Int32)ColorComponent.Red] = maskRed;
             this.maxChan[(Int32)ColorComponent.Red] = MakeMaxVal(redBits);
-            this.defaultsChan[(Int32)ColorComponent.Red] = 0;
 
             this.bitsAmounts[(Int32)ColorComponent.Green] = greenBits;
             this.multipliers[(Int32)ColorComponent.Green] = greenMultiplier >= 0 ? greenMultiplier : MakeMultiplier(greenBits);
             this.limitMasks[(Int32)ColorComponent.Green] = maskGreen;
             this.maxChan[(Int32)ColorComponent.Green] = MakeMaxVal(greenBits);
-            this.defaultsChan[(Int32)ColorComponent.Green] = 0;
 
             this.bitsAmounts[(Int32)ColorComponent.Blue] = blueBits;
             this.multipliers[(Int32)ColorComponent.Blue] = blueMultiplier >= 0 ? blueMultiplier : MakeMultiplier(blueBits);
             this.limitMasks[(Int32)ColorComponent.Blue] = maskBlue;
             this.maxChan[(Int32)ColorComponent.Blue] = MakeMaxVal(blueBits);
-            this.defaultsChan[(Int32)ColorComponent.Blue] = 0;
         }
-
-
 
         /// <summary>
         /// Creats a new PixelFormatter, with automatic calculation of colour multipliers using the CalculateMultiplier function.
         /// </summary>
-        /// <param name="bytesPerPixel">Amount of bytes to read per pixel</param>
-        /// <param name="alphaBits">Amount of bits to read for the alpha colour component</param>
-        /// <param name="alphaShift">Amount of bits to shift the data to get to the alpha colour component</param>
-        /// <param name="redBits">Amount of bits to read for the red colour component</param>
-        /// <param name="redShift">Amount of bits to shift the data to get to the red colour component</param>
-        /// <param name="greenBits">Amount of bits to read for the green colour component</param>
-        /// <param name="greenShift">Amount of bits to shift the data to get to the green colour component</param>
-        /// <param name="blueBits">Amount of bits to read for the blue colour component</param>
-        /// <param name="blueShift">Amount of bits to shift the data to get to the blue colour component</param>
+        /// <param name="bytesPerPixel">Amount of bytes to read per pixel.</param>
+        /// <param name="alphaBits">Amount of bits to read for the alpha colour component.</param>
+        /// <param name="alphaShift">Amount of bits to shift the data to get to the alpha colour component.</param>
+        /// <param name="redBits">Amount of bits to read for the red colour component.</param>
+        /// <param name="redShift">Amount of bits to shift the data to get to the red colour component.</param>
+        /// <param name="greenBits">Amount of bits to read for the green colour component.</param>
+        /// <param name="greenShift">Amount of bits to shift the data to get to the green colour component.</param>
+        /// <param name="blueBits">Amount of bits to read for the blue colour component.</param>
+        /// <param name="blueShift">Amount of bits to shift the data to get to the blue colour component.</param>
         /// <param name="littleEndian">True if the read bytes are interpreted as little-endian.</param>
         public PixelFormatter(Byte bytesPerPixel,
             Byte alphaBits, Byte alphaShift,
@@ -139,24 +131,23 @@ namespace Nyerguds.ImageManipulation
             Boolean littleEndian)
             : this(bytesPerPixel, alphaBits, alphaShift, -1, redBits, redShift, -1, greenBits, greenShift, -1,
                 blueBits, blueShift, -1, littleEndian)
-        {
-        }
+        { }
 
         /// <summary>
         /// Creates a new PixelFormatter.
         /// </summary>
-        /// <param name="bytesPerPixel">Amount of bytes to read per pixel</param>
-        /// <param name="alphaBits">Amount of bits to read for the alpha colour component</param>
-        /// <param name="alphaShift">Amount of bits to shift the data to get to the alpha colour component</param>
+        /// <param name="bytesPerPixel">Amount of bytes to read per pixel.</param>
+        /// <param name="alphaBits">Amount of bits to read for the alpha colour component.</param>
+        /// <param name="alphaShift">Amount of bits to shift the data to get to the alpha colour component.</param>
         /// <param name="alphaMultiplier">Multiplier for the alpha component's value to adjust it to the normal 0-255 range.</param>
-        /// <param name="redBits">Amount of bits to read for the red colour component</param>
-        /// <param name="redShift">Amount of bits to shift the data to get to the red colour component</param>
+        /// <param name="redBits">Amount of bits to read for the red colour component.</param>
+        /// <param name="redShift">Amount of bits to shift the data to get to the red colour component.</param>
         /// <param name="redMultiplier">Multiplier for the red component's value to adjust it to the normal 0-255 range.</param>
-        /// <param name="greenBits">Amount of bits to read for the green colour component</param>
-        /// <param name="greenShift">Amount of bits to shift the data to get to the green colour component</param>
+        /// <param name="greenBits">Amount of bits to read for the green colour component.</param>
+        /// <param name="greenShift">Amount of bits to shift the data to get to the green colour component.</param>
         /// <param name="greenMultiplier">Multiplier for the green component's value to adjust it to the normal 0-255 range.</param>
-        /// <param name="blueBits">Amount of bits to read for the blue colour component</param>
-        /// <param name="blueShift">Amount of bits to shift the data to get to the blue colour component</param>
+        /// <param name="blueBits">Amount of bits to read for the blue colour component.</param>
+        /// <param name="blueShift">Amount of bits to shift the data to get to the blue colour component.</param>
         /// <param name="blueMultiplier">Multiplier for the blue component's value to adjust it to the normal 0-255 range.</param>
         /// <param name="littleEndian">True if the read bytes are interpreted as little-endian.</param>
         public PixelFormatter(Byte bytesPerPixel,
@@ -168,31 +159,27 @@ namespace Nyerguds.ImageManipulation
         {
             this.bytesPerPixel = bytesPerPixel;
             this.littleEndian = littleEndian;
-            UInt32 maxValAlpha = MakeMaxVal(alphaBits);
+            UInt32 maxValAlpha = alphaBits == 0 ? 255 : MakeMaxVal(alphaBits);
 
             this.bitsAmounts[(Int32)ColorComponent.Alpha] = alphaBits;
             this.multipliers[(Int32)ColorComponent.Alpha] = alphaMultiplier >= 0 ? alphaMultiplier : MakeMultiplier(alphaBits);
             this.limitMasks[(Int32)ColorComponent.Alpha] = MakeMask(alphaBits, alphaShift);
             this.maxChan[(Int32)ColorComponent.Alpha] = maxValAlpha;
-            this.defaultsChan[(Int32)ColorComponent.Alpha] = maxValAlpha;
 
             this.bitsAmounts[(Int32)ColorComponent.Red] = redBits;
             this.multipliers[(Int32)ColorComponent.Red] = redMultiplier >= 0 ? redMultiplier : MakeMultiplier(redBits);
             this.limitMasks[(Int32)ColorComponent.Red] = MakeMask(redBits, redShift);
             this.maxChan[(Int32)ColorComponent.Red] = MakeMaxVal(redBits);
-            this.defaultsChan[(Int32)ColorComponent.Red] = 0;
 
             this.bitsAmounts[(Int32)ColorComponent.Green] = greenBits;
             this.multipliers[(Int32)ColorComponent.Green] = greenMultiplier >= 0 ? greenMultiplier : MakeMultiplier(greenBits);
             this.limitMasks[(Int32)ColorComponent.Green] = MakeMask(greenBits, greenShift);
             this.maxChan[(Int32)ColorComponent.Green] = MakeMaxVal(greenBits);
-            this.defaultsChan[(Int32)ColorComponent.Green] = 0;
 
             this.bitsAmounts[(Int32)ColorComponent.Blue] = blueBits;
             this.multipliers[(Int32)ColorComponent.Blue] = blueMultiplier >= 0 ? blueMultiplier : MakeMultiplier(blueBits);
             this.limitMasks[(Int32)ColorComponent.Blue] = MakeMask(blueBits, blueShift);
             this.maxChan[(Int32)ColorComponent.Blue] = MakeMaxVal(blueBits);
-            this.defaultsChan[(Int32)ColorComponent.Blue] = 0;
         }
 
         /// <summary>
@@ -209,11 +196,11 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Gets the data from a value according to a bit mask.
+        /// Gets the data from a value according to a bit mask. Collates all bits as they are in the mask, effectively giving a value where all non-masked bits are "removed".
         /// </summary>
         /// <param name="mask">The bit mask.</param>
-        /// <param name="inputVal">Input value</param>
-        /// <returns></returns>
+        /// <param name="inputVal">Input value.</param>
+        /// <returns>The value from the mask.</returns>
         private UInt32 GetValueFromMask(UInt32 mask, UInt32 inputVal)
         {
             UInt32 curVal = 0;
@@ -234,7 +221,7 @@ namespace Nyerguds.ImageManipulation
         /// </summary>
         /// <param name="destValue">Value to add the current input to.</param>
         /// <param name="mask">The bit mask.</param>
-        /// <param name="value">Input value</param>
+        /// <param name="value">Input value.</param>
         /// <returns>The destValue with the value repalced on it according to the mask.</returns>
         private UInt32 AddValueWithMask(UInt32 destValue, UInt32 mask, UInt32 value)
         {
@@ -265,7 +252,7 @@ namespace Nyerguds.ImageManipulation
         /// <summary>
         /// Using this multiplier instead of a basic int ensures a true uniform distribution of values of this bits length over the 0-255 range.
         /// </summary>
-        /// <param name="colorComponentBitLength">Bits length of the color component</param>
+        /// <param name="colorComponentBitLength">Bits length of the color component.</param>
         /// <returns>The most correct multiplier to convert colour components of the given bits length to a 0-255 range.</returns>
         public static Double MakeMultiplier(Byte colorComponentBitLength)
         {
@@ -282,8 +269,28 @@ namespace Nyerguds.ImageManipulation
         /// <returns>The color at that position.</returns>
         public Color GetColor(Byte[] data, Int32 offset)
         {
-            UInt32 value = ArrayUtils.ReadIntFromByteArray(data, offset, this.bytesPerPixel, this.littleEndian);
+            UInt32 value = (UInt32)ArrayUtils.ReadIntFromByteArray(data, offset, this.bytesPerPixel, this.littleEndian);
             return this.GetColorFromValue(value);
+        }
+
+        /// <summary>
+        /// Reads a color palette from the data, starting at the given offset and increasing by the set colour byte length.
+        /// </summary>
+        /// <param name="data">Image data as byte array.</param>
+        /// <param name="offset">Offset to read in the data.</param>
+        /// <param name="colors">Amount of colours in the palette.</param>
+        /// <returns>The color at that position.</returns>
+        public Color[] GetColorPalette(Byte[] data, Int32 offset, Int32 colors)
+        {
+            Color[] palette = new Color[colors];
+            Int32 step = this.bytesPerPixel;
+            Int32 end = offset + step * colors;
+            if (data.Length < end)
+                throw new IndexOutOfRangeException("Palette is too long to be read from the given array!");
+            Int32 palIndex = 0;
+            for (Int32 offs = offset; offs < end; offs += step)
+                palette[palIndex++] = this.GetColor(data, offs);
+            return palette;
         }
 
         /// <summary>
@@ -295,7 +302,7 @@ namespace Nyerguds.ImageManipulation
         /// <returns>The raw bit data of the color at that position.</returns>
         public UInt32[] GetRawComponents(Byte[] data, Int32 offset)
         {
-            UInt32 value = ArrayUtils.ReadIntFromByteArray(data, offset, this.bytesPerPixel, this.littleEndian);
+            UInt32 value = (UInt32)ArrayUtils.ReadIntFromByteArray(data, offset, this.bytesPerPixel, this.littleEndian);
             return this.GetRawComponentsFromValue(value);
         }
 
@@ -355,7 +362,7 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Gets a specific component from a read integer value.
+        /// Gets the raw value of a specific component from the given integer value, without adjustment to 0-255 range.
         /// </summary>
         /// <param name="readValue">The read integer value.</param>
         /// <param name="type">The color component to get.</param>
@@ -366,13 +373,15 @@ namespace Nyerguds.ImageManipulation
         }
 
         /// <summary>
-        /// Gets a specific color component from a read integer value.
+        /// Gets a specific color component from a read integer value. The returned value is adjusted to 0-255 range.
         /// </summary>
         /// <param name="readValue">The read integer value.</param>
         /// <param name="type">The color component to get.</param>
         /// <returns>The read color component, adjust to /256 fraction.</returns>
         private Byte GetChannelFromValue(UInt32 readValue, ColorComponent type)
         {
+            if (this.bitsAmounts[(Int32)type] == 0)
+                return defaultsChan[(Int32)type];
             UInt32 val = this.GetRawChannelFromValue(readValue, type);
             Double valD = (val * this.multipliers[(Int32)type]);
             return (Byte)Math.Min(255, Math.Round(valD, MidpointRounding.AwayFromZero));
@@ -385,12 +394,12 @@ namespace Nyerguds.ImageManipulation
         /// <returns>The integer value to write.</returns>
         public UInt32 GetValueFromColor(Color color)
         {
-            Byte[] components = new Byte[] { color.R, color.G, color.B, color.A };
+            Byte[] components = new Byte[] { color.A, color.R, color.G, color.B };
             UInt32 val = 0;
             for (Int32 i = 0; i < 4; i++)
             {
                 Double tempValD = components[i] / this.multipliers[i];
-                UInt32 tempVal = (UInt32)Math.Min(maxChan[i], Math.Round(tempValD, MidpointRounding.AwayFromZero));
+                UInt32 tempVal = (UInt32)Math.Min(this.maxChan[i], Math.Round(tempValD, MidpointRounding.AwayFromZero));
                 val = this.AddValueWithMask(val, this.limitMasks[i], tempVal);
             }
             return val;
@@ -405,7 +414,7 @@ namespace Nyerguds.ImageManipulation
         {
             UInt32[] componentsChecked = new UInt32[4];
             for (Int32 i = 0; i < 4; i++)
-                componentsChecked[i] = (i < components.Length) ? components[i] : defaultsChan[i];
+                componentsChecked[i] = (i < components.Length) ? components[i] : this.defaultsChan[i];
             UInt32 val = 0;
             for (Int32 i = 0; i < 4; i++)
                 val = this.AddValueWithMask(val, this.limitMasks[i], componentsChecked[i]);

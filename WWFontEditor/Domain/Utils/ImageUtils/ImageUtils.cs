@@ -131,7 +131,7 @@ namespace Nyerguds.ImageManipulation
                         img2.Save(ms, saveFormat);
                 }
                 else if (saveFormat.Equals(ImageFormat.Png))
-                    BitmapHandler.GetPngImageData(image, 0);
+                    BitmapHandler.GetPngImageData(image, 0, false);
                 else
                     image.Save(ms, saveFormat);
                 // Clean up temp image.
@@ -1082,7 +1082,7 @@ namespace Nyerguds.ImageManipulation
 
             if (trimmedYTop == height)
             {
-                // Full width was trimmed; image is empty.
+                // Full height was trimmed; image is empty.
                 height = 0;
                 yOffset = 0;
                 return adjustBuffer ? new Byte[0] : buffer;
@@ -1445,7 +1445,7 @@ namespace Nyerguds.ImageManipulation
             return true;
         }
 
-        public static void ReorderBits(Byte[] imageData, Int32 width, Int32 height, ref Int32 stride, PixelFormatter inputFormat, PixelFormatter outputFormat)
+        public static void ReorderBits(Byte[] imageData, Int32 width, Int32 height, Int32 stride, PixelFormatter inputFormat, PixelFormatter outputFormat)
         {
             if (!inputFormat.BitsAmounts.SequenceEqual(outputFormat.BitsAmounts))
                 throw new ArgumentException("Output format's bytes per pixel do not match input format!", "outputFormat");

@@ -413,17 +413,15 @@ namespace WWFontEditor.Domain
 
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
-            if (wrapAt != -1)
-                wrapAt = Math.Max(wrapAt, this.FontWidth);
             Int32 fullWidth = 0;
-            Int32 fullHeight = this.m_FontHeight + this.FontTypePaddingBottom;
+            Int32 fullHeight = this.m_FontHeight;
             Int32 curWidth = 0;
             List<FontFileSymbol> symbols = new List<FontFileSymbol>();
-            text = text.Replace("\r\n", "\n");
-            // Calculates the image height by pre-applying the wrapping logic,
-            // and makes a list of the font file symbols to paint.
-            // This can't make a list of images yet since symbols can have 0 as dimensions.
-            foreach (Char c in text)
+            String printText = text.Replace("\r\n", "\n").Replace('\r', '\n');
+            // Makes the list of the font file symbols to paint, with null substituting for the line break.
+            // Also calculates the required width without wrapping.
+            Boolean isStart = true;
+            foreach (Char c in printText)
             {
                 if (c == '\n')
                 {
@@ -432,30 +430,84 @@ namespace WWFontEditor.Domain
                     // they are (shouldn't, either; it'd complicate copying), use "null" for a line break.
                     symbols.Add(null);
                     curWidth = 0;
-                    fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
+                    isStart = true;
                     continue;
                 }
-                Byte[] val = enc.GetBytes(new Char[] { c });
-                if (val.Length != 1 || val[0] >= this.Length)
+                if (isStart)
+                    isStart = false;
+                else
+                    curWidth += this.FontTypePaddingRight;
+                Byte[] val = enc.GetBytes(new Char[] {c});
+                Char[] newc = enc.GetChars(val);
+                // Can only handle one byte per character fonts.
+                if (val.Length != 1 || newc.Length != 1 || newc[0] != c)
                     continue;
-                FontFileSymbol ffs = this.GetSymbol(val[0]);
-                if (wrapAt != -1 && curWidth + ffs.Width > wrapAt)
+                Byte code = val[0];
+                // Font symbol is not implemented!
+                if (code >= this.Length)
                 {
-                    fullWidth = Math.Max(fullWidth, curWidth);
-                    curWidth = 0;
-                    fullHeight += this.m_FontHeight + this.FontTypePaddingBottom;
-                    symbols.Add(null);
+                    symbols.Add(new FontFileSymbol(this));
+                    continue;
                 }
+                FontFileSymbol ffs = this.GetSymbol(code);
+                curWidth += ffs.Width;
                 symbols.Add(ffs);
-                curWidth += ffs.Width + this.FontTypePaddingRight;
             }
-            Int32 lastBreak = symbols.LastIndexOf(null);
-            Int32 addedHeight = 0;
-            for (Int32 i = lastBreak+1; i < symbols.Count; i++)
-                addedHeight = Math.Max(addedHeight, symbols[i].Height + symbols[i].YOffset - this.FontHeight);
-            fullHeight += addedHeight;
-            
-            // the minimum of 1 is added to prevent empty text from crashing
+            // If wrapping is enabled, this applies wrapping by making a new list with extra null entries.
+            // Also calculates the required width with wrapping.
+            if (wrapAt > -1)
+            {
+                curWidth = 0;
+                fullWidth = 0;
+                if (symbols.Count > 0)
+                {
+                    // Ensure that the wrap width is at least as wide as the widest used symbol in the string.
+                    Int32 maxWidth = symbols.Max(x => x == null ? Int32.MinValue : x.Width);
+                    wrapAt = Math.Max(wrapAt, maxWidth);
+                }
+                List<FontFileSymbol> wrappedSymbols = new List<FontFileSymbol>();
+                isStart = true;
+                foreach (FontFileSymbol ffs in symbols)
+                {
+                    // Add padding behind previous symbol
+                    Boolean wasStart = isStart;
+                    if (isStart)
+                        isStart = false;
+                    else
+                        curWidth += this.FontTypePaddingRight;
+                    Boolean isBreak = ffs == null;
+                    if (isBreak || curWidth + ffs.Width > wrapAt)
+                    {
+                        // Remove padding since symbol isn't added
+                        if (!wasStart)
+                            curWidth -= this.FontTypePaddingRight;
+                        fullWidth = Math.Max(fullWidth, curWidth);
+                        // A wrap break never puts IsStart back to true since it immediately add the character behind the break.
+                        curWidth = 0;
+                        wrappedSymbols.Add(null);
+                        if (isBreak)
+                        {
+                            isStart = true;
+                            continue;
+                        }
+                    }
+                    wrappedSymbols.Add(ffs);
+                    curWidth += ffs.Width;
+                }
+                symbols = wrappedSymbols;
+            }
+            // Calculates the required line height, including any Y offsets sticking out that could extend the bottom.
+            // This goes over all lines, just to be sure.
+            Int32 curLineTop = 0;
+            foreach (FontFileSymbol ffs in symbols)
+            {
+                if (ffs == null) // Line break
+                    curLineTop += this.m_FontHeight + this.FontTypePaddingBottom;
+                else
+                    fullHeight = Math.Max(fullHeight, curLineTop + ffs.Height + ffs.YOffset);
+            }
+            // Comparison of the final line's curWidth after the loop.
+            //The minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
             fullHeight = Math.Max(1, fullHeight);
             Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, PaletteUtils.MakeTransparencyGuide(this.BitsPerPixel, this.TransparencyColor));
@@ -463,7 +515,7 @@ namespace WWFontEditor.Domain
             using (Graphics g = Graphics.FromImage(fullBm))
             {
                 g.CompositingMode = CompositingMode.SourceOver;
-                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg? 0x00 : 0xFF, colors[this.TransparencyColor])))
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(transparentBg ? 0x00 : 0xFF, colors[this.TransparencyColor])))
                     g.FillRectangle(brush, 0, 0, fullWidth, fullHeight);
                 curWidth = 0;
                 Int32 curHeight = 0;
@@ -475,11 +527,6 @@ namespace WWFontEditor.Domain
                         curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                         curWidth = 0;
                         continue;
-                    }
-                    if (wrapAt != -1 && curWidth + ffs.Width > fullWidth)
-                    {
-                        curWidth = 0;
-                        curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                     }
                     if (ffs.Width != 0)
                     {
