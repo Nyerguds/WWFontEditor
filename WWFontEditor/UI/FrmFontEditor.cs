@@ -135,7 +135,7 @@ namespace WWFontEditor
 
             // Create right-click menu for toolstrip items
             m_tsmiCopyGridChar = new ContextMenuStrip();
-            ToolStripMenuItem mniCopyChar = new ToolStripMenuItem("Copy character", null, new EventHandler(CopyCharacter));
+            ToolStripMenuItem mniCopyChar = new ToolStripMenuItem("Copy", null, new EventHandler(this.tsmiCopySymbol_Click));
             m_tsmiCopyGridChar.Items.Add(mniCopyChar);
 
             // Set title
@@ -1342,13 +1342,31 @@ namespace WWFontEditor
             FontFileSymbol ffs = this.m_LoadedFont.GetSymbol(curIndex);
             if (ffs == null)
                 return;
+
             Clipboard.Clear();
             DataObject data = new DataObject();
-            //Color[] palette = PaletteUtils.MakePalette(m_CurrentPalette, GetEditBpp(m_LoadedFont), PaletteUtils.MakeTransparencyGuide(this.m_LoadedFont.BitsPerPixel, this.m_LoadedFont.TransparencyColor)));
-            data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
-            data.SetData(DataFormats.Bitmap, ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true));
-            data.SetData(ffs.Clone());
-            Clipboard.SetDataObject(data);
+            using (MemoryStream pngMemStream = new MemoryStream())
+            using (MemoryStream dibMemStream = new MemoryStream())
+            using (Bitmap symb = ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true))
+            {
+                // Text character
+                data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
+                // version without transparency support
+                data.SetData(DataFormats.Bitmap, symb);
+                data.SetImage(symb);
+                // Add the image as PNG. Gimp will prefer this over the other two.
+                Byte[] pngData = BitmapHandler.GetPngImageData(symb, 0);
+                pngMemStream.Write(pngData, 0, pngData.Length);
+                data.SetData("PNG", false, pngMemStream);
+                // Add the image as DIB. This is (wrongly) accepted as ARGB by many applications.
+                Byte[] dibData = ClipboardImage.ConvertToDib(symb);
+                dibMemStream.Write(dibData, 0, dibData.Length);
+                data.SetData(DataFormats.Dib, false, dibMemStream);
+                // As Font Editor object
+                data.SetData(typeof(FontFileSymbol), ffs.Clone());
+
+                Clipboard.SetDataObject(data, true);
+            }
         }
 
         private void tsmiPasteSymbol_Click(object sender, EventArgs e)
@@ -1360,26 +1378,7 @@ namespace WWFontEditor
         {
             Paste(true);
         }
-
-
-        //*/
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct BitmapInfoHeader {
-          public int biSize;
-          public int biWidth;
-          public int biHeight;
-          public short biPlanes;
-          public short biBitCount;
-          public int biCompression;
-          public int biSizeImage;
-          public int biXPelsPerMeter;
-          public int biYPelsPerMeter;
-          public int biClrUsed;
-          public int biClrImportant;
-        }
-        //*/
-
+        
         private void Paste(Boolean pasteCombined)
         {
             if (this.m_LoadedFont == null)
