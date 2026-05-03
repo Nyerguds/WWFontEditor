@@ -9,13 +9,16 @@ namespace WWFontEditor.Domain
     // For real clipboard support :)
     // Further info: http://stackoverflow.com/questions/9032673/clipboard-copying-objects-to-and-from
     [Serializable]
+    [System.Diagnostics.DebuggerDisplay("{ToString()}")]
     public class FontFileCharacter
     {
         public Byte[] ByteData { get; set; }
+        /// <summary>Only use this for initialisation! Use ChangeWidth for editing the image!</summary>
         public Int32 Width { get; set; }
+        /// <summary>Only use this for initialisation! Use ChangeHeight for editing the image!</summary>
         public Int32 Height { get; set; }
         public Int32 YOffset { get; set; }
-        public Int32 BitsPerPixel { get; set; }
+        public Int32 BitsPerPixel { get; private set; }
 
 
         public FontFileCharacter(Int32 bitsPerPixel)
@@ -157,6 +160,11 @@ namespace WWFontEditor.Domain
             if (length > 0)
                 Array.Copy(source, sourcePos, target, destPos, length);
             return target;
+        }
+
+        public override String ToString()
+        {
+            return String.Format("{0}x{1} (Y={2}), {3} bytes", this.Width, this.Height, this.YOffset, this.ByteData == null ? 0 : this.ByteData.Length);
         }
     }
 

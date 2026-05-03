@@ -164,8 +164,8 @@ namespace WWFontEditor
             this.numCharacters.Enabled = loadOk && this.m_LoadedFont.CharactersMin < this.m_LoadedFont.CharactersMax;
             this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthMin < this.m_LoadedFont.FontWidthMax;
             this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightMin < this.m_LoadedFont.FontHeightMax;
-            this.numWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthMin < this.m_LoadedFont.FontWidthMax;
-            this.numHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightMin < this.m_LoadedFont.FontHeightMax;
+            this.numWidth.Enabled = loadOk && this.m_LoadedFont.IndividualSizesAllowed && this.m_LoadedFont.FontWidthMin < this.m_LoadedFont.FontWidthMax;
+            this.numHeight.Enabled = loadOk && this.m_LoadedFont.IndividualSizesAllowed && this.m_LoadedFont.FontHeightMin < this.m_LoadedFont.FontHeightMax;
             this.numYOffset.Enabled = loadOk && this.m_LoadedFont.YOffsetMax > 0;
             this.btnShiftUp.Enabled = loadOk;
             this.btnShiftLeft.Enabled = loadOk;
@@ -186,7 +186,6 @@ namespace WWFontEditor
                 this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeCode + ")";
                 this.lblValType.Text = m_LoadedFont.ShortTypeCode.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.lblValType, m_LoadedFont.LongTypeCode);
-                //this.lblValType.Text = m_LoadedFont.ShortTypeCode.Replace("&", "&&");
                 this.numCharacters.Minimum = this.m_LoadedFont.CharactersMin;
                 this.numCharacters.Maximum = this.m_LoadedFont.CharactersMax;
                 this.numCharacters.Value = this.m_LoadedFont.Length;
@@ -287,7 +286,7 @@ namespace WWFontEditor
                 }
                 DataTable charsTable = new DataTable("Characters");
                 charsTable.Columns.Add(new DataColumn("Hex", typeof(String)));
-                charsTable.Columns.Add(new DataColumn("Dec", typeof(Byte)));
+                charsTable.Columns.Add(new DataColumn("Dec", typeof(Int32)));
                 charsTable.Columns.Add(new DataColumn("Char", typeof(String)));
                 charsTable.Columns.Add(new DataColumn("Pic", typeof(Bitmap)));
                 FontFileCharacter[] charsInfo = m_LoadedFont.GetAllRawData();
@@ -374,7 +373,7 @@ namespace WWFontEditor
                 numWidth.Maximum = this.m_LoadedFont.FontWidth;
                 numWidth.Value = m_CurWidth;
                 this.numYOffset.Value = m_CurYOffset;
-                this.CheckCanRevert();
+                this.AdjustRevertButton();
                 if (refreshEditor)
                     this.RefreshEditor();
             }
@@ -516,7 +515,7 @@ namespace WWFontEditor
             if ((e.Button & MouseButtons.Left) != 0 || (e.Button & MouseButtons.Right) != 0)
             {
                 ReloadDataGrid();
-                this.CheckCanRevert();
+                this.AdjustRevertButton();
             }
         }
 
@@ -586,30 +585,57 @@ namespace WWFontEditor
             }
         }
 
+        private Boolean CheckIsEqual()
+        {
+            return CheckIsEqual(GetSelectedIndex());
+        }
+
+        private Boolean CheckIsEqual(Int32 index)
+        {
+            if (m_LoadedFont == null || this.m_LoadedFontBackup == null)
+                return false;
+            FontFileCharacter rawData1 = this.m_LoadedFont.GetRawData(index);
+            FontFileCharacter rawData2 = this.m_LoadedFontBackup.GetRawData(index);
+            if (rawData1 == null || rawData2 == null)
+                return false;
+            if (this.m_LoadedFont.GetCharWidth(index) != this.m_LoadedFontBackup.GetCharWidth(index)
+                || this.m_LoadedFont.GetCharHeight(index) != this.m_LoadedFontBackup.GetCharHeight(index)
+                || this.m_LoadedFont.GetCharYOffset(index) != this.m_LoadedFontBackup.GetCharYOffset(index)
+                || !rawData1.ByteData.SequenceEqual(rawData2.ByteData))
+                return false;
+            return true;    
+        }
+
         private Boolean CheckCanRevert()
         {
+            if (m_LoadedFont == null || this.m_LoadedFontBackup == null)
+                return false;
             Int32 index = GetSelectedIndex();
-            Boolean equal = m_LoadedFont != null && this.m_LoadedFontBackup != null;
-            FontFileCharacter rawData2 = null;
-            if (equal)
-            {
-                FontFileCharacter rawData1 = this.m_LoadedFont.GetRawData(index);
-                rawData2 = this.m_LoadedFontBackup.GetRawData(index);
-                equal = rawData1 != null && rawData2 != null;
-                if (equal)
-                {
-                    equal = this.m_LoadedFont.GetCharWidth(index) == this.m_LoadedFontBackup.GetCharWidth(index)
-                                   && this.m_LoadedFont.GetCharHeight(index) == this.m_LoadedFontBackup.GetCharHeight(index)
-                                   && this.m_LoadedFont.GetCharYOffset(index) == this.m_LoadedFontBackup.GetCharYOffset(index)
-                                   && rawData1.ByteData.SequenceEqual(rawData2.ByteData);
-                }
-            }
-            Boolean enable = !equal && rawData2 != null;
+            FontFileCharacter rawData1 = this.m_LoadedFont.GetRawData(index);
+            FontFileCharacter rawData2 = this.m_LoadedFontBackup.GetRawData(index);
+            if (rawData1 == null || rawData2 == null)
+                return false;
+            // they're the same; can't revert.
+            if (CheckIsEqual(index))
+                return false;
+            // different dimensions; can't revert. Would never be equal to original.
+            if (!m_LoadedFont.IndividualSizesAllowed
+                && (m_LoadedFont.FontWidth != m_LoadedFontBackup.FontWidth || m_LoadedFont.FontHeight != m_LoadedFontBackup.FontHeight))
+                return false;
+            if (m_LoadedFont.FontWidth < rawData2.Width || m_LoadedFont.FontHeight < rawData2.Height)
+                return false;
+            return true;
+        }
+        
+        private Boolean AdjustRevertButton()
+        {
+            Boolean enable = CheckCanRevert();
             this.btnRevert.Enabled = enable;
             this.revertToolStripMenuItem.Enabled = enable;
             return enable;
-
         }
+
+
 
         /// <summary>
         /// Regenerates the preview pixel image drawn on top of the front edit grid
@@ -829,9 +855,9 @@ namespace WWFontEditor
             FontFileCharacter fc = this.m_LoadedFont.GetRawData(curIndex);
             if (fc == null)
                 return;
-            Boolean canrevert = this.CheckCanRevert();
+            Boolean canrevert = this.AdjustRevertButton();
             // if there are unsaved changes, or the image is new and not empty, ask specifically
-            if (canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.ByteData.Length > 0))
+            if (!CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.ByteData.Length > 0))
             {
                 DialogResult dr = MessageBox.Show("This will completely overwrite the current character\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)

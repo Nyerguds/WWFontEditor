@@ -27,6 +27,8 @@ namespace WWFontEditor.Domain
         public abstract Int32 FontHeightMax { get; }
         /// <summary>Upper limit for the Y-offset of the characters in the font. Zero means the font format does not support Y offsets</summary>
         public abstract Int32 YOffsetMax { get; }
+        /// <summary> Set this to False if individual characters cannot have different sizes than their parent font.</summary>
+        public virtual Boolean IndividualSizesAllowed { get { return true; } }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
         /// <summary></summary>
@@ -51,7 +53,7 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontHeight = Math.Min(value, this.FontHeightMax);
                 foreach (FontFileCharacter fontchar in this.m_ImageDataList)
-                    if (fontchar.Height > value)
+                    if (fontchar.Height > value || !IndividualSizesAllowed)
                         fontchar.ChangeHeight(value);
             }
         }
@@ -65,7 +67,7 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontWidth = Math.Min(value, this.FontWidthMax);
                 foreach (FontFileCharacter fontchar in this.m_ImageDataList)
-                    if (fontchar.Width > value)
+                    if (fontchar.Width > value || !IndividualSizesAllowed)
                         fontchar.ChangeWidth(value);
             }
         }
@@ -79,6 +81,8 @@ namespace WWFontEditor.Domain
             typeof (FontFileV2),
             // V0's "check" is file size only; ALWAYS leave it last.
             typeof (FontFileV1),
+            // Can be put behind V0, since its size is always more than V1's fixed size.
+            typeof (FontFileD2K),
         };
 
 
@@ -298,22 +302,16 @@ namespace WWFontEditor.Domain
                 unknown0E = 0;
 
             // write header
-            fullData[0x00] = (Byte)(fullLength & 0xFF);         //Int16 FileSize, low byte;
-            fullData[0x01] = (Byte)((fullLength >> 8) & 0xFF);  //Int16 FileSize, high byte;
+            ArrayUtils.SetLEShortInByteArray(fullData, 0, (Int16)fullLength);
             fullData[0x02] = (Byte)(isTibSun ? 0x02 : 0x00);    // Byte DataFormat
             fullData[0x03] = unknown03;                         // Byte Unknown03 (0x05 in EOB/C&C/RA1, 0x00 in TS)
             fullData[0x04] = 0x0e;                              // Int16 Unknown04, low byte; (always 0x0e)
             fullData[0x05] = 0x00;                              // Int16 Unknown04, high byte; (always 0x00)
-            fullData[0x06] = (Byte)(offsetsListOffset & 0xFF);        // Int16 FontDataListOffset, low byte;
-            fullData[0x07] = (Byte)((offsetsListOffset >> 8) & 0xFF); // Int16 FontDataListOffset, high byte;
-            fullData[0x08] = (Byte)(widthsListOffset & 0xFF);         // Int16 WidthsListOffset, low byte
-            fullData[0x09] = (Byte)((widthsListOffset >> 8) & 0xFF);  // Int16 WidthsListOffset, high byte
-            fullData[0x0A] = (Byte)(fontOffsetStart & 0xFF);          // Int16 FontDataOffset, low byte
-            fullData[0x0B] = (Byte)((fontOffsetStart >> 8) & 0xFF);   // Int16 FontDataOffset, high byte
-            fullData[0x0C] = (Byte)(heightsListOffset & 0xFF);        // Int16 HeightsListOffset, low byte
-            fullData[0x0D] = (Byte)((heightsListOffset >> 8) & 0xFF); // Int16 HeightsListOffset, high byte
-            fullData[0x0E] = (Byte)(unknown0E & 0xFF);          // Int16 Unknown0E, low byte (0x11 for pre-C&C WW games?)
-            fullData[0x0F] = (Byte)((unknown0E >> 8) & 0xFF);   // Int16 Unknown0E, high byte (always 0x10)
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x06, (Int16)offsetsListOffset);
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x08, (Int16)widthsListOffset);
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x0A, (Int16)fontOffsetStart);
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x0C, (Int16)heightsListOffset);
+            ArrayUtils.SetLEShortInByteArray(fullData, 0x0E, (Int16)unknown0E);
             fullData[0x10] = 0x00;                              // Byte AlwaysZero (Always 0x00)
             fullData[0x11] = (Byte)(isTibSun ? 0 : imagesCount - 1);  // Byte LastCharIndex (for non-TS)
             fullData[0x12] = (Byte)m_FontHeight;                // Byte FontHeight
@@ -357,8 +355,7 @@ namespace WWFontEditor.Domain
                 else if (replacei == i)
                 {
                     // Data is not null and not a duplicate: write offset and advance offset ptr.
-                    fontDataOffsetsList[i * 2] = (Byte)(fontOffset & 0xFF);
-                    fontDataOffsetsList[i * 2 + 1] = (Byte)((fontOffset >> 8) & 0xFF);
+                    ArrayUtils.SetLEShortInByteArray(fontDataOffsetsList, i * 2, (Int16)fontOffset);
                     fontOffset += imageData[i].Length;
                 }
                 else

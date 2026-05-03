@@ -1,0 +1,42 @@
+Fonts Resources - .FNT and .FPL
+
+FontHeader of record
+FontLoadedFlag: byte; //Must be $00
+SpaceSize: byte; //Size of space (in pixels)
+FirstSymbol: byte; //Code of first symbol in font
+Interval: byte; //Size of interval between symbols (in pixels)
+MaxHeight: byte; //Maximum height of symbol
+Reserve: array[0..2] of byte; //not used
+SymbolsHandle array[0..255] of LongInt; //Handle table to symbols in memory (There is no importance in a file)
+end;
+
+Symbols: array[0..255] of record
+Width: LongInt; //Width of symbol
+Heigth: LongInt; //Heigth of symvol
+Pixels: array[1..(Symbols.Width*Symbols.Heigth)] of byte;
+end;
+
+Warning: FONTCOL.FNT using palette from FONTCOL.FPL, Format - 256*RGBF, F=Junk!
+Warning: [Dune2000 Folder]\Data\BIN\Font.BIN - is symbol code(index) table(map)
+
+Nyerguds' interpretation:
+
+00 Byte FontLoadedFlag    // Always "01"? Grem's specs say "Must be $00", but there's no explanation, and in the fonts it's always 01.
+01 Byte SpaceSize         // Size of the "space" character, since it's not included I guess.
+02 Byte FirstSymbol       // 21; start after space. Wonder if it supports adding earlier ones.
+03 Byte Interval          // Pixels between symbols - padding. Not related to font graphics. Still, could be made editable, or included, or something...
+04 Byte MaxHeight         // Indication of overall font height
+05 Byte Unused05          // Unused (0x00)
+06 Byte Unused06          // Unused (0x00)
+07 Byte Unused07          // Unused (0x00)? specs said only 2 bytes though. But it aligns to 8 as far as I can see.
+08 Int32[255] dataOffsets // leftover mem dump? Seems dumb to put in a fnt file...
+
+408 start of characters array.
+Read as repeating
+Int32 width
+Int32 height
+Byte[width*height]
+
+Characters start at the FirstSymbol, and WRAP AROUND TO ZERO WHEN REACHING 256!
+From what I can see, the fonts contain 255 characters; the only one missing is the space, which is replaced by the SpaceSize in the header.
+The editor gets around this oddity by adding the space as empty character with its width set to SpaceSize.

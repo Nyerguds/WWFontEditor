@@ -141,6 +141,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="d2kfontspecs.txt" />
     <Content Include="fnt_format_info.txt" />
     <Content Include="Resources\icon_colpicker.png" />
     <Content Include="Resources\icon_copy.png" />

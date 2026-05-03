@@ -51,11 +51,18 @@ WWFont v4
 -Tiberian Sun Firestorm Installer
 -Lands of Lore III Installer
 
+IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
+-Dune 2000
+
 
 ---------------------------------------
 
 
 Version history:
+
+v1.2.1:
+-Added experimental Dune 2000 support. Strange format, so I have no idea if the
+ game manages to read the files saved with this.
 
 v1.2:
 -Implemented support for older versions of the font format.

@@ -14,6 +14,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightMax { get { return 0xFF; } }
         public override Int32 YOffsetMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
+        public override Boolean IndividualSizesAllowed { get { return false; } }
         public override String ShortTypeCode { get { return "WW V2"; } }
         public override String LongTypeCode { get { return "Westwood Font Version 2"; } }
         public override String[] GamesList { get { return new String[]
@@ -51,7 +52,6 @@ namespace WWFontEditor.Domain.FontTypes
 
         public override Byte[] SaveFont()
         {
-            Int32 startIndex = 0x104;
             Byte[][] imageData = new Byte[0x80][];
             for (Int32 i = 0; i < 0x80; i++)
             {

@@ -30,23 +30,7 @@ namespace WWFontEditor.Domain
             return swapped;
         }
 
-        public static Boolean ArraysAreEqual<T>(T[] row1, T[] row2) where T : IComparable<T>
-        {
-            if (row1 == null && row2 == null)
-                return true;
-            if (row1 == null || row2 == null)
-                return false;
-            if (row1.Length != row2.Length)
-                return false;
-            for (int i = 0; i < row1.Length; i++)
-            {
-                if (row1[i].CompareTo(row2[i]) != 0)
-                    return false;
-            }
-            return true;
-        }
-        
-        public static Int32 GetBEIntFromByteArray(byte[] data, int startIndex)
+        public static Int32 GetBEIntFromByteArray(Byte[] data, Int32 startIndex)
         {
             return (data[startIndex] << 24)
                  | (data[startIndex + 1] << 16)
@@ -54,12 +38,12 @@ namespace WWFontEditor.Domain
                  | data[startIndex + 3];
         }
 
-        public static Int16 GetBEShortFromByteArray(byte[] data, int startIndex)
+        public static Int16 GetBEShortFromByteArray(Byte[] data, Int32 startIndex)
         {
             return (Int16)Convert.ToUInt16((data[startIndex] << 8) | data[startIndex + 1]);
         }
 
-        public static Int32 GetLEIntFromByteArray(byte[] data, int startIndex)
+        public static Int32 GetLEIntFromByteArray(Byte[] data, Int32 startIndex)
         {
             return (data[startIndex + 3] << 24)
                  | (data[startIndex + 2] << 16)
@@ -67,9 +51,23 @@ namespace WWFontEditor.Domain
                  | data[startIndex];
         }
 
-        public static Int16 GetLEShortFromByteArray(byte[] data, int startIndex)
+
+        public static void SetLEIntInByteArray(Byte[] data, Int32 startIndex, Int32 value)
+        {
+            data[startIndex + 0x00] = (Byte)(value & 0xFF);
+            data[startIndex + 0x01] = (Byte)((value >> 0x08) & 0xFF);
+            data[startIndex + 0x02] = (Byte)((value >> 0x10) & 0xFF);
+            data[startIndex + 0x03] = (Byte)((value >> 0x18) & 0xFF);
+        }
+        public static Int16 GetLEShortFromByteArray(Byte[] data, Int32 startIndex)
         {
             return (Int16)Convert.ToUInt16((data[startIndex + 1] << 8) | data[startIndex]);
+        }
+
+        public static void SetLEShortInByteArray(Byte[] data, Int32 startIndex, Int16 value)
+        {
+            data[startIndex + 0x00] = (Byte)(value & 0xFF);
+            data[startIndex + 0x01] = (Byte)((value >> 8) & 0xFF);
         }
     }
 }
