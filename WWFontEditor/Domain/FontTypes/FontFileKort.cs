@@ -25,8 +25,6 @@ namespace WWFontEditor.Domain.FontTypes
         public override String LongTypeDescription { get { return "A 1-bit font which defines overall width and height in bytes, which contains individual symbol sizes, and Y-offsets saved from the bottom. It does not contain symbols below index 32, or above 127."; } }
         public override String[] GamesListForType { get { return new String[] { "King Arthur's Knights of the Round Table" }; } }
         
-        protected const Int32 StartSymbol = 0x20;
-        protected const Int32 NrOfSymbols = 0x60;
 
         public override void LoadFont(Byte[] fileData)
         {
@@ -38,27 +36,27 @@ namespace WWFontEditor.Domain.FontTypes
             Int32 fontWidthBytes = fileData[0];
             this.m_FontWidth = fontWidthBytes * 8;
             this.m_FontHeight = fileData[1];
-
-            Byte[] symbolWidths = new Byte[NrOfSymbols];
-            Array.Copy(fileData, 2, symbolWidths, 0, NrOfSymbols);
+            Int32 nrOfSymbols = this.SymbolsTypeMax - this.SymbolsTypeFirst;
+            Byte[] symbolWidths = new Byte[nrOfSymbols];
+            Array.Copy(fileData, 2, symbolWidths, 0, nrOfSymbols);
             if (symbolWidths.Any(w => w > this.m_FontWidth))
                 throw new FileTypeLoadException("Character widths data exceeds maximum width.");
-            Byte[] symbolYOffsets = new Byte[NrOfSymbols];
-            Array.Copy(fileData, NrOfSymbols + 2, symbolYOffsets, 0, NrOfSymbols);
+            Byte[] symbolYOffsets = new Byte[nrOfSymbols];
+            Array.Copy(fileData, nrOfSymbols + 2, symbolYOffsets, 0, nrOfSymbols);
             if (symbolYOffsets.Any(w => w > this.m_FontHeight))
                 throw new FileTypeLoadException("Character delta-Y exceeds maximum height.");
 
-            Byte[][] symbolData = new Byte[NrOfSymbols][];
+            Byte[][] symbolData = new Byte[nrOfSymbols][];
             Int32 charSize = this.m_FontHeight * fontWidthBytes;
-            for (Int32 i = 0; i < NrOfSymbols; ++i)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Byte[] charData = new Byte[charSize];
-                Array.Copy(fileData, NrOfSymbols * 2 + 2 + i * charSize, charData, 0, charSize);
+                Array.Copy(fileData, nrOfSymbols * 2 + 2 + i * charSize, charData, 0, charSize);
                 symbolData[i] = charData;
             }
-            for (Int32 i = 0; i < StartSymbol; ++i)
+            for (Int32 i = 0; i < this.SymbolsTypeFirst; ++i)
                 this.m_ImageDataList.Add(new FontFileSymbol(new Byte[0], 0, this.m_FontHeight, 0, this.BitsPerPixel, this.TransparencyColor));
-            for (Int32 i = 0; i < NrOfSymbols; ++i)
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Byte[] curData8bit;
                 try
@@ -78,13 +76,14 @@ namespace WWFontEditor.Domain.FontTypes
         {
             Int32 fontStride = (this.m_FontWidth + 7) / 8;
             Int32 charSize = this.m_FontHeight * fontStride;
-
-            Byte[] characterWidths = new Byte[NrOfSymbols];
-            Byte[] characterYOffsets = new Byte[NrOfSymbols];
-            Byte[][] imageData = new Byte[NrOfSymbols][];
-            for (Int32 i = 0; i < NrOfSymbols; ++i)
+            Int32 nrOfSymbols = this.SymbolsTypeMax - this.SymbolsTypeFirst;
+            Byte[] characterWidths = new Byte[nrOfSymbols];
+            Byte[] characterYOffsets = new Byte[nrOfSymbols];
+            Byte[][] imageData = new Byte[nrOfSymbols][];
+            Int32 curSymbol = this.SymbolsTypeFirst;
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
-                FontFileSymbol ffs = this.m_ImageDataList[i+StartSymbol];
+                FontFileSymbol ffs = this.m_ImageDataList[curSymbol++];
                 Byte[] ffsBytes = ImageUtils.ConvertFrom8Bit(ffs.ByteData, ffs.Width, this.m_FontHeight, this.BitsPerPixel, true);
                 if (ffsBytes.Length < charSize)
                 {
@@ -96,15 +95,15 @@ namespace WWFontEditor.Domain.FontTypes
                 characterWidths[i] = (Byte)ffs.Width;
                 characterYOffsets[i] = (Byte)Math.Min(Math.Max(0, this.m_FontHeight - ffs.YOffset), this.m_FontHeight);
             }
-            Byte[] fullData = new Byte[NrOfSymbols * (2 + (this.m_FontHeight * fontStride)) + 2];
+            Byte[] fullData = new Byte[nrOfSymbols * (2 + (this.m_FontHeight * fontStride)) + 2];
             fullData[0x00] = (Byte)fontStride;
             fullData[0x01] = (Byte)this.m_FontHeight;
             Int32 fontDataOffset = 2;
-            Array.Copy(characterWidths, 0, fullData, fontDataOffset, NrOfSymbols);
-            fontDataOffset += NrOfSymbols;
-            Array.Copy(characterYOffsets, 0, fullData, fontDataOffset, NrOfSymbols);
-            fontDataOffset += NrOfSymbols;
-            for (Int32 i = 0; i < NrOfSymbols; ++i)
+            Array.Copy(characterWidths, 0, fullData, fontDataOffset, nrOfSymbols);
+            fontDataOffset += nrOfSymbols;
+            Array.Copy(characterYOffsets, 0, fullData, fontDataOffset, nrOfSymbols);
+            fontDataOffset += nrOfSymbols;
+            for (Int32 i = 0; i < nrOfSymbols; ++i)
             {
                 Array.Copy(imageData[i], 0, fullData, fontDataOffset, charSize);
                 fontDataOffset += charSize;

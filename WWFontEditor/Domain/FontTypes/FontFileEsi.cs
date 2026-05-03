@@ -108,7 +108,7 @@ namespace WWFontEditor.Domain.FontTypes
             if (charWidths[0x5E] != 0)
                 spaceWidth = charWidths[0x5E];
             else
-                spaceWidth = charWidths.Max() / 2;
+                spaceWidth = charWidths.Max() * 2 / 3;
             space.ChangeWidth(spaceWidth, this.TransparencyColor);
             this.m_ImageDataList.Add(space);
             Int32 bitsLength = this.BitsPerPixel;
@@ -139,7 +139,7 @@ namespace WWFontEditor.Domain.FontTypes
         {
             Int32 lHeight = this.BaseLineHeight;
             if (lHeight == 0)
-                lHeight = FontFileDynV4.CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax, this.TransparencyColor);
+                lHeight = CalculateLineHeight(this.m_ImageDataList, this.TransparencyColor);
 
             return new SaveOption[]
             {

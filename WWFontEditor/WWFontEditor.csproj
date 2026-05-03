@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Domain\Compression\DynamixLzHuffDecoder.cs" />
+    <Compile Include="Domain\Compression\JazzRleCompression.cs" />
     <Compile Include="Domain\Compression\MythosCompression.cs" />
     <Compile Include="Domain\Compression\PppCompression.cs" />
     <Compile Include="Domain\Compression\RleCompression.cs" />
@@ -58,6 +59,9 @@
     <Compile Include="Domain\FontTypes\FontFileDotWriter.cs" />
     <Compile Include="Domain\FontTypes\FontFileEmo.cs" />
     <Compile Include="Domain\FontTypes\FontFileEsi.cs" />
+    <Compile Include="Domain\FontTypes\FontFileJazz.cs" />
+    <Compile Include="Domain\FontTypes\FontFileJazzC.cs" />
+    <Compile Include="Domain\RemapEncoding.cs" />
     <Compile Include="Domain\Utils\EncodingSupport.cs" />
     <Compile Include="Domain\FontTypes\FontDummy.cs" />
     <Compile Include="Domain\FontTypes\FontFileKotB.cs" />

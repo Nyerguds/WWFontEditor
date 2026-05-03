@@ -152,7 +152,7 @@ namespace WWFontEditor.Domain.FontTypes
             // Line height. Default calculation uses the most commonly used lowest point in the font.
             Int32 lHeight = this.BaseLineHeight;
             if (lHeight == 0)
-                lHeight = CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.FontHeightTypeMax, this.TransparencyColor);
+                lHeight = CalculateLineHeight(this.m_ImageDataList, this.TransparencyColor);
 
             return new SaveOption[]
             {
@@ -261,69 +261,6 @@ namespace WWFontEditor.Domain.FontTypes
             ArrayUtils.WriteIntToByteArray(fileData, 0x11, 4, true, (UInt32)fullDataSize);
             Array.Copy(writeData, 0, fileData, writeOffset, writeData.Length);
             return fileData;
-        }
-
-        public static Int32 CalculateLineHeight(List<FontFileSymbol> imageDataList, Int32 bitsPerPixel, Int32 yOffsetMax, Byte transparencyColor)
-        {
-            Int32 checkColor = -1;
-            Int32 images = imageDataList.Count;
-            // This check has no use on 1-bpp; there are only two values.
-            if (bitsPerPixel > 1)
-            {
-                Dictionary<Byte, Int32> colFrequencies = new Dictionary<Byte, Int32>();
-                for (Int32 i = 0; i < images; ++i)
-                {
-                    FontFileSymbol symbol = imageDataList[i];
-                    Byte[] symbolData = symbol.ByteData;
-                    Int32 symbolDataLen = symbolData.Length;
-                    for (Int32 j = 0; j < symbolDataLen; ++j)
-                    {
-                        Byte c = symbol.ByteData[j];
-                        if (c == transparencyColor)
-                            continue;
-                        Int32 curVal;
-                        if (!colFrequencies.TryGetValue(c, out curVal))
-                            curVal = 0;
-                        colFrequencies[c] = curVal + 1;
-                    }
-                }
-                Int32 maxCol = 0;
-                foreach (KeyValuePair<Byte, Int32> kvp in colFrequencies)
-                {
-                    if (kvp.Value <= maxCol)
-                        continue;
-                    checkColor = kvp.Key;
-                    maxCol = kvp.Value;
-                }
-            }
-            Dictionary<Int32, Int32> frequencies = new Dictionary<Int32, Int32>();
-            for (Int32 i = 0; i < images; ++i)
-            {
-                FontFileSymbol symbol = imageDataList[i];
-                if (symbol.ByteData.Length == 0)
-                    continue;
-                FontFileSymbol ffs = new FontFileSymbol(symbol.ByteData, symbol.Width, symbol.Height, 0, bitsPerPixel, transparencyColor);
-                if (checkColor != -1)
-                    ffs.ByteData = ffs.ByteData.Select(b => b != checkColor ? transparencyColor : b).ToArray();
-                ffs.OptimizeYHeight(yOffsetMax);
-                Int32 fullHeight = ffs.Height == 0 ? 0 : ffs.YOffset + ffs.Height;
-                if (fullHeight == 0)
-                    continue;
-                Int32 curVal;
-                if (!frequencies.TryGetValue(fullHeight, out curVal))
-                    curVal = 0;
-                frequencies[fullHeight] = curVal + 1;
-            }
-            Int32 max = 0;
-            Int32 maxKey = -1;
-            foreach (KeyValuePair<Int32, Int32> kvp in frequencies)
-            {
-                if (kvp.Value <= max)
-                    continue;
-                maxKey = kvp.Key;
-                max = kvp.Value;
-            }
-            return maxKey == -1 ? 0 : maxKey;
         }
     }
 }

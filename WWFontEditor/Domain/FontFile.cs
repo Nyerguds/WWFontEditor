@@ -29,7 +29,7 @@ namespace WWFontEditor.Domain
         protected Int32 m_FontHeight;
         /// <summary>Overall maximum font width.</summary>
         protected Int32 m_FontWidth;
-        /// <summary>Overall maximum font width.</summary>
+        /// <summary>Inbuilt font type padding.</summary>
         protected Int32 m_FontPadding = -1;
 
         /// <summary> array with the actual image data (as 8-bit) as byte arrays</summary>
@@ -37,7 +37,7 @@ namespace WWFontEditor.Domain
         #endregion
 
         #region overridable properties and functions
-        /// <summary>Lower limit for the amount of symbols in the font. These include any that are hidden by SymbolsTypeFirst</summary>
+        /// <summary>Lower limit for the amount of symbols in the font. These include any that are hidden by <see cref="SymbolsTypeFirst" /></summary>
         public virtual Int32 SymbolsTypeMin { get {return 0;} }
         /// <summary>Upper limit for the amount of symbols in the font.</summary>
         public abstract Int32 SymbolsTypeMax { get; }
@@ -70,17 +70,17 @@ namespace WWFontEditor.Domain
         /// </summary>
         public virtual Int32 FontTypePaddingHorizontal { get { return 0; } }
         /// <summary>
-        /// Horizontal padding applied to the font. If FontTypePaddingHorizontal is 0 or greater,
-        /// it can't be changed and always just returns that. If FontTypePaddingHorizontal is 
-        /// smaller than 0, it returns m_FontPadding, unless that's undefined (set to -1), then 
-        /// the absolute value of FontTypePaddingHorizontal is returned.
+        /// Horizontal padding applied to the font. If <see cref="FontTypePaddingHorizontal" /> is 0 or greater,
+        /// it can't be changed and always just returns that. If <see cref="FontTypePaddingHorizontal" /> is 
+        /// smaller than 0, it returns <see cref="m_FontPadding" />, unless that's undefined (set to -1), then 
+        /// the absolute value of <see cref="FontTypePaddingHorizontal" /> is returned.
         /// </summary>
         public virtual Int32 FontPaddingHorizontal
         {
             get { return this.FontTypePaddingHorizontal >= 0 ? this.FontTypePaddingHorizontal : (this.m_FontPadding >= 0 ? this.m_FontPadding : Math.Abs(this.FontTypePaddingHorizontal)); }
             set { if (this.FontTypePaddingHorizontal < 0) this.m_FontPadding = value; }
         }
-        /// <summary>Not used by the font editor, but used by some font types, so this allows it to be generally stored.</summary>
+        /// <summary>Y-position of the base of the font. Not used by the font editor, but used by some font types, so this allows it to be generally stored.</summary>
         public virtual Int32 BaseLineHeight { get; set; }
         /// <summary>Bits per pixel of the data in this font.</summary>
         public abstract Int32 BitsPerPixel { get; }
@@ -102,7 +102,7 @@ namespace WWFontEditor.Domain
         public virtual Boolean IsUnicode { get { return false; } }
 
         /// <summary>
-        /// Loads the font from file data. Throws a FileTypeLoadException if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
+        /// Loads the font from file data. Throws a <see cref="FileTypeLoadException" /> if the format is not recognised. Might throw other exceptions if the actual load failed after validation.
         /// </summary>
         /// <param name="fileData">The file data to read the font from.</param>
         /// <returns>False if the font was not identified as this type.</returns>
@@ -303,6 +303,51 @@ namespace WWFontEditor.Domain
                 throw new IndexOutOfRangeException("Bad symbol index '" + index + "'.");
             FontFileSymbol symbol = this.GetSymbol(index);
             symbol.PaintPixel(x, y, value);
+        }
+
+        /// <summary>
+        /// Calculates the "base line" that some fonts save. The default calculation for this is to take the most commonly used lowest point in the font.
+        /// This is achieved checking the end of the symbol symbol data backwards until a point no more transparent values are found, then seeing which line
+        /// of the symbol data this is on, for each symbol, storing how many times each end-line value is encountered, and taking the most common one.
+        /// </summary>
+        /// <param name="imageDataList">Images list to check</param>
+        /// <param name="transparencyColor">Colour index that is considered "transparent".</param>
+        /// <returns>The most commonly found actual symbol height, regardless of empty space under the symbols.</returns>
+        public static Int32 CalculateLineHeight(List<FontFileSymbol> imageDataList, Byte transparencyColor)
+        {
+            Dictionary<Int32, Int32> lastRowFreq = new Dictionary<Int32, Int32>();
+            for (Int32 i = 0; i < imageDataList.Count; ++i)
+            {
+                FontFileSymbol frame = imageDataList[i];
+                if (frame == null || frame.Width == 0 || frame.Height == 0)
+                    continue;
+                Int32 w = frame.Width;
+                Int32 curAmount;
+                Byte[] imageData = frame.ByteData;
+                Int32 height = imageData.Length - 1;
+                while (height >= 0 && imageData[height] == transparencyColor)
+                    height--;
+                // Last found height, ranging from 0 to full height.
+                height = ((height + w) / w);
+                if (!lastRowFreq.TryGetValue(height, out curAmount))
+                    curAmount = 0;
+                lastRowFreq[height] = curAmount + 1;
+            }
+            Int32 maxFound = 0;
+            Int32 maxFoundAt = -1;
+            Int32[] rows = lastRowFreq.Keys.ToArray();
+            Array.Sort(rows);
+            for (Int32 i = rows.Length - 1; i >= 0; --i)
+            {
+                Int32 row = rows[i];
+                Int32 rowAmount = lastRowFreq[row];
+                if (rowAmount > maxFound)
+                {
+                    maxFound = rowAmount;
+                    maxFoundAt = row;
+                }
+            }
+            return Math.Max(0, maxFoundAt);
         }
 
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
@@ -568,6 +613,8 @@ namespace WWFontEditor.Domain
             typeof(FontFileMythos),
             typeof(FontFileKotB),
             typeof(FontFileEmo),
+            typeof(FontFileJazzC),
+            typeof(FontFileJazz),
             //typeof(FontFileMK), //DO NOT ENABLE. HAS NO SAVE.
         };
 
@@ -578,6 +625,8 @@ namespace WWFontEditor.Domain
         /// </summary>
         public static Type[] AutoDetectTypes =
         {
+            // Starts with a long unique string.
+            typeof(FontFileJazzC),
             // Dynamix fonts starting from v3 have a very specific "FNT:" header start so I prefer putting them first.
             typeof(FontFileDynV3),
             typeof(FontFileDynV4),
@@ -596,6 +645,7 @@ namespace WWFontEditor.Domain
             typeof(FontFileEsi),
             typeof(FontFileDotWriter),
             // rather weak file size / content based checks.
+            typeof(FontFileJazz),
             typeof(FontFileEmo),
             typeof(FontFileDynSQ5),
             typeof(FontFileCent),

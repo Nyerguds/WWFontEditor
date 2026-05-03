@@ -175,7 +175,7 @@ namespace WWFontEditor.UI
 
         private List<D2KEncoding> ScanForD2KEncodings()
         {
-            Regex codePageRegex = new Regex("^FONT_?(\\d+).*?\\.BIN$");
+            Regex codePageRegex = new Regex("^FONT[_-]?(\\d+).*?\\.BIN$");
             String appFolder = Path.GetDirectoryName(Application.ExecutablePath);
             FileInfo[] files = new DirectoryInfo(appFolder).GetFiles("FONT*.BIN");
             List<D2KEncoding> d2kEncodings = new List<D2KEncoding>();
@@ -189,16 +189,18 @@ namespace WWFontEditor.UI
                         continue;
                     Encoding enc = null;
                     Match m = codePageRegex.Match(file.Name);
+                    String codepageNum = String.Empty;
                     if (m.Success)
                     {
                         Int32 codepage = Int32.Parse(m.Groups[1].Value);
+                        codepageNum = codepage.ToString();
                         try { enc = Encoding.GetEncoding(codepage); }
                         catch { /* ignore */ }
                         if (enc != null && (!enc.IsSingleByte || !TextUtils.IsAsciiCompatible(enc)))
                             enc = null;
                     }
                     Byte[] remapTable = File.ReadAllBytes(file.FullName);
-                    d2kEncodings.Add(new D2KEncoding(remapTable, file.Name + " (D2K Encoding)", enc));
+                    d2kEncodings.Add(new D2KEncoding(remapTable, file.Name + " (D2K Encoding)", "Dune-2000-enc" + codepageNum, enc));
                 }
                 catch (Exception e)
                 {

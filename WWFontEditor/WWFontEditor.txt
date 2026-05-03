@@ -233,6 +233,12 @@ KotB font (extracted from the decompressed exe file)
 ESI font
 -Jeopardy! / Family Feud series
 
+Jazz Jackrabbit uncompressed font
+-Jazz Jackrabbit 1
+
+Jazz Jackrabbit compressed font
+-Jazz Jackrabbit 1
+
 --------------------------
 Notes on Dune 2000 support
 --------------------------
@@ -255,13 +261,31 @@ So, in short: ä = 0xE4 ==> table index 0xE4 ==> value 0x80 => font index 0x80
 by looking up in which spot in the table each index value is, but you don't
 need to do that, since Dune 2000 text files are just in Windows-1252 encoding)
 
-
 If you want to add fonts for a different text encoding to the game, I advise
 you to get rid of this whole nonsense by replacing FONT.BIN with a 256-byte
 file containing a simple sequence of bytes from 00 to FF, so each character
 simply gets mapped onto itself.
 
+------------------------------
+Notes on Jazz Jackrabbit fonts
+------------------------------
 
+The Jazz Jackrabbit fonts are actually saved as tilesets, and the mapping of
+these tiles to text is rather complex. Because of this, be aware that these
+fonts will have entries in them that are not saved at all in the final file.
+
+Uncompressed font:
+-Only supports 0-9, A-Z, and the % character.
+-Space character is purely editable for the UI and preview; it is not saved.
+
+Compressed font:
+-No support for ASCII symbols $*/@\^_`{|}~
+-No support for ASCII symbol at hex index 7F
+-No support for Extended ASCII symbols at hex indices 9C-9F
+-No support for Extended ASCII symbols at hex indices beyond A5
+-Space character is optional; if its height is set to 0 in the editor, it is
+ saved as value in the header rather than as symbol.
+ 
 -----------------
 Special thanks to
 -----------------
@@ -322,6 +346,9 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.15.0: (2022/04/28 13:19)
+-Added Jazz Jackrabbit fonts.
 
 v1.14.1: (2022/01/23 13:20)
 -Fixed RA2 unicode bitfont's handling of the symbol height.

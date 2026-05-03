@@ -108,7 +108,7 @@ namespace WWFontEditor.Domain.FontTypes
             // Line height. Default calculation uses the most commonly used lowest point in the font.
             Int32 lHeight = this.LineHeight;
             if (lHeight == 0)
-                lHeight = (Byte)FontFileDynV4.CalculateLineHeight(this.m_ImageDataList, this.BitsPerPixel, this.YOffsetTypeMax, this.TransparencyColor);
+                lHeight = (Byte)FontFileDynV4.CalculateLineHeight(this.m_ImageDataList, this.TransparencyColor);
             return new SaveOption[]
             {
                 new SaveOption("OPT", SaveOptionType.Boolean, "Optimise to remove duplicate symbols", "0"),
