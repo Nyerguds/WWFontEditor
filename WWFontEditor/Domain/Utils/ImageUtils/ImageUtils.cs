@@ -655,7 +655,7 @@ namespace Nyerguds.ImageManipulation
         {
             Byte[] newSource = source.ToArray();
             Byte[] emptyRow = new Byte[stride];
-            if (backColor != 0)
+            if (backColor != 0 && !wrap)
                 for (Int32 i = 0; i < stride; i++)
                     emptyRow[i] = backColor;
             Int32 length = source.Length - stride;
@@ -975,7 +975,7 @@ namespace Nyerguds.ImageManipulation
             }
 
             Int32 trimmedYTop;
-            Int32 trimmedYBottom = width;
+            Int32 trimmedYBottom = height;
             Byte[] tempArray = new Byte[width];
             for (trimmedYTop = 0; trimmedYTop < height; trimmedYTop++)
             {
@@ -985,13 +985,12 @@ namespace Nyerguds.ImageManipulation
             }
             if (AlsoTrimBottom)
             {
-                for (trimmedYBottom = height - 1; trimmedYBottom >= yOffset + trimmedYTop; trimmedYBottom--)
+                for (trimmedYBottom = height; trimmedYBottom > yOffset + trimmedYTop; trimmedYBottom--)
                 {
-                    Array.Copy(buffer, width * trimmedYBottom, tempArray, 0, width);
+                    Array.Copy(buffer, width * (trimmedYBottom-1), tempArray, 0, width);
                     if (tempArray.All(x => x == valueToTrim))
-                        trimmedYBottom++;
-                    else
-                        break;
+                        continue;
+                    break;
                 }
             }
             Int32 newHeight = trimmedYBottom - trimmedYTop;
@@ -1005,7 +1004,7 @@ namespace Nyerguds.ImageManipulation
             }
             // Color doesn't matter here since this should only reduce.
             for (Int32 i = 0; i < trimmedYTop; i++)
-                ImageUtils.Shift8BitRowVert(buffer, width, false, false, 0);
+                ImageUtils.Shift8BitRowVert(buffer, width, true, false, 0);
             buffer = ChangeHeight(buffer, width, height, newHeight, 0);
             height = newHeight;
             // Optimization: no need to keep Y if data is empty.

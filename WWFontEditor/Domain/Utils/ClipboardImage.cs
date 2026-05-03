@@ -100,7 +100,7 @@ namespace WWFontEditor.Domain.Utils
             hdr.biClrImportant=0;
 
             Byte[] fullImage = new Byte[hdrSize+12+bm32bData.Length];
-            Byte[] pibHeaderBytes = ToByteArray(hdr);
+            Byte[] pibHeaderBytes = StructToByteArray(hdr);
             Array.Copy(pibHeaderBytes, 0, fullImage, 0, hdrSize);
             ArrayUtils.WriteIntToByteArray(fullImage, hdrSize + 0, 4, true, 0x00FF0000);
             ArrayUtils.WriteIntToByteArray(fullImage, hdrSize + 4, 4, true, 0x0000FF00);
@@ -117,7 +117,7 @@ namespace WWFontEditor.Domain.Utils
             {
                 Byte[] header = new Byte[40];
                 Array.Copy(dibBytes, header, 40);
-                BITMAPINFOHEADER dibHdr = FromByteArray<BITMAPINFOHEADER>(header);
+                BITMAPINFOHEADER dibHdr = StructFromByteArray<BITMAPINFOHEADER>(header);
                 // Not dealing with non-standard formats
                 if (dibHdr.biPlanes != 1 || (dibHdr.biCompression != BITMAPCOMPRESSION.BI_RGB && dibHdr.biCompression != BITMAPCOMPRESSION.BI_BITFIELDS))
                     return null;
@@ -158,14 +158,12 @@ namespace WWFontEditor.Domain.Utils
                     // Admitted, this may give a mess if the alpha bits simply aren't cleared, but why the hell wouldn't it use 24bpp then?
                     if (bitCount == 32 && redMask == 0xFF0000 && greenMask == 0x00FF00 && blueMask == 0x0000FF)
                     {
-                        if (image.Length < 4)
-                            return null;
-                        // Stride is always multiple of 4; no need to take it into account for 32bpp.
-                        for (Int32 pix = 4; pix < image.Length; pix += 4)
+                        // Stride is always a multiple of 4; no need to take it into account for 32bpp.
+                        for (Int32 pix = 3; pix < image.Length; pix += 4)
                         {
                             // 0 can mean transparent, but can also mean the alpha isn't filled in, so only check for non-zero alpha,
                             // which would indicate there is actual data in the alpha bytes.
-                            if (image[pix + 3] == 0)
+                            if (image[pix] == 0)
                                 continue;
                             fmt = PixelFormat.Format32bppPArgb;
                             break;
@@ -208,7 +206,7 @@ namespace WWFontEditor.Domain.Utils
             }
         }
         
-        public static T FromByteArray<T>(Byte[] bytes) where T : struct
+        public static T StructFromByteArray<T>(Byte[] bytes) where T : struct
         {
             IntPtr ptr = IntPtr.Zero;
             try
@@ -226,7 +224,7 @@ namespace WWFontEditor.Domain.Utils
             }
         }
 
-        public static Byte[] ToByteArray<T>(T obj) where T : struct
+        public static Byte[] StructToByteArray<T>(T obj) where T : struct
         {
             IntPtr ptr = IntPtr.Zero;
             try

@@ -46,10 +46,10 @@ namespace Nyerguds.ImageManipulation
         /// Creats a new PixelFormatter based on masks as used by DIB format.
         /// </summary>
         /// <param name="bytesPerPixel">Amount of bytes to read per pixel</param>
-        /// <param name="maskRed"></param>
-        /// <param name="maskGreen"></param>
-        /// <param name="maskBlue"></param>
-        /// <param name="maskAlpha"></param>
+        /// <param name="maskRed">Bit mask for red colour component</param>
+        /// <param name="maskGreen">Bit mask for green colour component</param>
+        /// <param name="maskBlue">Bit mask for blue colour component</param>
+        /// <param name="maskAlpha">Bit mask for alpha component</param>
         public PixelFormatter(Byte bytesPerPixel, UInt32 maskRed, UInt32 maskGreen, UInt32 maskBlue, UInt32 maskAlpha)
         {
             this.bytesPerPixel = bytesPerPixel;

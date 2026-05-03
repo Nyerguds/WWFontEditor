@@ -299,6 +299,10 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 Version history
 ---------------
 
+v1.10.5: (2017/09/19 7:35)
+-Fixed a serious bug in the Y-offset optimisation logic.
+-Added new clipboard types (DIB and PNG) to character copy function too.
+
 v1.10.4: (2017/09/18 15:05)
 -Changed "Copy Character" on symbols list to the same new copy function.
 

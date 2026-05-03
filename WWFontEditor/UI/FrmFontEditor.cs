@@ -58,7 +58,6 @@ namespace WWFontEditor
         private Int32[] m_CustomColors;
 
         private FontEditSettings m_Settings;
-        private MemoryStream clipboardMemoryStream;
 
         public FrmFontEditor(String[] args)
             : this()
@@ -1345,26 +1344,30 @@ namespace WWFontEditor
 
             Clipboard.Clear();
             DataObject data = new DataObject();
+            Color[] noTransPal = m_CurrentPalette.ToArray();
+            if (noTransPal.Length > this.m_LoadedFont.TransparencyColor)
+                noTransPal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(255, noTransPal[this.m_LoadedFont.TransparencyColor]);
+
             using (MemoryStream pngMemStream = new MemoryStream())
             using (MemoryStream dibMemStream = new MemoryStream())
-            using (Bitmap symb = ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true))
+            using (Bitmap imageNoTr = ffs.GetBitmapFullSize(noTransPal, m_LoadedFont, true))
+            using (Bitmap image = ffs.GetBitmapFullSize(m_CurrentPalette, m_LoadedFont, true))
             {
-                // Text character
+                // As text character
                 data.SetData(DataFormats.Text, (String)this.dgrvSymbolsList.Rows[curIndex - m_LoadedFont.SymbolsTypeFirst].Cells[2].Value);
-                // version without transparency support
-                data.SetData(DataFormats.Bitmap, symb);
-                data.SetImage(symb);
-                // Add the image as PNG. Gimp will prefer this over the other two.
-                Byte[] pngData = BitmapHandler.GetPngImageData(symb, 0);
+                // As standard bitmap, without transparency support
+                data.SetData(DataFormats.Bitmap, true, imageNoTr);
+                // As PNG. Gimp will prefer this over the other two.
+                Byte[] pngData = BitmapHandler.GetPngImageData(image, 0);
                 pngMemStream.Write(pngData, 0, pngData.Length);
                 data.SetData("PNG", false, pngMemStream);
-                // Add the image as DIB. This is (wrongly) accepted as ARGB by many applications.
-                Byte[] dibData = ClipboardImage.ConvertToDib(symb);
+                // As DIB. This is (wrongly) accepted as ARGB by many applications.
+                Byte[] dibData = ClipboardImage.ConvertToDib(image);
                 dibMemStream.Write(dibData, 0, dibData.Length);
                 data.SetData(DataFormats.Dib, false, dibMemStream);
                 // As Font Editor object
                 data.SetData(typeof(FontFileSymbol), ffs.Clone());
-
+                // The 'copy=true' argument means the MemoryStreams can be safely disposed after the operation.
                 Clipboard.SetDataObject(data, true);
             }
         }
@@ -1828,21 +1831,25 @@ namespace WWFontEditor
                 return;
             Clipboard.Clear();
             DataObject data = new DataObject();
+
+            Color[] noTransPal = m_CurrentPalette.ToArray();
+            if (noTransPal.Length > this.m_LoadedFont.TransparencyColor)
+                noTransPal[this.m_LoadedFont.TransparencyColor] = Color.FromArgb(255, noTransPal[this.m_LoadedFont.TransparencyColor]);
             using (MemoryStream pngMemStream = new MemoryStream())
             using (MemoryStream dibMemStream = new MemoryStream())
             using (Bitmap prevNoTrans = GeneratePreview(0, false))
             using (Bitmap prevTrans = GeneratePreview(0, asTransparent))
             {
-                // version without transparency support
+                // Add version without transparency support
                 data.SetData(DataFormats.Bitmap, prevNoTrans);
                 data.SetImage(asTransparent ? prevTrans : prevNoTrans);
                 
-                // Add the image as PNG. Gimp will prefer this over the other two.
+                // Add as PNG. Gimp will prefer this over the other two.
                 Byte[] pngData = BitmapHandler.GetPngImageData(asTransparent ? prevTrans : prevNoTrans, 0);
                 pngMemStream.Write(pngData, 0, pngData.Length);
                 data.SetData("PNG", false, pngMemStream);
 
-                // Add the image as DIB. This is (wrongly) accepted as ARGB by many applications.
+                // Add as DIB. This is (wrongly) accepted as ARGB by many applications.
                 Byte[] dibData = ClipboardImage.ConvertToDib(asTransparent ? prevTrans : prevNoTrans);
                 dibMemStream.Write(dibData, 0, dibData.Length);
                 data.SetData(DataFormats.Dib, false, dibMemStream);
@@ -1927,15 +1934,6 @@ namespace WWFontEditor
         private void FrmFontEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE);
-            if (!e.Cancel && this.clipboardMemoryStream != null)
-            {
-                try
-                {
-                    this.clipboardMemoryStream.Close();
-                    this.clipboardMemoryStream.Dispose();
-                }
-                catch { /* ignore */ }
-            }
         }
 
         private Boolean AbortForChangesAskSave(String question)
