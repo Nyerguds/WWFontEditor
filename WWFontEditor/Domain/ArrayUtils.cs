@@ -68,5 +68,47 @@ namespace Nyerguds.Util
             }
             return value;
         }
+
+        public static Int32 ReadBitsFromByteArray(Byte[] dataArr, ref Int32 bitIndex, Int32 codeLen, Int32 bufferInEnd)
+        {
+            Int32 intCode = 0;
+            Int32 byteIndex = bitIndex / 8;
+            Int32 ignoreBitsAtIndex = bitIndex % 8;
+            Int32 bitsToReadAtIndex = Math.Min(codeLen, 8 - ignoreBitsAtIndex);
+            Int32 totalUsedBits = 0;
+            while (codeLen > 0)
+            {
+                if (byteIndex >= bufferInEnd)
+                    return -1;
+
+                Int32 toAdd = (dataArr[byteIndex] >> ignoreBitsAtIndex) & ((1 << bitsToReadAtIndex) - 1);
+                intCode |= (toAdd << totalUsedBits);
+                totalUsedBits += bitsToReadAtIndex;
+                codeLen -= bitsToReadAtIndex;
+                bitsToReadAtIndex = Math.Min(codeLen, 8);
+                ignoreBitsAtIndex = 0;
+                byteIndex++;
+            }
+            bitIndex += totalUsedBits;
+            return intCode;
+        }
+
+        public static void WriteBitsToByteArray(Byte[] dataArr, Int32 bitIndex, Int32 codeLen, Int32 intCode)
+        {
+            Int32 byteIndex = bitIndex / 8;
+            Int32 usedBitsAtIndex = bitIndex % 8;
+            Int32 bitsToWriteAtIndex = Math.Min(codeLen, 8 - usedBitsAtIndex);
+            while (codeLen > 0)
+            {
+                Int32 codeToWrite = (intCode & ((1 << bitsToWriteAtIndex) - 1)) << usedBitsAtIndex;
+                intCode = intCode >> bitsToWriteAtIndex;
+                dataArr[byteIndex] |= (Byte)codeToWrite;
+                codeLen -= bitsToWriteAtIndex;
+                bitsToWriteAtIndex = Math.Min(codeLen, 8);
+                usedBitsAtIndex = 0;
+                byteIndex++;
+            }
+        }
+
     }
 }

@@ -1,9 +1,5 @@
 ﻿using Nyerguds.Util.UI;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -43,7 +39,10 @@ namespace WWFontEditor.UI
             TargetFontFile = selectedItem.ItemObject;
             btnConvert.Enabled = selectedItem.ItemType != SourceFontFile.GetType();
             lblTypeInfo.Text = TargetFontFile.LongTypeDescription;
-            lblGamesList.Text = "Games list:\n- " + String.Join("\n- ", TargetFontFile.GamesListForType).Replace("&", "&&");
+            String games = String.Join(Environment.NewLine + "- ", TargetFontFile.GamesListForType);
+            if (!String.IsNullOrEmpty(games))
+                games = "- " + games;
+            rtbGamesList.Text = games;
             Boolean tooHighCol = SourceFontFile.BitsPerPixel > TargetFontFile.BitsPerPixel;
             Boolean tooHigh = tooHighCol;
             if (tooHighCol)

@@ -5,27 +5,28 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Very old 1bpp Westwood font format, without file header, with fixed 8x8 symbols.
+    /// Very old 1bpp Westwood Studios font format, without file header, with fixed 8x8 symbols.
     /// </summary>
-    public class FontFileV1 : FontFile
+    public class FontFileTran : FontFile
     {
-        public override Int32 SymbolsTypeMin { get { return 0x80; } }
-        public override Int32 SymbolsTypeMax { get { return 0x80; } }
+        public override Int32 SymbolsTypeMin { get { return 0x9F; } }
+        public override Int32 SymbolsTypeMax { get { return 0x9F; } }
+        public override Int32 SymbolsTypeFirst { get { return 0x20; } }
         public override Int32 FontWidthTypeMin { get { return 8; } }
         public override Int32 FontWidthTypeMax { get { return 8; } }
         public override Int32 FontHeightTypeMin { get { return 8; } }
         public override Int32 FontHeightTypeMax { get { return 8; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override String ShortTypeName { get { return "WW v1"; } }
-        public override String ShortTypeDescription { get { return "WWFont v1 (WarConst, ElmStr, DrStr, CirEdg)"; } }
-        public override String LongTypeDescription { get { return "A simple 1 BPP font without header data; it's always a 128-item list of 8x8 symbols."; } }
+        /// <summary>File extensions typically used for this font type.</summary>
+        public override String[] FileExtensions { get { return new String[] { "GDA" }; } }
+        public override String ShortTypeName { get { return "TranFont"; } }
+        public override String ShortTypeDescription { get { return "Translvania 1 & 2 Font"; } }
+        public override String LongTypeDescription { get { return "A simple 1 BPP font with a tiny header of seemingly fixed values."; } }
         public override String[] GamesListForType { get { return new String[]
         {
-            "Wargame Construction Set",
-            "A Nightmare On Elm Street",
-            "DragonStrike",
-            "Circuit's Edge"
+            "Transylvania",
+            "Transylvania II: The Crimson Crown",
         }; } }
 
         protected const Int32 m_FontSize = 0x400;
@@ -33,19 +34,24 @@ namespace WWFontEditor.Domain.FontTypes
         public override void LoadFont(Byte[] fileData)
         {
             if (fileData.Length != m_FontSize)
-                throw new FileTypeLoadException("File size is not " + m_FontSize + " bytes.");
+                throw new FileTypeLoadException(ERR_SIZECHECK);
+            if (ArrayUtils.ReadIntFromByteArray(fileData,0,4,true) != 0x03001100)
+                throw new FileTypeLoadException(ERR_BADHEADER);
             m_FontWidth = 8;
             m_FontHeight = 8;
-            for (Int32 i = 0; i < m_FontSize; i += 8)
+
+            for (Int32 i = 0; i < SymbolsTypeFirst; i++)
+                this.m_ImageDataList.Add(new FontFileSymbol(new Byte[m_FontHeight * m_FontWidth], this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel));
+            for (Int32 i = 4; i + 4 < m_FontSize; i += 8)
             {
                 Byte[] curData8bit;
                 try
                 {
-                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, i, this.BitsPerPixel, true);
+                    curData8bit = ImageUtils.ConvertTo8Bit(fileData, m_FontWidth, m_FontHeight, i, this.BitsPerPixel, false);
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
+                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i / 8));
                 }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, this.m_FontWidth, this.m_FontHeight, 0, this.BitsPerPixel);
                 this.m_ImageDataList.Add(fc);

@@ -869,7 +869,7 @@
             // 
             this.numZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.numZoom.EnteredValue = new decimal(new int[] {
-            1,
+            20,
             0,
             0,
             0});
@@ -908,6 +908,7 @@
             this.pnlImageScroll.Size = new System.Drawing.Size(400, 400);
             this.pnlImageScroll.TabIndex = 40;
             this.pnlImageScroll.TabStop = true;
+            this.pnlImageScroll.MouseScroll += new System.Windows.Forms.MouseEventHandler(this.PnlImageScroll_MouseScroll);
             // 
             // pxbEditGridFront
             // 

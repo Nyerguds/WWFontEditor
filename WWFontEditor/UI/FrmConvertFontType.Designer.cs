@@ -37,6 +37,7 @@
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.lblNote = new System.Windows.Forms.Label();
+            this.rtbGamesList = new WWFontEditor.UI.Tools.EnhRichTextBox();
             this.SuspendLayout();
             // 
             // cmbTypes
@@ -91,15 +92,17 @@
             this.lblGamesList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblGamesList.AutoSize = true;
             this.lblGamesList.Location = new System.Drawing.Point(439, 12);
             this.lblGamesList.Margin = new System.Windows.Forms.Padding(3);
             this.lblGamesList.Name = "lblGamesList";
-            this.lblGamesList.Size = new System.Drawing.Size(266, 186);
+            this.lblGamesList.Size = new System.Drawing.Size(58, 13);
             this.lblGamesList.TabIndex = 2;
-            this.lblGamesList.Text = "gameslist";
+            this.lblGamesList.Text = "Games list:";
             // 
             // btnConvert
             // 
+            this.btnConvert.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnConvert.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btnConvert.Location = new System.Drawing.Point(12, 175);
             this.btnConvert.Name = "btnConvert";
@@ -110,6 +113,7 @@
             // 
             // btnCancel
             // 
+            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.Location = new System.Drawing.Point(93, 175);
             this.btnCancel.Name = "btnCancel";
@@ -130,6 +134,25 @@
     "nversion.";
             this.lblNote.Visible = false;
             // 
+            // rtbGamesList
+            // 
+            this.rtbGamesList.AllowKeyZoom = false;
+            this.rtbGamesList.AllowScrollWheelZoom = false;
+            this.rtbGamesList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.rtbGamesList.BackColor = System.Drawing.SystemColors.Control;
+            this.rtbGamesList.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.rtbGamesList.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.rtbGamesList.Location = new System.Drawing.Point(442, 31);
+            this.rtbGamesList.Name = "rtbGamesList";
+            this.rtbGamesList.ReadOnly = true;
+            this.rtbGamesList.Selectable = false;
+            this.rtbGamesList.Size = new System.Drawing.Size(268, 170);
+            this.rtbGamesList.TabIndex = 8;
+            this.rtbGamesList.Text = "";
+            this.rtbGamesList.WordWrap = false;
+            // 
             // FrmConvertFontType
             // 
             this.AcceptButton = this.btnConvert;
@@ -137,6 +160,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
             this.ClientSize = new System.Drawing.Size(719, 210);
+            this.Controls.Add(this.rtbGamesList);
             this.Controls.Add(this.lblNote);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConvert);
@@ -166,5 +190,6 @@
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label lblNote;
+        private WWFontEditor.UI.Tools.EnhRichTextBox rtbGamesList;
     }
 }

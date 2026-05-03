@@ -67,10 +67,19 @@
     <Compile Include="Domain\ArrayUtils.cs" />
     <Compile Include="Domain\Compression\DynamixCompression.cs" />
     <None Include="Domain\Compression\WestwoodCompression.cs" />
+    <Compile Include="Domain\Compression\DynamixLzwDecoder.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV6.cs" />
+    <Compile Include="Domain\FontTypes\FontFileTran.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDyn96.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV1a.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV1b.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV3.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV5.cs" />
+    <Compile Include="Domain\FontTypes\FontFileKort.cs" />
     <Compile Include="Domain\FontTypes\FontFileCent.cs" />
-    <Compile Include="Domain\FontTypes\FontFileDynV2.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV4.cs" />
     <Compile Include="Domain\FontTypes\FontFileMK.cs" />
-    <Compile Include="Domain\FontTypes\FontFileDynV1.cs" />
+    <Compile Include="Domain\FontTypes\FontFileDynV2.cs" />
     <Compile Include="Domain\ImageUtils\ColorHSL.cs" />
     <Compile Include="Domain\ImageUtils\ColorUtils.cs" />
     <Compile Include="Domain\ImageUtils\SixBitColor.cs" />
@@ -79,10 +88,10 @@
     <Compile Include="Domain\FontFile.cs" />
     <Compile Include="Domain\FontFileSymbol.cs" />
     <Compile Include="Domain\FontTypes\FontFileD2K.cs" />
-    <Compile Include="Domain\FontTypes\FontFileV1.cs" />
-    <Compile Include="Domain\FontTypes\FontFileV4.cs" />
-    <Compile Include="Domain\FontTypes\FontFileV2.cs" />
-    <Compile Include="Domain\FontTypes\FontFileV3.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV1.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV4.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV2.cs" />
+    <Compile Include="Domain\FontTypes\FontFileWsV3.cs" />
     <Compile Include="Domain\GeneralUtils.cs" />
     <Compile Include="Domain\ImageUtils\ImageUtils.cs" />
     <Compile Include="Domain\FontEditSettings.cs" />
@@ -157,6 +166,9 @@
       <DependentUpon>PalettePanel.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Tools\PixelBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="UI\Tools\EnhRichTextBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\Tools\SelectablePanel.cs">

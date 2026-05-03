@@ -6,9 +6,9 @@ using Nyerguds.ImageManipulation;
 namespace WWFontEditor.Domain.FontTypes
 {
     /// <summary>
-    /// Old 1bpp Westwood font format
+    /// Old 1bpp Westwood Studios font format
     /// </summary>
-    public class FontFileV2 : FontFile
+    public class FontFileWsV2 : FontFile
     {
         public override Int32 SymbolsTypeMin { get { return 0x80; } }
         public override Int32 SymbolsTypeMax { get { return 0x80; } }
@@ -18,8 +18,8 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 BitsPerPixel { get { return 1; } }
         public override Boolean CustomSymbolWidthsForType { get { return false; } }
         public override Boolean CustomSymbolHeightsForType { get { return false; } }
-        public override String ShortTypeName { get { return "WW v2"; } }
-        public override String ShortTypeDescription { get { return "WWFont v2 (BattleTech, EoB)"; } }
+        public override String ShortTypeName { get { return "WWFont v2"; } }
+        public override String ShortTypeDescription { get { return "WWFont v2 (BattleTech/EoB)"; } }
         public override String LongTypeDescription { get { return "A 1 BPP font with a fixed set of 128 characters, with a maximum width of 8 pixels, with the file header specifying the global width and height for all symbols."; } }
         public override String[] GamesListForType { get { return new String[]
         {

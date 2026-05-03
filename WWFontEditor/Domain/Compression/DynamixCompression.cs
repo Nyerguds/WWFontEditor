@@ -1,4 +1,5 @@
 ﻿using System;
+using Nyerguds.Util;
 
 namespace Compression
 {
@@ -47,10 +48,17 @@ namespace Compression
 
         public static Byte[] LzwDecode(Byte[] buffer, Int32 decompressedSize)
         {
+
+            DynamixLzwDecoder lzwDec = new DynamixLzwDecoder();
+            Byte[] outputBuffer = new Byte[decompressedSize];
+            lzwDec.LzwDecode(buffer, null, null, outputBuffer);
+            return outputBuffer;
+            /*/
             DynamixCompression decompr = new DynamixCompression();
             Byte[] outputBuffer = new Byte[decompressedSize];
             decompr.DynamixLzwDecode(buffer, outputBuffer);
             return outputBuffer;
+            //*/
         }
         
         public static Byte[] RleDecode(Byte[] buffer, Int32 decompressedSize)

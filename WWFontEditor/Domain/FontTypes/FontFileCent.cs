@@ -28,7 +28,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override String[] FileExtensions { get { return new String[] { "fnt" }; } }
         public override String ShortTypeName { get { return "CentFont"; } }
         public override String ShortTypeDescription { get { return "Centurion Font"; } }
-        public override String LongTypeDescription { get { return "A fixed-height 1-bit font that supports custom character widths and Y-offsets, but lacks a real header. It does not contain symbols below index 32, and adds an extra padding pixel behind all symbols."; } }
+        public override String LongTypeDescription { get { return "An 8 pixel wide 1-bit font that supports custom character widths and Y-offsets, but lacks a real header. It does not contain symbols below index 32, and adds an extra padding pixel behind all symbols."; } }
         public override String[] GamesListForType { get { return new String[] { "Centurion: Defender of Rome" }; } }
         
         protected const Int32 StartSymbol = 0x20;
@@ -67,7 +67,7 @@ namespace WWFontEditor.Domain.FontTypes
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    throw new IndexOutOfRangeException(String.Format("Data for font entry #{0} exceeds file bounds!", i));
+                    throw new FileTypeLoadException(String.Format("{0}: Data for font entry #{1} exceeds file bounds!", ShortTypeName, i));
                 }
                 FontFileSymbol fc = new FontFileSymbol(curData8bit, characterWidths[i], this.m_FontHeight, characterYOffsets[i], this.BitsPerPixel);
                 this.m_ImageDataList.Add(fc);
@@ -75,7 +75,7 @@ namespace WWFontEditor.Domain.FontTypes
         }
 
         public override Byte[] SaveFont(Boolean disableCompression)
-        {            
+        {
             Byte[] characterWidths = new Byte[NrOfSymbols];
             Byte[] characterYOffsets = new Byte[NrOfSymbols];
             Byte[][] imageData = new Byte[NrOfSymbols][];
@@ -89,13 +89,6 @@ namespace WWFontEditor.Domain.FontTypes
                 characterYOffsets[i] = (Byte)ffs.YOffset;
             }
             Byte[] fullData = new Byte[NrOfSymbols * (2 + m_FontHeight)];
-            /*/
-            Array.Copy(Encoding.ASCII.GetBytes("CFNT"), 0, fullData, 0, 4);
-            fullData[0x04] = (Byte)this.m_FontWidth;
-            fullData[0x05] = (Byte)this.m_FontHeight;
-            fullData[0x06] = (Byte)startSymbol;
-            fullData[0x07] = (Byte)nrOfSymbols;
-            //*/
             Int32 fontDataOffset = 0;
             Array.Copy(characterWidths, 0, fullData, fontDataOffset, NrOfSymbols);
             fontDataOffset += NrOfSymbols;

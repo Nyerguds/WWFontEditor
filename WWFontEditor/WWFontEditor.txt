@@ -2,14 +2,14 @@
 Westwood Font Editor
 ==================== Created by Nyerguds
 
-This editor can read and write paletted fonts of pretty much every Westwood
-game ever released, plus Dune 2000, which is technically not made by Westwood.
+This editor was originally created to read and write paletted fonts of the
+Westwood Studios games. It has since been expanded to edit other paletted
+fonts formats of games not made by Westwood, with focus on the Sierra Dynamix
+games.
 
-It does not have support for RA2 fonts because paletted editing is very
-different in nature than high colour editing, and all internal data in the
-editor uses 8-bit images. And there's already an editor for that, anyway ;)
-
-This might evolve into a more general 1 to 8 bit font editor for more games.
+It does not have support for Red Alert 2 fonts because those are high-colour,
+and paletted editing is very different in nature than high colour editing. And
+there's already an editor for that, anyway ;)
 
 Have fun with it!
 
@@ -68,6 +68,8 @@ The following shortcuts can be used in the editor:
  moved around; it will be pasted from the top left corner.
 
 [Ctrl] : Holding down [Ctrl] enables the Colour Picker.
+
+[Ctrl] + [Scroll Wheel] : (with editor selected) Increase/Decrease zoom.
 
 [Ctrl] + [Up]    : Shift image up   
 [Ctrl] + [Down]  : Shift image down	
@@ -153,18 +155,68 @@ WWFont v4
 IGFont (Dune 2000 was made by Intelligent Games, not by Westwood)
 -Dune 2000
 
-Dynamix Font v1 & v2
+Dynamix Font v1 a/b (2bpp and 4bpp version)
+-Pete Rose Pennant Fever
+-Skyfox II
+-Arctic Fox
+
+Dynamix Font v2
+-Abrams Battle Tank
+-The Train: Escape to Normandy
+
+Dynamix Font v3
+-Die Hard
+-Caveman Ugh-Lympics
+-F-14 Tomcat
+-Suzuki's RM250 Motocross
+-MechWarrior
+-A-10 Tank Killer
+-A-10 Tank Killer v1.5
+-Ghostbusters II
+-DeathTrack
+-David Wolf: Secret Agent
+-Stellar 7
 -Rise of the Dragon
 -Heart of China
 -The Adventures of Willy Beamish
 
+Dynamix Font v4
+-Red Baron
+-Rise of the Dragon
+-Heart of China
+-The Adventures of Willy Beamish
+-Betrayal at Krondor
+-A-10 Tank Killer v1.5
+-Stellar 7
+-Nova 9: The Return of Gir Draxon
+-The Incredible Machine
+-Sid & Al's Incredible Toons
+-Front Page Sports Football
+
+Dynamix Font v5
+-Betrayal at Krondor
+-Front Page Sports Football
+
+Dynamix Font v6
+-Front Page Sports Football Pro
+
+Dynamix Font '96 (doesn't seem related to the older types at all)
+-Space Quest 7
+
+Transylvania Font (probably also Dynamix, but again, no format similarities)
+-Transylvania
+-Transylvania II: The Crimson Crown
+
 Centurion Font
 -Centurion: Defender of Rome
 
+KORT font
+-King Arthur's Knights of the Round Table
 
--------------------------
+
+--------------------------
 Notes on Dune 2000 support
--------------------------
+--------------------------
 
 The text encoding dropdown list has an extra "Dune 2000 text encoding" item
 at the bottom. The reason for this is that the font is strangely reordered.
@@ -199,8 +251,8 @@ Special thanks to
 -tomsons26 for the creation of the program icon, for digging through ancient
  Westwood games, and for his tireless nagging.
 -Moon Flower for the help with the design of the palettes manager.
--The people of the oldgamesitalia.net forum for getting me interested in the
- Dynamix fonts.
+-The people of the oldgamesitalia.net forum for getting me interested in game
+ fonts beyond the scope of Westwood Studios.
 
 
 --------------------
@@ -225,7 +277,7 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 
 Further attribution, for the sake of completeness:
 
-The Dynamix v2 format was figured out thanks to code from ScummVM. ScummVM is
+The Dynamix v4 format was figured out thanks to code from ScummVM. ScummVM is
 licensed under the GNU General Public License, but I only used it as reference
 and didn't copy or use their actual code.
 
@@ -238,6 +290,18 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.10: (2017/08/04 21:46)
+-[Ctrl] + scroll wheel will now zoom the editor.
+-Fixed a bug where the symbol heights did not always adapt to the font height.
+-Added support for the font from "King Arthur's Knights of the Round Table".
+-Added older Dynamix font types, and and shifted the version numbers.
+-Added support for the 8-bit Dynamix format used in "Betrayal at Krondor".
+-Identified more games using these Dynamix fonts.
+-Added support for the font from "Space Quest V".
+-Added support for the font in the Transylvania games (probably also Dynamix)
+-Renamed internal classes so the Westwood fonts actuall have "WS" in the name.
+-Added better LZW unpacking method which does not overflow on large files.
 
 v1.9.9: (2017/07/24 15:11)
 -Added zoom controls to preview pane.

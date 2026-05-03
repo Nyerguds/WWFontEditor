@@ -67,7 +67,7 @@ namespace WWFontEditor.Domain
         public const Boolean DefGenerate4BitWB = true;
         public const Boolean DefGenerate4BitWindows = true;
 
-        public const Boolean DefLimit8BitPalettes = true;
+        public const Boolean DefLimit8BitPalettes = false;
         public const Boolean DefGenerate8BitRainbow = true;
         public const Boolean DefGenerate8BitWindows = true;
         public const Boolean DefGenerate8BitBW = true;

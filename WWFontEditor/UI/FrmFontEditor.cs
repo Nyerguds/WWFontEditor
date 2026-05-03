@@ -70,7 +70,7 @@ namespace WWFontEditor
             InitializeComponent();
             // Load settings
             m_Settings = new FontEditSettings();
-            this.numZoom.Value = this.m_Settings.Zoom;
+            this.numZoom.EnteredValue = this.m_Settings.Zoom;
             this.chkGrid.Checked = this.m_Settings.EnableGrid;
             this.chkOutline.Checked = this.m_Settings.EnableArea;
             this.chkShiftWrap.Checked = this.m_Settings.EnablePixelWrap;
@@ -581,6 +581,18 @@ namespace WWFontEditor
                 selectedIndex = (Int32)this.dgrvSymbolsList.SelectedRows[0].Cells[1].Value;
             return selectedIndex;
         }
+        
+        private void PnlImageScroll_MouseScroll(Object sender, MouseEventArgs e)
+        {
+            Keys k = Control.ModifierKeys;
+            if ((k & Keys.Control) != 0)
+            {
+                this.numZoom.EnteredValue = this.numZoom.LimitRange(this.numZoom.EnteredValue + (e.Delta / 120));
+                HandledMouseEventArgs args = e as HandledMouseEventArgs;
+                if (args != null)
+                    args.Handled = true;
+            }
+        }
 
         private void NumZoom_ValueChanged(object sender, EventArgs e)
         {
@@ -604,7 +616,7 @@ namespace WWFontEditor
                 Int32 zoom = (Int32)numZoom.Value;
                 Boolean drawGrid = chkGrid.Checked;
                 Boolean drawOutline = chkOutline.Checked;
-                // AddGred means some kind of grid overlay needs to be drawn; either the grid itself or the outline.
+                // AddGrid means some kind of grid overlay needs to be drawn; either the grid itself or the outline.
                 Boolean addGrid = zoom > 4 && (drawGrid || drawOutline);
                 pxbImage.Visible = imgLoadOk | addGrid;
                 pxbImage.Location = new Point(0, m_CurYOffset * zoom);
@@ -1034,7 +1046,7 @@ namespace WWFontEditor
             if (this.m_LoadedFont == null)
                 return;
             FontFile selectedItem;
-            String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, typeof(FontFileV3), true, m_FileName, out selectedItem);
+            String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, typeof(FontFileWsV3), true, m_FileName, out selectedItem);
             if (filename == null || selectedItem == null)
                 return;
             if (m_LoadedFont.GetType() != selectedItem.GetType() && !ChangeFontType(selectedItem))
