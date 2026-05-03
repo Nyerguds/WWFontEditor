@@ -29,6 +29,7 @@ namespace Nyerguds.Util.UI
         protected Color m_EmptyItemBackColor = Color.Black;
         protected Char m_EmptyItemChar = 'X';
         protected Color m_EmptyItemCharColor = Color.Red;
+        protected String m_EmptyItemToolTip = "No color set";
 
         protected Color m_TransItemBackColor = Color.Empty;
         protected Char m_TransItemChar = 'T';
@@ -38,6 +39,27 @@ namespace Nyerguds.Util.UI
         protected Int32 m_MaxColors = 256;
         protected Boolean m_ShowColorToolTips = true;
         protected Boolean m_ShowRemappedPalette = false;
+
+        public static void InitPaletteControl(Int32 bitsPerPixel, PalettePanel palPanel, Color[] palette, Int32 maxDimension)
+        {
+            Int32 colors = 1 << bitsPerPixel;
+            palPanel.MaxColors = colors;
+            Int32 squaresPerRow = (Int32)Math.Sqrt(colors);
+            Int32 squaresPerCol = colors / squaresPerRow + ((colors % squaresPerRow) > 0 ? 1 : 0);
+            squaresPerRow = Math.Max(squaresPerRow, squaresPerCol);
+            Int32 sqrWidth = (Int32)Math.Ceiling(maxDimension * 7.5 / 8.5 / squaresPerRow);
+            Int32 padding = (Int32)Math.Max(1, Math.Round(sqrWidth / 8.5));
+            while (maxDimension < squaresPerRow * sqrWidth + (squaresPerRow - 1) * padding)
+            {
+                sqrWidth--;
+                padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
+            }
+            palPanel.ColorTableWidth = squaresPerRow;
+            palPanel.LabelSize = new Size(sqrWidth, sqrWidth);
+            palPanel.PadBetween = new Point(padding, padding);
+            palPanel.Palette = palette;
+        }
+
 
         [Description("Frame size. This is completely determined by the padding, label size, and padding between the labels, and can't be modified."), Category("Palette panel")]
         [DefaultValue(typeof(Size), "320, 320")]
@@ -62,7 +84,7 @@ namespace Nyerguds.Util.UI
         public new Boolean AutoSize
         {
             get { return true; }
-            set {  }
+            set { }
         }
 
         [RefreshProperties(RefreshProperties.Repaint)]
@@ -207,6 +229,14 @@ namespace Nyerguds.Util.UI
             set { this.m_EmptyItemCharColor = value; Invalidate(); }
         }
 
+        [Description("Tooltip shown on an empty image entry. Leave empty to disable tooltips on empty entries."), Category("Palette panel")]
+        [RefreshProperties(RefreshProperties.Repaint)]
+        [DefaultValue("No color set")]
+        public String EmptyItemToolTip
+        {
+            get { return this.m_EmptyItemToolTip; }
+            set { this.m_EmptyItemToolTip = value; Invalidate(); }
+        }
         [Description("Color used to indicate entries that are transparent on the palette. Setting this to Color.Empty will use the value of the actual color itself, and will automatically generate a visible color for the indicator character instead of using TransItemCharColor."), Category("Palette panel")]
         [RefreshProperties(RefreshProperties.Repaint)]
         public Color TransItemBackColor
@@ -312,7 +342,7 @@ namespace Nyerguds.Util.UI
             Int32 sizeX = this.Padding.Left + LabelSize.Width * this.m_ColorTableWidth + PadBetween.X * (this.m_ColorTableWidth - 1) + this.Padding.Right;
             Int32 sizeY = this.Padding.Top + LabelSize.Height * rows + PadBetween.Y * (rows - 1) + this.Padding.Bottom;
             base.Size = new Size(sizeX, sizeY);
-            this.Invalidate();            
+            this.Invalidate();
         }
 
         public void SetVisibility(Int32 colorLabelIndex, Boolean visible)
@@ -424,7 +454,7 @@ namespace Nyerguds.Util.UI
                         this.SetLabelProperties(this.m_ColorLabels[index], x, y, col, emptyCol, transparentCol, selectThis);
                     if (m_ShowColorToolTips)
                         this.SetColorToolTip(index, emptyCol, transparentCol);
-                    if (newPalette) 
+                    if (newPalette)
                         this.Controls.Add(m_ColorLabels[index]);
                 }
             }
@@ -457,7 +487,10 @@ namespace Nyerguds.Util.UI
             String tooltipString;
             if (isEmpty)
             {
-                tooltipString = "No color set";
+                if (String.IsNullOrEmpty(EmptyItemToolTip))
+                    tooltipString = null;
+                else
+                    tooltipString = EmptyItemToolTip;
             }
             else
             {
@@ -507,7 +540,7 @@ namespace Nyerguds.Util.UI
                 lbl.Text = String.Empty;
                 lbl.ForeColor = Color.Black;
             }
-            
+
             lbl.BorderStyle = addBorder ? BorderStyle.FixedSingle : BorderStyle.None;
             lbl.Location = new Point(this.Padding.Left + (LabelSize.Width + PadBetween.X) * x,
                                         this.Padding.Top + (LabelSize.Height + PadBetween.Y) * y);
@@ -554,7 +587,7 @@ namespace Nyerguds.Util.UI
         protected virtual void ColorLblMouseClick(object sender, MouseEventArgs e)
         {
             Label lbl = (Label)sender;
-            Int32 index = lbl != null? (Int32)lbl.Tag : -1;
+            Int32 index = lbl != null ? (Int32)lbl.Tag : -1;
             Int32 mousebutton = -1;
             if ((e.Button & System.Windows.Forms.MouseButtons.Left) != 0)
                 mousebutton = 0;
@@ -616,7 +649,7 @@ namespace Nyerguds.Util.UI
             }
             if (this.ColorLabelMouseClick != null)
                 this.ColorLabelMouseClick(this, new PaletteClickEventArgs(e, index, GetColor(index)));
-            
+
         }
 
         protected virtual void ColorLblMouseDoubleClick(object sender, MouseEventArgs e)
@@ -684,7 +717,7 @@ namespace Nyerguds.Util.UI
     /// Disables the "feature" that double-clicking a label copies its text. Since said copy apparently happens
     /// on the internal text variable in the Label class, an override fixes this problem.
     /// </summary>
-    public class LabelNoCopyOnDblClick: Label
+    public class LabelNoCopyOnDblClick : Label
     {
         private String text;
 

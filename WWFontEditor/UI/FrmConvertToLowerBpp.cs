@@ -29,7 +29,7 @@ namespace WWFontEditor.UI
             this.lblExplanation.Text = (singleSymbol? TEXT_SINGLESYM : TEXT_WHOLEFONT) + TEXT_PART2;
             if (palette != null)
             {
-                FrmFontEditor.InitPaletteControl(bppValue, this.palColorSelector, palette, PALETTE_MAX_DIM);
+                PalettePanel.InitPaletteControl(bppValue, this.palColorSelector, palette, PALETTE_MAX_DIM);
             }
         }
 

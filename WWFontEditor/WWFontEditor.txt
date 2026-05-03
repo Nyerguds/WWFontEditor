@@ -211,6 +211,10 @@ Just, do please adhere to Wheaton's Law: don't be a dick :)
 ---------------
 Version history
 ---------------
+v1.6.1: (2017/04/17 11:06)
+-Shifting shortcuts no longer work from text fields or the characters list.
+-Added better close confirmations, with prompt to save.
+
 v1.6: (2017/04/11 08:30)
 -Added option for limiting 8-bit font types to use only 16 colours.
 

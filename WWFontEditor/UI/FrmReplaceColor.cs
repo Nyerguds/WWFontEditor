@@ -26,8 +26,8 @@ namespace WWFontEditor.UI
             InitializeComponent();
             if (palette != null)
             {
-                FrmFontEditor.InitPaletteControl(bppValue, this.palColorSelector1, palette, PALETTE_MAX_DIM);
-                FrmFontEditor.InitPaletteControl(bppValue, this.palColorSelector2, palette, PALETTE_MAX_DIM);
+                PalettePanel.InitPaletteControl(bppValue, this.palColorSelector1, palette, PALETTE_MAX_DIM);
+                PalettePanel.InitPaletteControl(bppValue, this.palColorSelector2, palette, PALETTE_MAX_DIM);
             }
         }
 

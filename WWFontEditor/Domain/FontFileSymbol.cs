@@ -123,6 +123,8 @@ namespace WWFontEditor.Domain
 
         public void ConvertToBpp(Byte? defaultValue, Int32 targetBpp)
         {
+            if (this.BitsPerPixel == targetBpp)
+                return;
             this.ByteData = ConvertDataToBpp(defaultValue, targetBpp);
             this.BitsPerPixel = targetBpp;
         }

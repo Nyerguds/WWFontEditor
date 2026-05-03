@@ -23,16 +23,19 @@ namespace WWFontEditor
     {
         private const Int32 PALETTE_MAX_DIM = 162;//134;
         private const String INI_SECTION = "Palette";
-        protected const String QUESTION_OPENNEWFONT = "The font has unsaved changes!\n\nAre you sure you want to close it?";
-        protected const String QUESTION_RESETFONT = "This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?";
-        protected const String QUESTION_EXITPROGRAM = "The font has unsaved changes!\n\nAre you sure you want to exit?";
+        private const String PROG_NAME = "Westwood Font Editor";
+        private const String PROG_AUTHOR = "Created by Nyerguds";
+        private const String QUESTION_RESETFONT = "This will remove all changes you have made to the font since it was loaded!\n\nAre you sure you want to continue?";
+        private const String QUESTION_REVERTSYMBOL = "This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?";
+        private const String QUESTION_SAVEFILE_OPENNEW = "The font has unsaved changes!\n\nDo you want to save the changes to the current font?";
+        private const String QUESTION_SAVEFILE_CLOSE = "The font has unsaved changes!\n\nDo you want to save the changes to the font?";
+        private const String ABOUTTEXT = "Program icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26";
 
 
         private Boolean m_Loading;
         private Boolean m_Clicking;
         private Boolean m_TempColActive;
         private Boolean m_TempColPickerSelected;
-        private String m_TitleText;
         private String m_FileName;
         private FontFile m_LoadedFont;
         private FontFile m_LoadedFontBackup;
@@ -131,9 +134,16 @@ namespace WWFontEditor
             m_tsmiCopyGridChar.Items.Add(mniCopyChar);
 
             // Set title
-            m_TitleText = "Westwood Font Editor " + GeneralUtils.ProgramVersion() + " - Created by Nyerguds";
-            this.Text = m_TitleText;
+            this.Text = GetTitle(true);
             this.m_Loading = false;
+        }
+
+        private String GetTitle(Boolean withAuthor)
+        {
+            String title = PROG_NAME + " " + GeneralUtils.ProgramVersion();
+            if (withAuthor)
+                title += " - " + PROG_AUTHOR;
+            return title;
         }
 
         private List<D2KEncoding> ScanForD2KEncodings()
@@ -165,7 +175,7 @@ namespace WWFontEditor
                 catch (Exception e)
                 {
                     // Should normally never happen: all necessary checks are done in advance.
-                    MessageBox.Show(this, string.Format("Loading of file \"{0}\" as Dune 2000 text encoding failed:\n\n{1}", file.Name, e.Message), m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, string.Format("Loading of file \"{0}\" as Dune 2000 text encoding failed:\n\n{1}", file.Name, e.Message), GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             return d2kEncodings;
@@ -186,7 +196,7 @@ namespace WWFontEditor
                 String ext = Path.GetExtension(path);
                 if (".fnt".Equals(ext, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    if (AbortForUnsavedChanges(QUESTION_OPENNEWFONT))
+                    if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
                         return;
                     LoadFontFile(path, null);
                 }
@@ -224,7 +234,7 @@ namespace WWFontEditor
                         if (this.m_LoadedFont == null)
                         {
                             String errors = String.Join("\n", loadErrors.Select(er => er.AttemptedLoadedType + ": " + er.Message).ToArray());
-                            MessageBox.Show(this, "Font type could not be identified. Errors returned by all attempts:\n\n" + errors, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBox.Show(this, "Font type could not be identified. Errors returned by all attempts:\n\n" + errors, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
                     }
@@ -235,9 +245,11 @@ namespace WWFontEditor
                     this.m_LoadedFont = null;
                 }
                 this.m_LoadedFontBackup = this.m_LoadedFont != null ? this.m_LoadedFont.Clone() : null;
+                if (this.m_LoadedFont.BitsPerPixel > GetEditBpp(m_LoadedFont))
+                    AdjustFontSymbolsBpp(this.m_LoadedFont);
                 Boolean loadOk = ReloadUi();
                 if (!loadOk)
-                    MessageBox.Show(this, "Font loading failed" + (error == null ? "." : ": " + error), m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(this, "Font loading failed" + (error == null ? "." : ": " + error), GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {
@@ -273,7 +285,7 @@ namespace WWFontEditor
             if (loadOk)
             {
                 ReloadPalettes(false);
-                this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
+                this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.btnValType.Text = m_LoadedFont.ShortTypeName.Replace("&", "&&");
                 this.toolTip1.SetToolTip(this.btnValType, m_LoadedFont.ShortTypeDescription);
                 this.numSymbols.Minimum = this.m_LoadedFont.SymbolsTypeMin;
@@ -292,7 +304,7 @@ namespace WWFontEditor
             else
             {
                 this.m_FileName = null;
-                this.Text = m_TitleText;
+                this.Text = GetTitle(true);
                 this.btnValType.Text = "-";
                 this.toolTip1.SetToolTip(this.btnValType, null);
                 this.numSymbols.Maximum = 0;
@@ -360,6 +372,15 @@ namespace WWFontEditor
             if (bpp != 8 || !this.m_Settings.Limit8BitPalettes)
                 return bpp;
             return 4;
+        }
+
+        private void AdjustFontSymbolsBpp(FontFile fontFile)
+        {
+            if (fontFile == null)
+                return;
+            FontFileSymbol[] symbols = fontFile.GetAllSymbols();
+            foreach (FontFileSymbol symbol in symbols)
+                symbol.ConvertToBpp(0, GetEditBpp(fontFile));
         }
 
         public static Color[] GetDummyPalette(Int32 bitsPerPixel)
@@ -469,26 +490,6 @@ namespace WWFontEditor
             return allPalettes;
         }
 
-        public static void InitPaletteControl(Int32 bitsPerPixel, PalettePanel palPanel, Color[] palette, Int32 maxDimension)
-        {
-            Int32 colors = 1 << bitsPerPixel;
-            palPanel.MaxColors = colors;
-            Int32 squaresPerRow = (Int32)Math.Sqrt(colors);
-            Int32 squaresPerCol = colors / squaresPerRow + ((colors % squaresPerRow) > 0 ? 1 : 0);
-            squaresPerRow = Math.Max(squaresPerRow, squaresPerCol);
-            Int32 sqrWidth = (Int32)Math.Ceiling(maxDimension * 7.5 / 8.5 / squaresPerRow);
-            Int32 padding = (Int32)Math.Max(1, Math.Round(sqrWidth / 8.5));
-            while (maxDimension < squaresPerRow * sqrWidth + (squaresPerRow - 1) * padding)
-            {
-                sqrWidth--;
-                padding = (Int32)Math.Max(1, Math.Ceiling(sqrWidth / 8.5));
-            }
-            palPanel.ColorTableWidth = squaresPerRow;
-            palPanel.LabelSize = new Size(sqrWidth, sqrWidth);
-            palPanel.PadBetween = new Point(padding, padding);
-            palPanel.Palette = palette;
-        }
-
         private void ReloadDataGrid()
         {
             Boolean wasLoading = this.m_Loading;
@@ -550,25 +551,28 @@ namespace WWFontEditor
             }
         }
 
-        private Boolean SaveFontFile(String fileName)
+        private void SaveFontFile()
+        {
+            SaveFontFile(this.m_FileName);
+        }
+
+        private void SaveFontFile(String fileName)
         {
             if (this.m_LoadedFont == null)
-                return false;
+                return;
             try
             {
                 Byte[] filedata = this.m_LoadedFont.SaveFont();
                 File.WriteAllBytes(fileName, filedata);
                 this.m_LoadedFontBackup = this.m_LoadedFont.Clone();
                 this.m_FileName = fileName;
-                this.Text = m_TitleText + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
+                this.Text = GetTitle(true) + " - \"" + Path.GetFileName(this.m_FileName) + "\" (" + m_LoadedFont.ShortTypeName + ")";
                 this.revertSymbolToolStripMenuItem.Enabled = false;
                 ReloadUIWithSelection();
-                return true;
             }
             catch (Exception e)
             {
-                MessageBox.Show(this, "Error occurred when saving:\n\n" + e.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
+                MessageBox.Show(this, "Error occurred when saving:\n\n" + e.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -830,7 +834,7 @@ namespace WWFontEditor
                     catch (IndexOutOfRangeException ex)
                     {
                         // Trying to draw a >15 color index on a 4-bit image. Shouldn't happen in the final version.
-                        MessageBox.Show(this, ex.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(this, ex.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -948,7 +952,7 @@ namespace WWFontEditor
 
         private void btnRevert_Click(object sender, EventArgs e)
         {
-            DialogResult dr = MessageBox.Show("This will revert the current edits on this\nsymbol image to their original state!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            DialogResult dr = MessageBox.Show(QUESTION_REVERTSYMBOL, GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dr != DialogResult.Yes)
                 return;
             this.m_LoadedFont.RestorePicFromBackup(GetSelectedIndex(), this.m_LoadedFontBackup, GetEditBpp(m_LoadedFont));
@@ -1013,7 +1017,7 @@ namespace WWFontEditor
 
         private void OpenFontToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (AbortForUnsavedChanges(QUESTION_OPENNEWFONT))
+            if (this.AbortForChangesAskSave(QUESTION_SAVEFILE_OPENNEW))
                 return;
             FontFile selectedItem;
             String filename = FileDialogGenerator.ShowOpenFileFialog(this, FontFile.SupportedTypes, m_FileName, "fonts", "fnt", out selectedItem);
@@ -1029,7 +1033,7 @@ namespace WWFontEditor
             if (this.m_LoadedFontBackup.GetType() != this.m_LoadedFont.GetType())
                 SaveFontAs();
             else
-                SaveFontFile(this.m_FileName);
+                SaveFontFile();
         }
 
 
@@ -1040,21 +1044,17 @@ namespace WWFontEditor
             SaveFontAs();
         }
 
-        private Boolean SaveFontAs()
+        private void SaveFontAs()
         {
             if (this.m_LoadedFont == null)
-                return false;
-
+                return;
             FontFile selectedItem;
             String filename = FileDialogGenerator.ShowSaveFileFialog(this, m_LoadedFont.GetType(), FontFile.SupportedTypes, true, m_FileName, out selectedItem);
             if (filename == null || selectedItem == null)
-                return false;
-            if (m_LoadedFont.GetType() != selectedItem.GetType())
-            {
-                if (!ChangeFontType(selectedItem))
-                    return false;
-            }
-            return SaveFontFile(filename);
+                return;
+            if (m_LoadedFont.GetType() != selectedItem.GetType() && !ChangeFontType(selectedItem))
+                return;
+            SaveFontFile(filename);
         }
 
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1241,6 +1241,14 @@ namespace WWFontEditor
             if (!e.Control)
                 return;
             ToggleTempColorSelect(true);
+            // Abort if inside a text field or the datagridview
+            Control control = this;
+            while (control is IContainerControl)
+            {
+                control = ((IContainerControl)control).ActiveControl;
+                if (control is TextBox || control is DataGridView)
+                    return;
+            }
             ShiftDirection sd;
             Boolean yShift = false;
             switch (e.KeyCode)
@@ -1347,7 +1355,7 @@ namespace WWFontEditor
             }
             if (clipboard == null)
             {
-                MessageBox.Show("No font data found on the clipboard.", m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No font data found on the clipboard.", GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             Int32 curIndex = GetSelectedIndex();
@@ -1358,7 +1366,7 @@ namespace WWFontEditor
             // if there are unsaved changes, or the image is new and not empty, ask specifically
             if (!CheckIsEqual() && !canrevert || (this.m_LoadedFontBackup.Length <= curIndex && fc.Width > 0 && fc.Height > 0))
             {
-                DialogResult dr = MessageBox.Show("This will completely overwrite the current symbol.\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                DialogResult dr = MessageBox.Show("This will completely overwrite the current symbol.\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
                     return;
             }
@@ -1386,7 +1394,7 @@ namespace WWFontEditor
             }
             catch (InvalidOperationException ex)
             {
-                MessageBox.Show(ex.Message, m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             this.ReloadImageInfo(true);
             this.ReloadDataGrid();
@@ -1447,7 +1455,7 @@ namespace WWFontEditor
         {
             if (this.m_LoadedFont == null)
                 return;
-            if (AbortForUnsavedChanges(QUESTION_RESETFONT))
+            if (!this.ConfirmOnUnsavedChanges(QUESTION_RESETFONT))
                 return;
             this.m_LoadedFont = this.m_LoadedFontBackup.Clone();
             ReloadUIWithSelection();
@@ -1483,7 +1491,7 @@ namespace WWFontEditor
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(this, m_TitleText + "\n\nProgram icon created by Tomsons26\n\nFont format research by Nyerguds, assisted by Omniblade, CCHyper and Tomsons26", m_TitleText, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(this, GetTitle(true) + "\n\n" + ABOUTTEXT, GetTitle(false), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ChkPaint_CheckStateChanged(object sender, EventArgs e)
@@ -1541,7 +1549,7 @@ namespace WWFontEditor
                 return;
             if (currentPal.SourceFile != null && currentPal.Entry >= 0)
             {
-                DialogResult dr = MessageBox.Show("This will remove all changes you have made to the palette since it was loaded!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                DialogResult dr = MessageBox.Show("This will remove all changes you have made to the palette since it was loaded!\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
                     return;
             }
@@ -1552,7 +1560,7 @@ namespace WWFontEditor
 
         private void ReloadColors(Int32 bpp)
         {
-            InitPaletteControl(bpp, this.palColorSelector, m_CurrentPalette, PALETTE_MAX_DIM);
+            PalettePanel.InitPaletteControl(bpp, this.palColorSelector, m_CurrentPalette, PALETTE_MAX_DIM);
             if (this.m_CurrentPaintColor1 >= m_CurrentPalette.Length)
                 this.m_CurrentPaintColor1 = 1;
             if (this.m_CurrentPaintColor2 >= m_CurrentPalette.Length)
@@ -1578,7 +1586,7 @@ namespace WWFontEditor
             Color[] fullPal;
             if (palfile.Exists && palfile.Length == 0x300)
             {
-                DialogResult dr = MessageBox.Show("This will overwrite the palette data on your hard disk!\n\nAre you sure you want to continue?", m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                DialogResult dr = MessageBox.Show("This will overwrite the palette data on your hard disk!\n\nAre you sure you want to continue?", GetTitle(false), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr != DialogResult.Yes)
                     return;
                 // Treat as C&C 6-bit colour palette
@@ -1651,9 +1659,7 @@ namespace WWFontEditor
             Boolean refreshSymbols = this.m_LoadedFont != null && oldEditBpp > GetEditBpp(this.m_LoadedFont);
             if (refreshSymbols)
             {
-                FontFileSymbol[] symbols = this.m_LoadedFont.GetAllSymbols();
-                foreach (FontFileSymbol symbol in symbols)
-                    symbol.ConvertToBpp(0, GetEditBpp(this.m_LoadedFont));
+                this.AdjustFontSymbolsBpp(this.m_LoadedFont);
             }
             this.m_CustomColors = settingsFrm.CustomColors;
             this.m_DefaultPalettes = LoadDefaultPalettes();
@@ -1672,11 +1678,6 @@ namespace WWFontEditor
         private void FrmFontEditor_Resize(object sender, EventArgs e)
         {
             RepaintPreview();
-        }
-
-        private void CopyPreviewTrans(object sender, EventArgs e)
-        {
-            CopyPreview(true);
         }
 
         private void CopyPreview(object sender, EventArgs e)
@@ -1770,7 +1771,20 @@ namespace WWFontEditor
 
         private void FrmFontEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
-            e.Cancel = AbortForUnsavedChanges(QUESTION_EXITPROGRAM);
+            e.Cancel = AbortForChangesAskSave(QUESTION_SAVEFILE_CLOSE);
+        }
+
+        private Boolean AbortForChangesAskSave(String question)
+        {
+            Boolean? saveFile = this.ConfirmOnUnsavedChanges(question, true);
+            // abort
+            if (!saveFile.HasValue)
+                return true;
+            // Save
+            if (saveFile.Value)
+                this.SaveFontFile();
+            // Not aborted; either saved or user doesn't care about lost changes.
+            return false;
         }
 
         /// <summary>
@@ -1778,14 +1792,28 @@ namespace WWFontEditor
         /// </summary>
         /// <param name="question">Message to give as question in case there are unsaved changes.</param>
         /// <returns>True if the action should be aborted.</returns>
-        private Boolean AbortForUnsavedChanges(String question)
+        private Boolean ConfirmOnUnsavedChanges(String question)
+        {
+            return this.ConfirmOnUnsavedChanges(question, false).GetValueOrDefault(false);
+        }
+
+        /// <summary>
+        /// Checks if there are unsaved changes, and returns whether the current action should be aborted because of that.
+        /// </summary>
+        /// <param name="question">Message to give as question in case there are unsaved changes.</param>
+        /// <param name="withCancel">Include Cancel in the choices. Will return as Null.</param>
+        /// <returns>True if the action should be aborted.</returns>
+        private Boolean? ConfirmOnUnsavedChanges(String question, Boolean withCancel)
         {
             if (this.m_LoadedFont == null || this.m_LoadedFontBackup == null)
                 return false;
             if (this.m_LoadedFont.Equals(m_LoadedFontBackup))
                 return false;
-            DialogResult res = MessageBox.Show(this, question, m_TitleText, MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            return res != System.Windows.Forms.DialogResult.Yes;
+            MessageBoxButtons mbb = withCancel ? MessageBoxButtons.YesNoCancel : MessageBoxButtons.YesNo;
+            DialogResult res = MessageBox.Show(this, question, GetTitle(false), mbb, MessageBoxIcon.Warning);
+            if (withCancel && res == DialogResult.Cancel)
+                return null;
+            return res == System.Windows.Forms.DialogResult.Yes;
         }
         
     }
