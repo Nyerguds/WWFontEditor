@@ -10,14 +10,15 @@ namespace WWFontEditor.Domain.FontTypes
     {
         public override Int32 SymbolsTypeMin { get { return 0x80; } }
         public override Int32 SymbolsTypeMax { get { return 0x80; } }
+        public override Int32 SymbolsTypeFirst { get { return 0x20; } }
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 FontWidthTypeMin { get { return 0x08; } }
         public override Int32 FontWidthTypeMax { get { return 0x08; } }
         public override Int32 YOffsetTypeMax { get { return 0xFF; } }
-        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
-        public override Boolean CustomSymbXForType { get { return true; } }
-        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
-        public override Boolean CustomSymbYForType { get { return false; } }
+        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
+        public override Boolean CustomSymbolWidthsForType { get { return true; } }
+        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
+        public override Boolean CustomSymbolHeightsForType { get { return false; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
         public override Int32 FontTypePaddingBottom { get { return 2; } }
         /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
@@ -27,7 +28,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override String[] FileExtensions { get { return new String[] { "fnt" }; } }
         public override String ShortTypeName { get { return "CentFont"; } }
         public override String ShortTypeDescription { get { return "Centurion Font"; } }
-        public override String LongTypeDescription { get { return "A fixed-size 1-bit font that supports custom character widths and Y-offsets, but lacks a real header. It does not save the characters below index 32."; } }
+        public override String LongTypeDescription { get { return "A fixed-height 1-bit font that supports custom character widths and Y-offsets, but lacks a real header. It does not contain symbols below index 32, and adds an extra padding pixel behind all symbols."; } }
         public override String[] GamesListForType { get { return new String[] { "Centurion: Defender of Rome" }; } }
         
         protected const Int32 StartSymbol = 0x20;

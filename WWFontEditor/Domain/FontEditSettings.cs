@@ -17,6 +17,7 @@ namespace WWFontEditor.Domain
         private const String INI_KEY_BACKGROUNDFRAME = "BackgroundFrame";
         private const String INI_KEY_BACKGROUND = "Background";
         private const String INI_KEY_USEPALETTEBG = "UsePaletteBG";
+        private const String INI_KEY_WRAP_PREVIEW = "WrapPreview";
 
         private const String INI_SECTION_DEFAULTS = "Defaults";
         private const String INI_KEY_ZOOM = "Zoom";
@@ -49,6 +50,7 @@ namespace WWFontEditor.Domain
         public static readonly Color DefBackgroundFrame = Color.Black;
         public static readonly Color DefBackground = Color.LightGray;
         public const Boolean DefUsePaletteBG = false;
+        public const Boolean DefWrapPreview = true;
 
         public const Int32   DefZoom = 20;
         public const Int32   DefSelectedSymbol = 32;
@@ -80,12 +82,14 @@ namespace WWFontEditor.Domain
         public Color BackgroundFrame { get; set; }
         public Color Background { get; set; }
         public Boolean UsePaletteBG { get; set; }
+        public Boolean WrapPreview { get; set; }
 
         public Int32 Zoom { get; set; }
         public Int32 SelectedSymbol { get; set; }
         public Boolean EnableGrid { get; set; }
         public Boolean EnableArea { get; set; }
         public Boolean EnablePixelWrap { get; set; }
+
 
         public Boolean Generate1BitBR { get; set; }
         public Boolean Generate1BitBW { get; set; }
@@ -127,6 +131,7 @@ namespace WWFontEditor.Domain
             this.BackgroundFrame = ColorFromString(settings.GetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDFRAME, null), DefBackgroundFrame);
             this.Background = ColorFromString(settings.GetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUND, null), DefBackground);
             this.UsePaletteBG = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_USEPALETTEBG, DefUsePaletteBG);
+            this.WrapPreview = settings.GetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_WRAP_PREVIEW, DefWrapPreview);
             
             this.Zoom = settings.GetIntValue(INI_SECTION_DEFAULTS, INI_KEY_ZOOM, DefZoom);
             this.SelectedSymbol = settings.GetIntValue(INI_SECTION_DEFAULTS, INI_KEY_SELECTEDSYMBOL, DefSelectedSymbol);
@@ -169,13 +174,14 @@ namespace WWFontEditor.Domain
             settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUNDFRAME, ColorToString(this.BackgroundFrame));
             settings.SetStringValue(INI_SECTION_USERINTERFACE, INI_KEY_BACKGROUND, ColorToString(this.Background));
             settings.SetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_USEPALETTEBG, this.UsePaletteBG);
+            settings.SetBoolValue(INI_SECTION_USERINTERFACE, INI_KEY_WRAP_PREVIEW, this.WrapPreview);
 
             settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_ZOOM, this.Zoom);
             settings.SetIntValue(INI_SECTION_DEFAULTS, INI_KEY_SELECTEDSYMBOL, this.SelectedSymbol);
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEGRID, this.EnableGrid);
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEAREA, this.EnableArea);
             settings.SetBoolValue(INI_SECTION_DEFAULTS, INI_KEY_ENABLEPIXELWRAP, this.EnablePixelWrap);
-
+            
             if (!this.Generate1BitBR && !this.Generate1BitBW && !this.Generate1BitWB)
                 this.Generate1BitBR = true;
             settings.SetBoolValue(INI_SECTION_PALETTES, INI_KEY_GENERATE1BITBR, this.Generate1BitBR);

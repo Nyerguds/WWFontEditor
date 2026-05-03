@@ -26,11 +26,12 @@ namespace WWFontEditor.UI
         private void LoadSettings()
         {
             this.SetLabelColor(lblValEditorBackColor, m_Settings.Background);
+            this.chkUsePaletteBg.Checked = this.m_Settings.UsePaletteBG;
             this.SetLabelColor(lblValEditorGridColor, m_Settings.BackgroundGrid);
             this.SetLabelColor(lblValEditorOutlineColor, m_Settings.BackgroundFrame);
             this.SetLabelColor(lblValEditAreaOutlineColor, m_Settings.EditAreaFrame);
             this.SetLabelColor(lblValEditAreaGridColor, m_Settings.EditAreaGrid);
-            this.chkUsePaletteBg.Checked = this.m_Settings.UsePaletteBG;
+            this.chkWrapPreviewText.Checked = this.m_Settings.WrapPreview;
             this.numDefaultZoom.Value = this.m_Settings.Zoom;
             this.numDefaultSelectedSymbol.Value = this.m_Settings.SelectedSymbol;
             this.chkEnableGrid.Checked = this.m_Settings.EnableGrid;
@@ -114,12 +115,13 @@ namespace WWFontEditor.UI
                 MessageBox.Show(this, "Error: at least one default palette must be selected for each image color type!", "Font Editor", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            this.m_Settings.Background       = lblValEditorBackColor.ForeColor;
-            this.m_Settings.BackgroundGrid  = lblValEditorGridColor.ForeColor;
-            this.m_Settings.BackgroundFrame = lblValEditorOutlineColor.ForeColor;
-            this.m_Settings.EditAreaFrame    = lblValEditAreaOutlineColor.ForeColor;
-            this.m_Settings.EditAreaGrid     = lblValEditAreaGridColor.ForeColor;
+            this.m_Settings.Background = lblValEditorBackColor.ForeColor;
             this.m_Settings.UsePaletteBG = this.chkUsePaletteBg.Checked;
+            this.m_Settings.BackgroundGrid = lblValEditorGridColor.ForeColor;
+            this.m_Settings.BackgroundFrame = lblValEditorOutlineColor.ForeColor;
+            this.m_Settings.EditAreaFrame = lblValEditAreaOutlineColor.ForeColor;
+            this.m_Settings.EditAreaGrid = lblValEditAreaGridColor.ForeColor;
+            this.m_Settings.WrapPreview = this.chkWrapPreviewText.Checked;
             this.m_Settings.Zoom = (Int32)this.numDefaultZoom.Value;
             this.m_Settings.SelectedSymbol = (Int32)this.numDefaultSelectedSymbol.Value;
             this.m_Settings.EnableGrid = this.chkEnableGrid.Checked;
@@ -147,11 +149,12 @@ namespace WWFontEditor.UI
         private void btnReset_Click(object sender, EventArgs e)
         {
             this.SetLabelColor(lblValEditorBackColor, FontEditSettings.DefBackground);
+            this.chkUsePaletteBg.Checked = FontEditSettings.DefUsePaletteBG;
             this.SetLabelColor(lblValEditorGridColor, FontEditSettings.DefBackgroundGrid);
             this.SetLabelColor(lblValEditorOutlineColor, FontEditSettings.DefBackgroundFrame);
             this.SetLabelColor(lblValEditAreaOutlineColor, FontEditSettings.DefEditAreaFrame);
             this.SetLabelColor(lblValEditAreaGridColor, FontEditSettings.DefEditAreaGrid);
-            this.chkUsePaletteBg.Checked = FontEditSettings.DefUsePaletteBG;
+            this.chkWrapPreviewText.Checked = FontEditSettings.DefWrapPreview;
             this.numDefaultZoom.Value = FontEditSettings.DefZoom;
             this.numDefaultSelectedSymbol.Value = FontEditSettings.DefSelectedSymbol;
             this.chkEnableGrid.Checked = FontEditSettings.DefEnableGrid;
@@ -170,7 +173,6 @@ namespace WWFontEditor.UI
             this.chkPal8BppWB.Checked = FontEditSettings.DefGenerate8BitWB;
             this.chkLimit8Bit.Checked = FontEditSettings.DefLimit8BitPalettes;
             this.chkDisableCompression.Checked = FontEditSettings.DefDisableCompression;
-
         }
     }
 }

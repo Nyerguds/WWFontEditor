@@ -33,20 +33,22 @@ namespace WWFontEditor.Domain
         public virtual Int32 SymbolsTypeMin { get {return 0;} }
         /// <summary>Upper limit for the amount of symbols in the font.</summary>
         public abstract Int32 SymbolsTypeMax { get; }
-        /// <summary>Lower limit for the overall width of the symbols in the font.</summary>
+        /// <summary>The first symbol that is saved. This hides all symbols before this index from the editor.</summary>
+        public virtual Int32 SymbolsTypeFirst { get { return 0; } }
+        /// <summary>Lower limit for the width of the overall font. This does not mean symbols themselves are mimited to this minimum.</summary>
         public virtual Int32 FontWidthTypeMin { get { return 0; } }
-        /// <summary>Upper limit for the overall width of the symbols in the font.</summary>
+        /// <summary>Lower limit for the width of the overall font.</summary>
         public abstract Int32 FontWidthTypeMax { get; }
-        /// <summary>Lower limit for the overall height of the symbols in the font.</summary>
+        /// <summary>Lower limit for the overall height of the overall font.</summary>
         public virtual Int32 FontHeightTypeMin { get { return 0; } }
-        /// <summary>Upper limit for the overall height of the symbols in the font.</summary>
+        /// <summary>Upper limit for the overall height of the overall font.</summary>
         public abstract Int32 FontHeightTypeMax { get; }
         /// <summary>Upper limit for the Y-offset of the symbols in the font. Zero means the font format does not support Y offsets</summary>
         public abstract Int32 YOffsetTypeMax { get; }
-        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
-        public virtual Boolean CustomSymbXForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
-        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font. Automatically disables if max and min for both dimensions are the same.</summary>
-        public virtual Boolean CustomSymbYForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
+        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
+        public virtual Boolean CustomSymbolWidthsForType { get { return this.FontWidthTypeMin != this.FontWidthTypeMax; } }
+        /// <summary> Set this to False if individual symbols cannot have different sizes than their parent font.</summary>
+        public virtual Boolean CustomSymbolHeightsForType { get { return this.FontHeightTypeMin != this.FontHeightTypeMax; } }
         /// <summary>Padding at the bottom of the font. Only used for the preview function.</summary>
         public virtual Int32 FontTypePaddingBottom { get { return 0; } }
         /// <summary>Padding between the characters of the font. Only used for the preview function.</summary>
@@ -98,7 +100,7 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontHeight = Math.Max(Math.Min(value, this.FontHeightTypeMax), this.FontHeightTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Height > m_FontHeight || !this.CustomSymbXForType)
+                    if (symbol.Height > m_FontHeight || !this.CustomSymbolWidthsForType)
                         symbol.ChangeHeight(m_FontHeight);
             }
         }
@@ -111,12 +113,12 @@ namespace WWFontEditor.Domain
             {
                 this.m_FontWidth = Math.Max(Math.Min(value, this.FontWidthTypeMax), this.FontWidthTypeMin);
                 foreach (FontFileSymbol symbol in this.m_ImageDataList)
-                    if (symbol.Width > m_FontWidth || !this.CustomSymbXForType)
+                    if (symbol.Width > m_FontWidth || !this.CustomSymbolWidthsForType)
                         symbol.ChangeWidth(m_FontWidth);
             }
         }
 
-        /// <summary>Amound of symbols in the font.</summary>
+        /// <summary>Amount of symbols in the font.</summary>
         public Int32 Length
         {
             get { return m_ImageDataList.Count; }
@@ -357,13 +359,16 @@ namespace WWFontEditor.Domain
 
         public Bitmap PrintText(String text, Color[] colors, Boolean transparentBg, Encoding enc, Int32 wrapAt)
         {
-            wrapAt = Math.Max(wrapAt, this.FontWidth);
+            if (wrapAt != -1)
+                wrapAt = Math.Max(wrapAt, this.FontWidth);
             Int32 fullWidth = 0;
             Int32 fullHeight = this.m_FontHeight + this.FontTypePaddingBottom;
             Int32 curWidth = 0;
             List<FontFileSymbol> symbols = new List<FontFileSymbol>();
-            text = text.Trim().Trim('\r', '\n').Replace("\r\n", "\n");
-
+            text = text.Replace("\r\n", "\n");
+            // Calculates the image height by pre-applying the wrapping logic,
+            // and makes a list of the font file symbols to paint.
+            // This can't make a list of images yet since symbols can have 0 as dimensions.
             foreach (Char c in text)
             {
                 if (c == '\n')
@@ -379,7 +384,7 @@ namespace WWFontEditor.Domain
                 Byte[] val = enc.GetBytes(new Char[]{c});
                 if (val.Length != 1 || val[0] >= this.Length)
                     continue;
-                FontFileSymbol ffs = GetSymbol(val[0]);
+                FontFileSymbol ffs = this.GetSymbol(val[0]);
                 symbols.Add(ffs);
                 if (wrapAt != -1 && curWidth + ffs.Width > wrapAt)
                 {
@@ -391,6 +396,7 @@ namespace WWFontEditor.Domain
             }
             // the minimum of 1 is added to prevent empty text from crashing
             fullWidth = Math.Max(1, Math.Max(fullWidth, curWidth));
+            fullHeight = Math.Max(1, fullHeight);
             Color[] palette = PaletteUtils.MakePalette(colors, this.BitsPerPixel, true);
             Bitmap fullBm = new Bitmap(fullWidth, fullHeight, PixelFormat.Format32bppPArgb);
             using (Graphics g = Graphics.FromImage(fullBm))
@@ -414,16 +420,14 @@ namespace WWFontEditor.Domain
                         curWidth = 0;
                         curHeight += this.m_FontHeight + this.FontTypePaddingBottom;
                     }
-                    else
+                    if (ffs.Width != 0)
                     {
-                        if (ffs.Width != 0)
-                        {
-                            Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
-                            g.DrawImage(symbol, new Point(curWidth, curHeight));
-                            curWidth += ffs.Width;
-                        }
-                        curWidth += this.FontTypePaddingRight;
+                        Bitmap symbol = ffs.GetBitmapFullSize(palette, this);
+                        g.DrawImage(symbol, new Point(curWidth, curHeight));
+                        curWidth += ffs.Width;
                     }
+                    curWidth += this.FontTypePaddingRight;
+                    
                 }                
             }
             return fullBm;

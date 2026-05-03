@@ -116,7 +116,7 @@ namespace WWFontEditor
             this.lblPaintColor1.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor1]);
             this.lblPaintColor2.BackColor = Color.FromArgb(0xFF, m_CurrentPalette[this.m_CurrentPaintColor2]);
 
-            // Add right click menu to preview pixelbox
+            // Add right click menu to preview panel
             ContextMenu cmCopyPreview = new ContextMenu();
             MenuItem mniCopy = new MenuItem("Copy");
             mniCopy.Click += new EventHandler(CopyPreview);
@@ -125,7 +125,7 @@ namespace WWFontEditor
             //mniCopyTrans.Click += new EventHandler(CopyPreviewTrans);
             cmCopyPreview.MenuItems.Add(mniCopy);
             //cmCopyPreview.MenuItems.Add(mniCopyTrans);
-            pxbPreview.ContextMenu = cmCopyPreview;
+            this.pnlImagePreview.ContextMenu = cmCopyPreview;
 
             // Create right-click menu for toolstrip items
             m_tsmiCopyGridChar = new ContextMenuStrip();
@@ -263,8 +263,8 @@ namespace WWFontEditor
             this.numSymbols.Enabled = loadOk && this.m_LoadedFont.SymbolsTypeMin < this.m_LoadedFont.SymbolsTypeMax;
             this.numFontWidth.Enabled = loadOk && this.m_LoadedFont.FontWidthTypeMin < this.m_LoadedFont.FontWidthTypeMax;
             this.numFontHeight.Enabled = loadOk && this.m_LoadedFont.FontHeightTypeMin < this.m_LoadedFont.FontHeightTypeMax;
-            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbXForType;
-            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbYForType;
+            this.numWidth.Enabled = loadOk && this.m_LoadedFont.CustomSymbolWidthsForType;
+            this.numHeight.Enabled = loadOk && this.m_LoadedFont.CustomSymbolHeightsForType;
             this.numYOffset.Enabled = loadOk && this.m_LoadedFont.YOffsetTypeMax > 0;
             this.btnShiftUp.Enabled = loadOk;
             this.btnShiftLeft.Enabled = loadOk;
@@ -324,13 +324,13 @@ namespace WWFontEditor
             {
                 // to allow index changed events on the following piece
                 this.m_Loading = false;
-                Int32 firstSelected = this.m_Settings.SelectedSymbol;
+                Int32 firstSelected = Math.Max(this.m_LoadedFont.SymbolsTypeFirst, this.m_Settings.SelectedSymbol);
                 if (this.m_LoadedFont.Length <= firstSelected)
                     firstSelected = 0;
                 if (this.m_LoadedFont.Length > firstSelected)
                 {
-                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[firstSelected].Cells[0];
-                    this.dgrvSymbolsList.Rows[firstSelected].Cells[0].Selected = true;
+                    this.dgrvSymbolsList.FirstDisplayedCell = this.dgrvSymbolsList.Rows[firstSelected - this.m_LoadedFont.SymbolsTypeFirst].Cells[0];
+                    this.dgrvSymbolsList.Rows[firstSelected - this.m_LoadedFont.SymbolsTypeFirst].Cells[0].Selected = true;
                     this.dgrvSymbolsList.Focus();
                 }
             }
@@ -466,7 +466,7 @@ namespace WWFontEditor
                 symbolsTable.Columns.Add(new DataColumn("Char", typeof(String)));
                 symbolsTable.Columns.Add(new DataColumn("Pic", typeof(Bitmap)));
                 FontFileSymbol[] allSymbols = m_LoadedFont.GetAllSymbols();
-                for (Int32 i = 0; i < allSymbols.Length; i++)
+                for (Int32 i = this.m_LoadedFont.SymbolsTypeFirst; i < allSymbols.Length; i++)
                 {
                     FontFileSymbol symbol = allSymbols[i];
                     DataRow row = symbolsTable.NewRow();
@@ -846,7 +846,7 @@ namespace WWFontEditor
             if (CheckIsEqual(index))
                 return false;
             // different dimensions; can't revert. Would never be equal to original.
-            if ((!m_LoadedFont.CustomSymbXForType && m_LoadedFont.FontWidth != m_LoadedFontBackup.FontWidth) || (!m_LoadedFont.CustomSymbYForType && m_LoadedFont.FontHeight != m_LoadedFontBackup.FontHeight))
+            if ((!m_LoadedFont.CustomSymbolWidthsForType && m_LoadedFont.FontWidth != m_LoadedFontBackup.FontWidth) || (!m_LoadedFont.CustomSymbolHeightsForType && m_LoadedFont.FontHeight != m_LoadedFontBackup.FontHeight))
                 return false;
             if (m_LoadedFont.FontWidth < rawData2.Width || m_LoadedFont.FontHeight < rawData2.Height)
                 return false;
@@ -1468,6 +1468,11 @@ namespace WWFontEditor
 
         private void ReloadUIWithSelection()
         {
+            ReloadUIWithSelection(0);
+        }
+
+        private void ReloadUIWithSelection(Int32 oldFontSymbolLimit)
+        {
             Boolean wasLoading = m_Loading;
             m_Loading = true;
             try
@@ -1481,10 +1486,15 @@ namespace WWFontEditor
                 }
                 m_Loading = false;
                 ReloadUi();
-                if ((this.dgrvSymbolsList.DataSource as DataTable) != null && selectedIndex < ((DataTable)(this.dgrvSymbolsList.DataSource)).Rows.Count)
+                if (m_LoadedFont != null)
                 {
-                    if (selectedIndex > 0)
-                        this.dgrvSymbolsList.VerticalScrollbarOffset = scrollOffset;
+                    Int32 diff = oldFontSymbolLimit - this.m_LoadedFont.SymbolsTypeFirst;
+                    selectedIndex += diff;
+                    scrollOffset += diff * this.dgrvSymbolsList.RowTemplate.Height;
+                }
+                if ((this.dgrvSymbolsList.DataSource as DataTable) != null && selectedIndex < ((DataTable)(this.dgrvSymbolsList.DataSource)).Rows.Count && selectedIndex > 0)
+                {
+                    this.dgrvSymbolsList.VerticalScrollbarOffset = Math.Max(0, scrollOffset);
                     this.dgrvSymbolsList.Rows[selectedIndex].Cells[0].Selected = true;
                 }
             }
@@ -1643,24 +1653,41 @@ namespace WWFontEditor
             {
                 this.pxbPreview.Image = null;
                 this.pxbPreview.BackColor = System.Drawing.Color.Silver;
-                this.pxbPreview.Enabled = false;
+                this.pnlImagePreview.Enabled = false;
+                this.pnlImagePreview.BackColor = System.Drawing.Color.Silver;
                 return;
             }
-            this.pxbPreview.Enabled = true;
-            pxbPreview.BackColor = m_Settings.Background;
-            pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
-            Int32 width = pxbPreview.ClientRectangle.Width - pxbPreview.Padding.Left - pxbPreview.Padding.Right;
-            pxbPreview.Image = GeneratePreview(width, true);
+            this.pnlImagePreview.Enabled = true;
+            this.pnlImagePreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
+            this.pxbPreview.BackColor = Color.FromArgb(0xFF, this.m_CurrentPalette[0]);
+            if (this.m_Settings.WrapPreview)
+            {
+                // Done three times to prevent scrollbar problems.
+                if (pnlImagePreview.VerticalScroll.Visible)
+                {
+                    pxbPreview.Image = GeneratePreview(String.Empty, 0, true);
+                    pxbPreview.Size = pxbPreview.Image.Size;
+                }
+                pxbPreview.Image = GeneratePreview(0, true);
+                pxbPreview.Size = pxbPreview.Image.Size;
+            }
+            pxbPreview.Image = GeneratePreview(this.m_Settings.WrapPreview ? 0 : -1, true);
+            pxbPreview.Size = pxbPreview.Image.Size;
         }
 
         private Bitmap GeneratePreview(Int32 width, Boolean transparentBg)
         {
+            return GeneratePreview(txtPreview.Text, width, transparentBg);
+        }
+
+        private Bitmap GeneratePreview(String text, Int32 width, Boolean transparentBg)
+        {
             if (m_LoadedFont == null)
                 return null;
             if (width == 0)
-                width = pxbPreview.ClientRectangle.Width - pxbPreview.Padding.Left - pxbPreview.Padding.Right;
+                width = pnlImagePreview.ClientRectangle.Width - pnlImagePreview.Padding.Left - pnlImagePreview.Padding.Right;
             Encoding enc = ((EncodingDropDownInfo)cmbEncodings.SelectedItem).Encoding;
-            return m_LoadedFont.PrintText(txtPreview.Text, this.m_CurrentPalette, transparentBg, enc, width);
+            return m_LoadedFont.PrintText(text, this.m_CurrentPalette, transparentBg, enc, width);
         }
 
         private void TsmiEditorSettings_Click(object sender, EventArgs e)
@@ -1731,6 +1758,7 @@ namespace WWFontEditor
             if (this.m_LoadedFont == null)
                 return false;
             FontFile sourceFontFile = this.m_LoadedFont;
+            Int32 origFirst = sourceFontFile.SymbolsTypeFirst;
             if (targetFontFile == null)
             {
                 FrmConvertFontType fontConvertDialog = new FrmConvertFontType(this.m_LoadedFont);
@@ -1750,7 +1778,7 @@ namespace WWFontEditor
             }
             m_LoadedFont.CloneInto(targetFontFile, replaceIndex, GetEditBpp(targetFontFile));
             m_LoadedFont = targetFontFile;
-            ReloadUIWithSelection();
+            ReloadUIWithSelection(origFirst);
             return true;
         }
 

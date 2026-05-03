@@ -76,6 +76,7 @@
             this.btnResetPalette = new System.Windows.Forms.Button();
             this.txtPreview = new System.Windows.Forms.TextBox();
             this.btnValType = new System.Windows.Forms.Button();
+            this.pnlImagePreview = new Nyerguds.Util.UI.SelectablePanel();
             this.pxbPreview = new RedCell.UI.Controls.PixelBox();
             this.cmbPalettes = new Nyerguds.Util.UI.ComboBoxSmartWidth();
             this.numFontHeight = new Nyerguds.Util.UI.EnhNumericUpDown();
@@ -95,6 +96,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numWidth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).BeginInit();
             this.menuStrip1.SuspendLayout();
+            this.pnlImagePreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).BeginInit();
@@ -646,16 +648,30 @@
             this.btnValType.UseVisualStyleBackColor = true;
             this.btnValType.Click += new System.EventHandler(this.BtnValType_Click);
             // 
+            // pnlImagePreview
+            // 
+            this.pnlImagePreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlImagePreview.AutoScroll = true;
+            this.pnlImagePreview.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.pnlImagePreview.BackColor = System.Drawing.Color.Silver;
+            this.pnlImagePreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlImagePreview.Controls.Add(this.pxbPreview);
+            this.pnlImagePreview.Enabled = false;
+            this.pnlImagePreview.Location = new System.Drawing.Point(399, 467);
+            this.pnlImagePreview.Margin = new System.Windows.Forms.Padding(0);
+            this.pnlImagePreview.Name = "pnlImagePreview";
+            this.pnlImagePreview.Padding = new System.Windows.Forms.Padding(1);
+            this.pnlImagePreview.Size = new System.Drawing.Size(373, 83);
+            this.pnlImagePreview.TabIndex = 318;
+            this.pnlImagePreview.TabStop = true;
+            // 
             // pxbPreview
             // 
-            this.pxbPreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.pxbPreview.BackColor = System.Drawing.Color.Silver;
-            this.pxbPreview.Enabled = false;
-            this.pxbPreview.Location = new System.Drawing.Point(397, 467);
+            this.pxbPreview.Location = new System.Drawing.Point(0, 0);
             this.pxbPreview.Name = "pxbPreview";
-            this.pxbPreview.Padding = new System.Windows.Forms.Padding(1);
-            this.pxbPreview.Size = new System.Drawing.Size(381, 83);
+            this.pxbPreview.Size = new System.Drawing.Size(181, 53);
             this.pxbPreview.TabIndex = 315;
             this.pxbPreview.TabStop = false;
             // 
@@ -895,9 +911,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 562);
+            this.Controls.Add(this.pnlImagePreview);
             this.Controls.Add(this.btnValType);
             this.Controls.Add(this.btnRemap);
-            this.Controls.Add(this.pxbPreview);
             this.Controls.Add(this.txtPreview);
             this.Controls.Add(this.btnResetPalette);
             this.Controls.Add(this.btnSavePalette);
@@ -940,6 +956,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numHeight)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.pnlImagePreview.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pxbPreview)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontHeight)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFontWidth)).EndInit();
@@ -1020,6 +1037,7 @@
         private System.Windows.Forms.Button btnValType;
         private System.Windows.Forms.ToolStripMenuItem tsmiManagePalettes;
         private System.Windows.Forms.ToolStripMenuItem tsmiPasteSymbolTrans;
+        private Nyerguds.Util.UI.SelectablePanel pnlImagePreview;
     }
 }
 

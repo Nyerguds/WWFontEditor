@@ -20,7 +20,7 @@ namespace WWFontEditor.Domain.FontTypes
         public override Int32 FontHeightTypeMax { get { return 0xFF; } }
         public override Int32 YOffsetTypeMax { get { return 0; } }
         public override Int32 BitsPerPixel { get { return 1; } }
-        public override Boolean CustomSymbYForType { get { return false; } }
+        public override Boolean CustomSymbolHeightsForType { get { return false; } }
         public override String ShortTypeName { get { return "DYN v2"; } }
         public override String ShortTypeDescription { get { return "Dynamix Font v2"; } }
         public override String LongTypeDescription { get { return "A 1 BPP font with compression support, with width definable for each symbol. It is optimized by only saving the used range of symbols."; } }

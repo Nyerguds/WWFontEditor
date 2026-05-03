@@ -65,11 +65,12 @@
             this.lblPalFourBit = new System.Windows.Forms.Label();
             this.lblPalOneBit = new System.Windows.Forms.Label();
             this.lblGenerateDefaultPalettes = new System.Windows.Forms.Label();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.chkDisableCompression = new System.Windows.Forms.CheckBox();
             this.btnReset = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOk = new System.Windows.Forms.Button();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.chkDisableCompression = new System.Windows.Forms.CheckBox();
+            this.chkWrapPreviewText = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDefaultSelectedSymbol)).BeginInit();
@@ -89,11 +90,12 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(402, 290);
+            this.tabControl1.Size = new System.Drawing.Size(402, 315);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.chkWrapPreviewText);
             this.tabPage1.Controls.Add(this.chkEnablePixelWrap);
             this.tabPage1.Controls.Add(this.chkEnableEditArea);
             this.tabPage1.Controls.Add(this.chkEnableGrid);
@@ -115,7 +117,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(394, 264);
+            this.tabPage1.Size = new System.Drawing.Size(394, 289);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Editor";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -123,7 +125,7 @@
             // chkEnablePixelWrap
             // 
             this.chkEnablePixelWrap.AutoSize = true;
-            this.chkEnablePixelWrap.Location = new System.Drawing.Point(11, 235);
+            this.chkEnablePixelWrap.Location = new System.Drawing.Point(11, 261);
             this.chkEnablePixelWrap.Name = "chkEnablePixelWrap";
             this.chkEnablePixelWrap.Size = new System.Drawing.Size(215, 17);
             this.chkEnablePixelWrap.TabIndex = 27;
@@ -133,7 +135,7 @@
             // chkEnableEditArea
             // 
             this.chkEnableEditArea.AutoSize = true;
-            this.chkEnableEditArea.Location = new System.Drawing.Point(11, 212);
+            this.chkEnableEditArea.Location = new System.Drawing.Point(11, 238);
             this.chkEnableEditArea.Name = "chkEnableEditArea";
             this.chkEnableEditArea.Size = new System.Drawing.Size(172, 17);
             this.chkEnableEditArea.TabIndex = 26;
@@ -143,7 +145,7 @@
             // chkEnableGrid
             // 
             this.chkEnableGrid.AutoSize = true;
-            this.chkEnableGrid.Location = new System.Drawing.Point(11, 189);
+            this.chkEnableGrid.Location = new System.Drawing.Point(11, 215);
             this.chkEnableGrid.Name = "chkEnableGrid";
             this.chkEnableGrid.Size = new System.Drawing.Size(128, 17);
             this.chkEnableGrid.TabIndex = 25;
@@ -153,7 +155,7 @@
             // lblDefaultSelectedSymbol
             // 
             this.lblDefaultSelectedSymbol.AutoSize = true;
-            this.lblDefaultSelectedSymbol.Location = new System.Drawing.Point(8, 166);
+            this.lblDefaultSelectedSymbol.Location = new System.Drawing.Point(8, 192);
             this.lblDefaultSelectedSymbol.Name = "lblDefaultSelectedSymbol";
             this.lblDefaultSelectedSymbol.Size = new System.Drawing.Size(119, 13);
             this.lblDefaultSelectedSymbol.TabIndex = 23;
@@ -167,7 +169,7 @@
             0,
             0,
             0});
-            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 164);
+            this.numDefaultSelectedSymbol.Location = new System.Drawing.Point(331, 190);
             this.numDefaultSelectedSymbol.Maximum = new decimal(new int[] {
             255,
             0,
@@ -185,7 +187,7 @@
             // lblDefaultZoom
             // 
             this.lblDefaultZoom.AutoSize = true;
-            this.lblDefaultZoom.Location = new System.Drawing.Point(8, 143);
+            this.lblDefaultZoom.Location = new System.Drawing.Point(8, 169);
             this.lblDefaultZoom.Name = "lblDefaultZoom";
             this.lblDefaultZoom.Size = new System.Drawing.Size(69, 13);
             this.lblDefaultZoom.TabIndex = 21;
@@ -199,7 +201,7 @@
             0,
             0,
             0});
-            this.numDefaultZoom.Location = new System.Drawing.Point(331, 141);
+            this.numDefaultZoom.Location = new System.Drawing.Point(331, 167);
             this.numDefaultZoom.Minimum = new decimal(new int[] {
             1,
             0,
@@ -538,36 +540,6 @@
             this.lblGenerateDefaultPalettes.TabIndex = 50;
             this.lblGenerateDefaultPalettes.Text = "Add default palettes:";
             // 
-            // btnReset
-            // 
-            this.btnReset.Location = new System.Drawing.Point(12, 296);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(104, 23);
-            this.btnReset.TabIndex = 200;
-            this.btnReset.Text = "Reset to defaults";
-            this.btnReset.UseVisualStyleBackColor = true;
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
-            // 
-            // btnCancel
-            // 
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(315, 296);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
-            this.btnCancel.TabIndex = 202;
-            this.btnCancel.Text = "Cancel";
-            this.btnCancel.UseVisualStyleBackColor = true;
-            // 
-            // btnOk
-            // 
-            this.btnOk.Location = new System.Drawing.Point(234, 296);
-            this.btnOk.Name = "btnOk";
-            this.btnOk.Size = new System.Drawing.Size(75, 23);
-            this.btnOk.TabIndex = 201;
-            this.btnOk.Text = "OK";
-            this.btnOk.UseVisualStyleBackColor = true;
-            this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
-            // 
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.chkDisableCompression);
@@ -589,12 +561,55 @@
             this.chkDisableCompression.Text = "Disable optional compression methods when saving";
             this.chkDisableCompression.UseVisualStyleBackColor = true;
             // 
+            // btnReset
+            // 
+            this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnReset.Location = new System.Drawing.Point(12, 321);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(104, 23);
+            this.btnReset.TabIndex = 200;
+            this.btnReset.Text = "Reset to defaults";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
+            // btnCancel
+            // 
+            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnCancel.Location = new System.Drawing.Point(315, 321);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.TabIndex = 202;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = true;
+            // 
+            // btnOk
+            // 
+            this.btnOk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOk.Location = new System.Drawing.Point(234, 321);
+            this.btnOk.Name = "btnOk";
+            this.btnOk.Size = new System.Drawing.Size(75, 23);
+            this.btnOk.TabIndex = 201;
+            this.btnOk.Text = "OK";
+            this.btnOk.UseVisualStyleBackColor = true;
+            this.btnOk.Click += new System.EventHandler(this.btnOk_Click);
+            // 
+            // chkWrapPreviewText
+            // 
+            this.chkWrapPreviewText.AutoSize = true;
+            this.chkWrapPreviewText.Location = new System.Drawing.Point(11, 142);
+            this.chkWrapPreviewText.Name = "chkWrapPreviewText";
+            this.chkWrapPreviewText.Size = new System.Drawing.Size(134, 17);
+            this.chkWrapPreviewText.TabIndex = 29;
+            this.chkWrapPreviewText.Text = "Auto-wrap preview text";
+            this.chkWrapPreviewText.UseVisualStyleBackColor = true;
+            // 
             // FrmSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(402, 325);
+            this.ClientSize = new System.Drawing.Size(402, 350);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnReset);
@@ -660,5 +675,6 @@
         private System.Windows.Forms.CheckBox chkLimit8Bit;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.CheckBox chkDisableCompression;
+        private System.Windows.Forms.CheckBox chkWrapPreviewText;
     }
 }

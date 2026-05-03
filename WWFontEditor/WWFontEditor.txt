@@ -160,7 +160,6 @@ Dynamix Font v1 & v2
 
 Centurion Font
 -Centurion: Defender of Rome
-(files need to be extracted from OVL0.OVL and given a header)
 
 
 -------------------------
@@ -239,6 +238,13 @@ https://www.vogons.org/viewtopic.php?p=273448#p273448
 ---------------
 Version history
 ---------------
+
+v1.9.8: (2017/07/24 13:34)
+-Fixed a number of bugs in the symbol paste / revert logic.
+-Added scrollbars to preview pane.
+-Fixed bug where preview wrapping didn't paint the symbol at which it wrapped.
+-Added an option to disable wrapping in the preview pane.
+-For fonts that have a fixed start symbol, lower symbols will be hidden.
 
 v1.9.7: (2017/07/24 09:52)
 -Added support for Centurion fonts without header.

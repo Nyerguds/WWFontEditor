@@ -40,8 +40,8 @@ namespace WWFontEditor.Domain
         public FontFileSymbol(Image image, Color[] palette, FontFile source)
         {
             this.BitsPerPixel = source.BitsPerPixel; 
-            this.Width = Math.Max(source.FontWidthTypeMin, Math.Min(source.FontWidth, image.Width));
-            this.Height = Math.Max(source.FontHeightTypeMin, Math.Min(source.FontHeight, image.Height));
+            this.Width = Math.Min(source.FontWidth, image.Width);
+            this.Height = Math.Min(source.FontHeight, image.Height);
             this.ByteData = new Byte[Width * Height];
             Bitmap srcImage = new Bitmap(image);
             for (Int32 y = 0; y < Height; y++)
@@ -52,6 +52,7 @@ namespace WWFontEditor.Domain
                     this.ByteData[y * Width + x] = (Byte)ColorUtils.GetClosestPaletteIndexMatch(col, palette, null);
                 }
             }
+            AdaptSizeToFont(this, source);
         }
 
         public FontFileSymbol(Byte[] byteData, Int32 width, Int32 height, Int32 yOffset, Int32 bitsPerPixel)
@@ -76,62 +77,40 @@ namespace WWFontEditor.Domain
 
         public Boolean HasTooHighDataFor(Int32 bitsPerPixel)
         {
-            // shouldn't. Let's assume that's implemented correctly ;)
+            // Shouldn't. Let's assume that's implemented correctly ;)
             if (this.BitsPerPixel <= bitsPerPixel)
                 return false;
             Int32 colValLimit = 1 << bitsPerPixel;
             return this.ByteData.Any(x => x >= colValLimit);
         }
 
-        public FontFileSymbol CloneFor(FontFile targetVersion, Byte? defaultValue, Int32 targetBpp)
+        public FontFileSymbol CloneFor(FontFile font, Byte? defaultValue, Int32 targetBpp)
         {
             // PART ONE: COLOR CONVERSION
             // If higher bitrate, convert overflow to default if given.
             Byte[] newByteData = ConvertDataToBpp(defaultValue, targetBpp);
-
             FontFileSymbol newSymbol = new FontFileSymbol(newByteData, this.Width, this.Height, this.YOffset, targetBpp);
-
-            // PART TWO: SIZE ADJUSTMENT
-
-            if (targetVersion.FontHeight == newSymbol.Height)
-                newSymbol.YOffset = 0;
-            else if (targetVersion.FontHeight < newSymbol.Height)
-            {
-                newSymbol.YOffset = 0;
-                newSymbol.ChangeHeight(targetVersion.FontHeight);
-            }
-            else if (targetVersion.FontHeight < newSymbol.Height + newSymbol.YOffset)
-            {
-                // target has enough space, but Y is too large.
-                newSymbol.YOffset = targetVersion.FontHeight - newSymbol.Height;
-            }
-            // If there is no suppport for Y, reduce Y to 0 and shift down symbol.
-            if (targetVersion.YOffsetTypeMax == 0 && newSymbol.YOffset > 0)
-            {
-                // Increase size of image
-                if (newSymbol.Height < targetVersion.FontHeight)
-                    newSymbol.ChangeHeight(Math.Min(targetVersion.FontHeight, newSymbol.Height + newSymbol.YOffset));
-                // Shift down to Y offset
-                for (int i = 0; i < newSymbol.YOffset; i++)
-                    newSymbol.ShiftImageData(ShiftDirection.Down, false);
-                // Remove Y offset; it's been replaced by actual offset
-                newSymbol.YOffset = 0;
-            }
-            if (!targetVersion.CustomSymbYForType && targetVersion.FontHeight != newSymbol.Height)
-                newSymbol.ChangeHeight(targetVersion.FontHeight);
-            // Reduce width if needed
-            if (targetVersion.FontWidth < newSymbol.Width || !targetVersion.CustomSymbXForType)
-                newSymbol.ChangeWidth(targetVersion.FontWidth);
-            if (targetVersion.FontWidthTypeMin > newSymbol.Width)
-                newSymbol.ChangeWidth(targetVersion.FontWidthTypeMin);
-            else if (targetVersion.FontWidthTypeMax < newSymbol.Width)
-                newSymbol.ChangeWidth(targetVersion.FontWidthTypeMax);
-
-            // If all sizes in the font are fixed (V1, V2) expand symbol to full size.
-            // At this point, this should only increase the size.
-            if (!targetVersion.CustomSymbXForType && targetVersion.FontWidth != newSymbol.Width)
-                newSymbol.ChangeWidth(targetVersion.FontWidth);
+            AdaptSizeToFont(newSymbol, font);
             return newSymbol;
+        }
+
+        private void AdaptSizeToFont(FontFileSymbol symbol, FontFile newFont)
+        {
+            if (this.YOffset > newFont.YOffsetTypeMax)
+            {
+                Int32 diff = symbol.YOffset - newFont.YOffsetTypeMax;
+                symbol.ChangeHeight(this.Height + diff);
+                symbol.YOffset = 0;
+                // Not ideal, I know, but I haven't adapted the shift function to accept an amount to shift.
+                for (Int32 i = 0; i < diff; i++)
+                    symbol.ShiftImageData(ShiftDirection.Down, false);
+            }
+            // Adapt to font width
+            if (!newFont.CustomSymbolWidthsForType || newFont.FontWidth < symbol.Width)
+                symbol.ChangeWidth(newFont.FontWidth);
+            // Adapt to font height
+            if (!newFont.CustomSymbolHeightsForType || newFont.FontHeight < symbol.Height)
+                symbol.ChangeHeight(newFont.FontHeight);
         }
 
         public void ConvertToBpp(Byte? defaultValue, Int32 targetBpp)
@@ -201,7 +180,7 @@ namespace WWFontEditor.Domain
 
         public void ChangeHeight(Int32 newHeight)
         {
-            if (Height == newHeight)
+            if (this.Height == newHeight)
                 return;
             Byte[] newData = new Byte[this.Width * newHeight];
             Array.Copy(this.ByteData, 0, newData, 0, Math.Min(this.ByteData.Length, newData.Length));
