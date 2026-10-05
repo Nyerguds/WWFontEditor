@@ -7,10 +7,6 @@ Westwood Studios games. It has since been expanded to edit other paletted
 fonts formats of games not made by Westwood, with focus on the Sierra Dynamix
 games.
 
-It does not have support for Red Alert 2 fonts because those are high-colour,
-and paletted editing is very different in nature than high colour editing. And
-there's already an editor for that, anyway ;)
-
 Have fun with it!
 
 
